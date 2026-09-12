@@ -1,48 +1,30 @@
-export default function Home() {
-  return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-950 via-slate-900 to-black text-white">
+'use client';
+import { useMemo, useState } from 'react';
 
-      {/* Navbar */}
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-white/10">
-        <h1 className="text-2xl font-bold text-cyan-400">
-          YOJANA CONNECT MITRA
-        </h1>
+type Service={id:string;title:string;icon:string;desc:string;tag:string};
+const services:Service[]=[
+{id:'schemes',title:'Government Schemes',icon:'🏛️',desc:'Discover schemes, eligibility, documents and application guidance.',tag:'Citizen'},
+{id:'education',title:'Education',icon:'🎓',desc:'Scholarships, admissions, courses, internships and career paths.',tag:'Student'},
+{id:'jobs',title:'Jobs & Careers',icon:'💼',desc:'Job discovery, applications, skills and placement support.',tag:'Career'},
+{id:'farmer',title:'Farmer Mitra',icon:'🌾',desc:'Farmer schemes, subsidies, market information and support.',tag:'Farmer'},
+{id:'health',title:'Healthcare',icon:'🏥',desc:'Health-service discovery, insurance and verified information.',tag:'Health'},
+{id:'finance',title:'Loans & Finance',icon:'💳',desc:'Loan, banking and financial-service pathways.',tag:'Finance'},
+{id:'business',title:'Business',icon:'🏢',desc:'Startup, MSME, compliance, funding and business opportunities.',tag:'Business'},
+{id:'documents',title:'Digital Documents',icon:'📄',desc:'Organise documents, verification and application checklists.',tag:'Documents'}];
+const schemes=[['PM-KISAN','Farmer income support','Farmer'],['PMAY','Housing assistance','Citizen'],['PM-JAY','Health coverage','Health'],['National Scholarship Portal','Student scholarships','Education'],['PM SVANidhi','Street-vendor finance','Business'],['PMEGP','Micro enterprise support','Business']];
 
-        <div className="hidden md:flex gap-8">
-          <a href="#">Home</a>
-          <a href="#">Services</a>
-          <a href="#">Schemes</a>
-          <a href="#">Partners</a>
-          <a href="#">Contact</a>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <section className="flex flex-col items-center justify-center text-center px-6 py-32">
-
-        <h2 className="text-6xl font-extrabold leading-tight">
-          AI Powered
-          <br />
-          Digital Citizen Platform
-        </h2>
-
-        <p className="mt-8 max-w-3xl text-xl text-gray-300">
-          Government Services • Education • Farmer • Healthcare • Jobs •
-          Insurance • Loans • Banking • Business • Digital Documents
-        </p>
-
-        <div className="mt-10 flex gap-5">
-          <button className="bg-cyan-500 hover:bg-cyan-600 px-8 py-4 rounded-xl font-semibold">
-            Get Started
-          </button>
-
-          <button className="border border-white px-8 py-4 rounded-xl">
-            Explore Services
-          </button>
-        </div>
-
-      </section>
-
-    </main>
-  );
-}
+export default function Home(){
+const[query,setQuery]=useState('');const[active,setActive]=useState('Home');const[registered,setRegistered]=useState(false);const[familyId,setFamilyId]=useState('');const[toast,setToast]=useState('');
+const filtered=useMemo(()=>{const q=query.toLowerCase().trim();return q?services.filter(s=>`${s.title} ${s.desc} ${s.tag}`.toLowerCase().includes(q)):services},[query]);
+const notify=(m:string)=>{setToast(m);window.setTimeout(()=>setToast(''),2800)};
+const registerFamily=()=>{const id=`YCM-${new Date().getFullYear()}-${Math.floor(100000+Math.random()*900000)}`;setFamilyId(id);setRegistered(true);notify('Family profile created. Connect the real payment gateway before taking money.');};
+return <main className="min-h-screen bg-slate-50 text-slate-900">{toast&&<div className="fixed right-5 top-5 z-50 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-2xl">{toast}</div>}
+<header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur"><div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4"><button onClick={()=>setActive('Home')} className="text-left"><div className="text-xl font-black tracking-tight text-blue-700">YOJANA CONNECT MITRA</div><div className="text-xs font-medium text-slate-500">AI-powered citizen opportunity platform</div></button><nav className="hidden items-center gap-6 text-sm font-semibold md:flex">{['Home','Services','Schemes','Education','Jobs','Partners','Contact'].map(x=><button key={x} onClick={()=>setActive(x)} className={active===x?'text-blue-700':'text-slate-600 hover:text-blue-700'}>{x}</button>)}</nav><button onClick={()=>setActive('Family Registration')} className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800">Family Login / Register</button></div></header>
+<section className="bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-900 text-white"><div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 md:grid-cols-[1.2fr_.8fr] md:items-center md:py-28"><div><span className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-xs font-bold text-cyan-200">ONE FAMILY • ONE YCM ID • ONE DIGITAL ASSISTANT</span><h1 className="mt-6 max-w-4xl text-4xl font-black leading-tight md:text-6xl">Everything your family needs to discover opportunities — in one place.</h1><p className="mt-6 max-w-3xl text-lg leading-8 text-blue-100">Government schemes, education, scholarships, jobs, internships, placements, farmer support, healthcare, finance, business services and digital documents — organised around your family.</p><div className="mt-8 flex flex-col gap-3 sm:flex-row"><button onClick={()=>setActive('Family Registration')} className="rounded-2xl bg-cyan-400 px-6 py-3.5 font-extrabold text-slate-950 hover:bg-cyan-300">Start ₹99 Family Registration</button><button onClick={()=>setActive('Services')} className="rounded-2xl border border-white/30 bg-white/10 px-6 py-3.5 font-bold">Explore Services</button></div><div className="mt-8 grid max-w-xl grid-cols-3 gap-3 text-center text-sm"><div className="rounded-2xl bg-white/10 p-4"><b className="block text-2xl">LKG–PhD</b><span className="text-blue-200">Education</span></div><div className="rounded-2xl bg-white/10 p-4"><b className="block text-2xl">24×7</b><span className="text-blue-200">Digital access</span></div><div className="rounded-2xl bg-white/10 p-4"><b className="block text-2xl">1 ID</b><span className="text-blue-200">Family account</span></div></div></div>
+<div className="rounded-3xl border border-white/15 bg-white/10 p-6 shadow-2xl backdrop-blur"><div className="text-sm font-bold text-cyan-200">YCM SMART SEARCH</div><h2 className="mt-2 text-2xl font-black">What are you looking for?</h2><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="e.g. scholarship, PM-KISAN, job, loan..." className="mt-5 w-full rounded-2xl bg-white px-4 py-3 text-slate-900 outline-none focus:ring-2 focus:ring-cyan-300"/><div className="mt-4 space-y-2">{filtered.slice(0,5).map(s=><button key={s.id} onClick={()=>setActive(s.title)} className="flex w-full items-center gap-3 rounded-2xl bg-white/10 p-3 text-left"><span className="text-2xl">{s.icon}</span><span><b className="block">{s.title}</b><small className="text-blue-200">{s.tag}</small></span></button>)}{!filtered.length&&<p className="p-3 text-sm text-blue-200">No service matched.</p>}</div></div></div></section>
+<section className="mx-auto max-w-7xl px-5 py-14"><p className="text-sm font-bold uppercase tracking-widest text-blue-700">YCM ecosystem</p><h2 className="mt-2 text-3xl font-black">Services for every stage of life</h2><div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{services.map(s=><button key={s.id} onClick={()=>setActive(s.title)} className="rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"><span className="text-4xl">{s.icon}</span><h3 className="mt-4 text-lg font-extrabold">{s.title}</h3><p className="mt-2 text-sm leading-6 text-slate-500">{s.desc}</p><span className="mt-4 inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{s.tag}</span></button>)}</div></section>
+<section className="border-y border-slate-200 bg-white"><div className="mx-auto max-w-7xl px-5 py-14"><div className="grid gap-10 md:grid-cols-[.8fr_1.2fr] md:items-center"><div><p className="text-sm font-bold uppercase tracking-widest text-blue-700">Family Registration</p><h2 className="mt-2 text-3xl font-black">One ₹99 plan for the whole family</h2><p className="mt-4 leading-7 text-slate-600">Create one family account for two years. Add members, interests, education and skills, then use the YCM assistant to discover relevant opportunities.</p><button onClick={()=>setActive('Family Registration')} className="mt-6 rounded-2xl bg-blue-700 px-6 py-3 font-bold text-white">Create Family Account</button></div><div className="grid gap-4 sm:grid-cols-2">{['Unique YCM Family ID','Multiple family members','Education & occupation profiles','Jobs, scholarships & schemes','QR-enabled receipt','Admin workflow ready'].map(x=><div key={x} className="rounded-2xl bg-slate-50 p-5 font-bold"><span className="mr-2 text-emerald-600">✓</span>{x}</div>)}</div></div></div></section>
+<section className="mx-auto max-w-7xl px-5 py-14"><p className="text-sm font-bold uppercase tracking-widest text-blue-700">Opportunity catalogue</p><h2 className="mt-2 text-3xl font-black">Popular pathways</h2><div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{schemes.map(([name,desc,tag])=><button key={name} onClick={()=>notify(`${name} opened — official eligibility/application source must be connected in production.`)} className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm"><div className="flex items-center justify-between"><b>{name}</b><span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">{tag}</span></div><p className="mt-2 text-sm text-slate-500">{desc}</p><span className="mt-4 block text-sm font-bold text-blue-700">Explore →</span></button>)}</div></section>
+<section className="bg-slate-950 text-white"><div className="mx-auto max-w-7xl px-5 py-14"><div className="grid gap-8 md:grid-cols-3"><div><div className="text-xl font-black text-cyan-300">YCM</div><p className="mt-3 text-sm leading-6 text-slate-400">Yojana Connect Mitra Pvt Ltd — digital platform connecting families with verified opportunities and service workflows.</p></div><div><b>Platform modules</b><p className="mt-3 text-sm leading-7 text-slate-400">Citizen • Family • Education • Jobs • Farmer • Healthcare • Finance • Business • CRM • Admin</p></div><div><b>Production checklist</b><p className="mt-3 text-sm leading-7 text-slate-400">OTP • Payment gateway • Database • Role-based admin • Audit logs • Backups • Privacy • HTTPS</p></div></div><div className="mt-10 border-t border-white/10 pt-6 text-xs text-slate-500">© {new Date().getFullYear()} Yojana Connect Mitra Pvt Ltd. Verify official sources before applications or payments.</div></div></section>
+{active!=='Home'&&<div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/50 p-3 sm:items-center"><div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><div className="text-sm font-bold uppercase tracking-widest text-blue-700">YCM Module</div><h2 className="mt-1 text-2xl font-black">{active}</h2></div><button onClick={()=>setActive('Home')} className="rounded-full bg-slate-100 px-3 py-1 text-xl">×</button></div>{active==='Family Registration'?<div className="mt-6">{registered?<div className="rounded-2xl bg-emerald-50 p-5"><div className="font-black text-emerald-800">Family profile created</div><div className="mt-2 text-sm text-emerald-700">YCM Family ID: <b>{familyId}</b></div><p className="mt-3 text-xs text-emerald-700">Prototype only. Real ₹99 collection needs a verified gateway and server-side signature verification.</p></div>:<><div className="grid gap-4 sm:grid-cols-2"><input className="rounded-xl border p-3" placeholder="Family head name"/><input className="rounded-xl border p-3" placeholder="Mobile number"/><input className="rounded-xl border p-3" placeholder="Email (optional)"/><input className="rounded-xl border p-3" placeholder="Number of family members"/></div><button onClick={registerFamily} className="mt-5 w-full rounded-xl bg-blue-700 px-5 py-3 font-bold text-white">Create ₹99 / 2-year Family Registration</button></>}</div>:<div className="mt-6"><p className="leading-7 text-slate-600">The {active} module is now represented in the platform shell. Production integration needs authenticated APIs, database records, verified data sources and role-based workflows.</p><div className="mt-5 grid gap-3 sm:grid-cols-2">{['Search & discovery','Eligibility checklist','Document checklist','Application tracking','Notifications','Admin verification'].map(x=><div key={x} className="rounded-xl bg-slate-50 p-4 font-semibold">✓ {x}</div>)}</div><button onClick={()=>notify('Workflow queued for production integration.')} className="mt-6 rounded-xl bg-slate-950 px-5 py-3 font-bold text-white">Continue</button></div>}</div></div>}
+</main>}
