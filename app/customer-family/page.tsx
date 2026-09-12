@@ -27,7 +27,8 @@ export default function CustomerFamilyPage() {
   ], []);
 
   async function register() {
-    setMessage('Creating registration request…');
+    setFamilyId('');
+    setMessage('Creating family registration…');
     try {
       const response = await fetch('/api/customer-family', {
         method: 'POST',
@@ -35,8 +36,12 @@ export default function CustomerFamilyPage() {
         body: JSON.stringify({ fullName: name, mobile, country: 'India' }),
       });
       const data = await response.json();
-      if (data.familyId) setFamilyId(data.familyId);
-      setMessage(data.message || (response.ok ? 'Request accepted.' : 'Registration is not yet connected to production storage.'));
+      if (response.status === 201 && data.family?.familyId) {
+        setFamilyId(data.family.familyId);
+        setMessage('Registration request saved. OTP and payment are the next activation steps.');
+      } else {
+        setMessage(data.message || 'Registration was not created.');
+      }
     } catch {
       setMessage('Unable to reach the Family 360 API.');
     }
@@ -69,12 +74,12 @@ export default function CustomerFamilyPage() {
         <section className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <h2 className="text-xl font-semibold">Start Family Registration</h2>
-            <p className="mt-1 text-sm text-slate-400">This creates the registration request. OTP, payment signature verification and database persistence are intentionally blocked until their production adapters are connected.</p>
+            <p className="mt-1 text-sm text-slate-400">The account is persisted only when the production PostgreSQL database is configured. No fake Family ID is shown when storage is unavailable.</p>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <label className="text-sm text-slate-300">Primary member name<input value={name} onChange={e => setName(e.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none" placeholder="Full name" /></label>
               <label className="text-sm text-slate-300">Mobile<input value={mobile} onChange={e => setMobile(e.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none" placeholder="10-digit mobile" inputMode="tel" /></label>
             </div>
-            <button onClick={register} className="mt-5 rounded-xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950">Create registration request</button>
+            <button onClick={register} className="mt-5 rounded-xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950">Create family registration</button>
             {familyId && <div className="mt-4 rounded-xl bg-emerald-400/10 p-4 text-sm text-emerald-200">Family ID: <strong>{familyId}</strong></div>}
             {message && <p className="mt-4 text-sm text-slate-300">{message}</p>}
           </div>
