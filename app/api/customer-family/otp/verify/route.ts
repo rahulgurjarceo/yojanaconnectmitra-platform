@@ -40,17 +40,25 @@ export async function POST(request: Request) {
 
     const auditStore = getPostgresYcmAuditStore();
     if (!auditStore) return NextResponse.json({ success: false, code: 'AUTH_AUDIT_STORE_UNAVAILABLE' }, { status: 503 });
-    await auditStore.append(buildAuditRecord({
-      event: 'AUTH_OTP_VERIFIED',
-      subject: family.familyId,
-      role: 'family',
-      familyId: family.familyId,
-      resourceType: 'family',
-      resourceId: family.familyId,
-      success: true,
-    }));
+    try {
+      await auditStore.append(buildAuditRecord({
+        event: 'AUTH_OTP_VERIFIED',
+        subject: family.familyId,
+        role: 'family',
+        familyId: family.familyId,
+        resourceType: 'family',
+        resourceId: family.familyId,
+        success: true,
+      }));
+    } catch {
+      return NextResponse.json({ success: false, code: 'AUTH_AUDIT_WRITE_FAILED' }, { status: 503 });
+    }
 
-    return issueVerifiedSession({ subject: family.familyId, role: 'family', familyId: family.familyId });
+    try {
+      return issueVerifiedSession({ subject: family.familyId, role: 'family', familyId: family.familyId });
+    } catch {
+      return NextResponse.json({ success: false, code: 'AUTH_SESSION_ISSUANCE_FAILED' }, { status: 503 });
+    }
   } catch (error) {
     console.error('customer-family OTP verification failed', error);
     return NextResponse.json({ success: false, code: 'OTP_AUTHENTICATION_FAILED' }, { status: 503 });
