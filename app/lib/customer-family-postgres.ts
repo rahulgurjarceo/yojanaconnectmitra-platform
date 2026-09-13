@@ -62,12 +62,12 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
   }
   async getPaymentByProviderReference(providerReference: string): Promise<FamilyPayment | null> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
-    const rows = await this.sql`SELECT payment_id, family_id, amount_paise, currency, provider, provider_reference, status, signature_verified FROM ycm_family_payments WHERE provider_reference = ${providerReference} LIMIT 1`;
+    const rows = await this.sql`SELECT payment_id, family_id, amount_paise, currency, provider, provider_reference, provider_payment_id, status, signature_verified FROM ycm_family_payments WHERE provider_reference = ${providerReference} LIMIT 1`;
     return rows.length ? mapPaymentRow(rows[0] as unknown as Record<string, unknown>) : null;
   }
-  async markPaymentVerified(orderId: string, paymentId: string): Promise<boolean> {
+  async markPaymentVerified(orderId: string, providerPaymentId: string): Promise<boolean> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
-    const rows = await this.sql`UPDATE ycm_family_payments SET status = 'success', signature_verified = TRUE, provider_reference = ${orderId} WHERE provider_reference = ${orderId} AND payment_id = ${paymentId} AND amount_paise = 9900 AND currency = 'INR' AND status IN ('created','pending') RETURNING payment_id`;
+    const rows = await this.sql`UPDATE ycm_family_payments SET status = 'success', signature_verified = TRUE, provider_payment_id = ${providerPaymentId} WHERE provider_reference = ${orderId} AND amount_paise = 9900 AND currency = 'INR' AND status IN ('created','pending') RETURNING payment_id`;
     return rows.length > 0;
   }
   async close(): Promise<void> { if (this.sql) await this.sql.end({ timeout: 5 }); }
