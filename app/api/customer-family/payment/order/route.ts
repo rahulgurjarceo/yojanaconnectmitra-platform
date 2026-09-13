@@ -1,17 +1,26 @@
 import { NextResponse } from 'next/server';
 import { getCustomerFamilyPaymentProvider } from '../../../../lib/customer-family-payment';
+import { getPostgresCustomerFamilyRepository } from '../../../../lib/customer-family-postgres';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   const provider = getCustomerFamilyPaymentProvider();
-  if (!provider) {
-    return NextResponse.json({ success: false, code: 'PAYMENT_PROVIDER_NOT_CONFIGURED', message: 'Payment gateway is not configured on the production server.' }, { status: 503 });
-  }
-
+  const repository = getPostgresCustomerFamilyRepository();
+  if (!provider) return NextResponse.json({ success: false, code: 'PAYMENT_PROVIDER_NOT_CONFIGURED' }, { status: 503 });
+  if (!repository) return NextResponse.json({ success: false, code: 'DATABASE_NOT_CONFIGURED' }, { status: 503 });
   const body = await request.json().catch(() => null) as { familyId?: string } | null;
-  if (!body?.familyId) return NextResponse.json({ success: false, code: 'FAMILY_ID_REQUIRED' }, { status: 400 });
-
-  const order = await provider.createOrder({ familyId: body.familyId, amount: 99, currency: 'INR' });
-  return NextResponse.json({ success: true, order }, { status: 201 });
+  const familyId = typeof body?.familyId === 'string' ? body.familyId.trim() : '';
+  if (!familyId) return NextResponse.json({ success: false, code: 'FAMILY_ID_REQUIRED' }, { status: 400 });
+  const family = await repository.findById(familyId);
+  if (!family) return NextResponse.json({ success: false, code: 'FAMILY_NOT_FOUND' }, { status: 404 });
+  if (family.status !== 'pending_payment') return NextResponse.json({ success: false, code: 'FAMILY_NOT_PENDING_PAYMENT' }, { status: 409 });
+  if (family.amountPaise !== undefined && family.amountPaise !== 9900) return NextResponse.json({ success: false, code: 'FAMILY_PLAN_AMOUNT_MISMATCH' }, { status: 409 });
+  try {
+    const order = await provider.createOrder({ familyId, amount: 99, currency: 'INR' });
+    return NextResponse.json({ success: true, order }, { status: 201 });
+  } catch (error) {
+    console.error('Family payment order failed', error);
+    return NextResponse.json({ success: false, code: 'PAYMENT_ORDER_FAILED' }, { status: 502 });
+  }
 }
