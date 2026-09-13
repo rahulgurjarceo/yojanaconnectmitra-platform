@@ -7,7 +7,6 @@ type ResourceData = { cases: any[]; documents: any[]; consents: any[]; cri: any[
 
 export default function FamilyDashboardPage() {
   const [state, setState] = useState<{ loading: boolean; error?: string; data?: DashboardData; resources?: ResourceData }>({ loading: true });
-
   useEffect(() => {
     (async () => {
       const sessionResponse = await fetch('/api/auth/session', { cache: 'no-store' });
@@ -17,7 +16,7 @@ export default function FamilyDashboardPage() {
       if (session.user?.role !== 'family' || !familyId) throw new Error('FORBIDDEN_ROLE_SCOPE');
       const [dashboardResponse, resourcesResponse] = await Promise.all([
         fetch(`/api/family-dashboard?familyId=${encodeURIComponent(familyId)}`, { cache: 'no-store' }),
-        fetch(`/api/family-dashboard/resources?familyId=${encodeURIComponent(familyId)}`, { cache: 'no-store' }),
+        fetch(`/api/family-dashboard/resources-v2?familyId=${encodeURIComponent(familyId)}`, { cache: 'no-store' }),
       ]);
       const dashboard = await dashboardResponse.json();
       const resources = await resourcesResponse.json();
@@ -26,10 +25,8 @@ export default function FamilyDashboardPage() {
       setState({ loading: false, data: dashboard, resources: resources.resources });
     })().catch(error => setState({ loading: false, error: error instanceof Error ? error.message : 'DASHBOARD_ACCESS_DENIED' }));
   }, []);
-
   if (state.loading) return <main className="min-h-screen bg-slate-950 p-8 text-white">Verifying Family access…</main>;
   if (state.error) return <main className="min-h-screen bg-slate-950 p-8 text-white"><div className="mx-auto max-w-xl rounded-3xl border border-red-400/20 bg-red-400/5 p-8"><h1 className="text-2xl font-black">Access denied</h1><p className="mt-2 text-slate-300">Only the authenticated Family owner can access this Family 360 data.</p><p className="mt-4 text-xs text-red-300">{state.error}</p></div></main>;
-
   const family = state.data!.family;
   const resources = state.resources!;
   const cards = [['Cases', resources.cases.length, 'case tracking'], ['Documents', resources.documents.length, 'metadata only; no raw Aadhaar'], ['Consents', resources.consents.length, 'consent ledger'], ['CRI / CSAT', resources.cri.length, 'outcome and service quality']];
