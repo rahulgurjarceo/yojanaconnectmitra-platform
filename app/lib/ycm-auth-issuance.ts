@@ -12,6 +12,13 @@ export type VerifiedIdentity = {
 const SESSION_TTL_SECONDS = 8 * 60 * 60;
 
 export function issueVerifiedSession(identity: VerifiedIdentity) {
+  if (identity.role === 'family' && (!identity.familyId || identity.subject !== identity.familyId)) {
+    throw new Error('INVALID_FAMILY_IDENTITY');
+  }
+  if (identity.role === 'employee' && (!identity.employeeId || identity.subject !== identity.employeeId)) {
+    throw new Error('INVALID_EMPLOYEE_IDENTITY');
+  }
+
   const now = Math.floor(Date.now() / 1000);
   const permissions = [
     'family:self','case:self','document:self','consent:self','cri:self',
