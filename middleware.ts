@@ -20,6 +20,7 @@ export function middleware(request: NextRequest) {
 
   const response = NextResponse.next();
   response.headers.set('Cache-Control', 'private, no-store');
+  response.headers.set('X-YCM-Auth', 'verified-session');
   return response;
 }
 
