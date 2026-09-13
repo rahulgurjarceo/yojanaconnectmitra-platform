@@ -1,5 +1,5 @@
 import postgres from 'postgres';
-import type { CustomerFamilyRepository, FamilyActivationState, FamilyRecord } from './customer-family-db';
+import type { CustomerFamilyRepository, FamilyActivationState, FamilyOtpChallenge, FamilyRecord } from './customer-family-db';
 
 function getClient() {
   const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
@@ -8,6 +8,14 @@ function getClient() {
 }
 function mapRow(row: Record<string, unknown>): FamilyRecord {
   return { familyId: String(row.family_id), status: row.status as FamilyRecord['status'], fullName: String(row.full_name), mobile: String(row.mobile), country: String(row.country), createdAt: new Date(String(row.created_at)).toISOString(), updatedAt: new Date(String(row.updated_at)).toISOString() };
+}
+function mapOtpRow(row: Record<string, unknown>): FamilyOtpChallenge {
+  return {
+    familyId: row.family_id == null ? null : String(row.family_id),
+    mobile: String(row.mobile),
+    status: row.status as FamilyOtpChallenge['status'],
+    expiresAt: new Date(String(row.expires_at)).toISOString(),
+  };
 }
 export class PostgresCustomerFamilyRepository implements CustomerFamilyRepository {
   private readonly sql = getClient();
@@ -39,6 +47,11 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
   async createOtpChallenge(input: { challengeId: string; familyId?: string; mobile: string; provider: string; expiresAt: string }): Promise<void> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
     await this.sql`INSERT INTO ycm_family_otp_challenges (challenge_id, family_id, mobile, provider, status, expires_at) VALUES (${input.challengeId}, ${input.familyId || null}, ${input.mobile}, ${input.provider}, 'sent', ${input.expiresAt})`;
+  }
+  async getOtpChallenge(challengeId: string): Promise<FamilyOtpChallenge | null> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    const rows = await this.sql`SELECT family_id, mobile, status, expires_at FROM ycm_family_otp_challenges WHERE challenge_id = ${challengeId} LIMIT 1`;
+    return rows.length ? mapOtpRow(rows[0] as unknown as Record<string, unknown>) : null;
   }
   async markOtpChallengeVerified(challengeId: string): Promise<boolean> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
