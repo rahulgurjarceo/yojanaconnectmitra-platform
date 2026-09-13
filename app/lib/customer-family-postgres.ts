@@ -1,5 +1,5 @@
 import postgres from 'postgres';
-import type { CustomerFamilyRepository, FamilyRecord } from './customer-family-db';
+import type { CustomerFamilyRepository, FamilyActivationState, FamilyRecord } from './customer-family-db';
 
 function getClient() {
   const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
@@ -63,6 +63,35 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
       RETURNING family_id, status, full_name, mobile, country, created_at, updated_at
     `;
     return rows.length ? mapRow(rows[0] as unknown as Record<string, unknown>) : null;
+  }
+
+  async getActivationState(familyId: string): Promise<FamilyActivationState> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    const familyRows = await this.sql`
+      SELECT mobile FROM ycm_families WHERE family_id = ${familyId} LIMIT 1
+    `;
+    if (!familyRows.length) throw new Error('FAMILY_NOT_FOUND');
+    const mobile = String(familyRows[0].mobile);
+
+    const otpRows = await this.sql`
+      SELECT 1
+      FROM ycm_family_otp_challenges
+      WHERE family_id = ${familyId}
+        AND mobile = ${mobile}
+        AND status = 'verified'
+      ORDER BY verified_at DESC NULLS LAST, created_at DESC
+      LIMIT 1
+    `;
+    const paymentRows = await this.sql`
+      SELECT 1
+      FROM ycm_family_payments
+      WHERE family_id = ${familyId}
+        AND status = 'success'
+        AND signature_verified = TRUE
+      ORDER BY created_at DESC
+      LIMIT 1
+    `;
+    return { otpVerified: otpRows.length > 0, paymentVerified: paymentRows.length > 0 };
   }
 
   async close(): Promise<void> {
