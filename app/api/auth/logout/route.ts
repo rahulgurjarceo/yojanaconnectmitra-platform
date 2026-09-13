@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sessionCookieName, verifySession } from '../../../../lib/ycm-access-control';
 import { getPostgresYcmSessionRevocationStore } from '../../../../lib/ycm-postgres-session-revocation';
+import { buildAuditRecord } from '../../../../lib/ycm-audit-events';
+import { getPostgresYcmAuditStore } from '../../../../lib/ycm-postgres-audit-store';
 
 export const runtime = 'nodejs';
 
@@ -11,16 +13,26 @@ export async function POST(request: NextRequest) {
 
   if (session) {
     const store = getPostgresYcmSessionRevocationStore();
-    if (!store && process.env.NODE_ENV === 'production') {
+    const auditStore = getPostgresYcmAuditStore();
+    if ((!store || !auditStore) && process.env.NODE_ENV === 'production') {
       return NextResponse.json({ success: false, code: 'AUTH_SECURITY_STORE_UNAVAILABLE' }, { status: 503, headers: { 'Cache-Control': 'private, no-store' } });
     }
-    if (store) {
-      try {
-        await store.revoke(session.sessionId, session.exp, 'user_logout');
-      } catch {
-        if (process.env.NODE_ENV === 'production') {
-          return NextResponse.json({ success: false, code: 'AUTH_SECURITY_STORE_UNAVAILABLE' }, { status: 503, headers: { 'Cache-Control': 'private, no-store' } });
-        }
+    try {
+      if (store) await store.revoke(session.sessionId, session.exp, 'user_logout');
+      if (auditStore) {
+        await auditStore.append(buildAuditRecord({
+          event: 'AUTH_LOGOUT',
+          subject: session.sub,
+          role: session.role,
+          sessionId: session.sessionId,
+          familyId: session.familyId,
+          employeeId: session.employeeId,
+          success: true,
+        }));
+      }
+    } catch {
+      if (process.env.NODE_ENV === 'production') {
+        return NextResponse.json({ success: false, code: 'AUTH_SECURITY_STORE_UNAVAILABLE' }, { status: 503, headers: { 'Cache-Control': 'private, no-store' } });
       }
     }
   }
