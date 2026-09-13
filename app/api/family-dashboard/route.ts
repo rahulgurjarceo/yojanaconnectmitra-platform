@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const repository = getPostgresCustomerFamilyRepository();
     if (!repository) return NextResponse.json({ success: false, code: 'FAMILY_DATABASE_NOT_CONFIGURED' }, { status: 503 });
 
-    const family = await repository.getFamily(familyId);
+    const family = await repository.findById(familyId);
     if (!family) return NextResponse.json({ success: false, code: 'FAMILY_NOT_FOUND' }, { status: 404 });
 
     return NextResponse.json({
@@ -23,9 +23,11 @@ export async function GET(request: NextRequest) {
       family: {
         familyId: family.familyId,
         status: family.status,
-        primaryMobile: family.primaryMobile,
+        fullName: family.fullName,
+        mobile: family.mobile,
+        country: family.country,
         createdAt: family.createdAt,
-        members: family.members,
+        updatedAt: family.updatedAt,
         scope: 'family:self',
         modules: ['members', 'consent-ledger', 'document-vault', 'cases', 'tracking', 'outcomes', 'cri-csat'],
       },
