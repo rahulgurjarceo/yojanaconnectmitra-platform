@@ -1,5 +1,5 @@
 import postgres from 'postgres';
-import type { CustomerFamilyRepository, FamilyActivationState, FamilyOtpChallenge, FamilyRecord } from './customer-family-db';
+import type { CustomerFamilyRepository, FamilyActivationState, FamilyOtpChallenge, FamilyPayment, FamilyRecord } from './customer-family-db';
 
 function getClient() {
   const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
@@ -10,12 +10,10 @@ function mapRow(row: Record<string, unknown>): FamilyRecord {
   return { familyId: String(row.family_id), status: row.status as FamilyRecord['status'], fullName: String(row.full_name), mobile: String(row.mobile), country: String(row.country), createdAt: new Date(String(row.created_at)).toISOString(), updatedAt: new Date(String(row.updated_at)).toISOString() };
 }
 function mapOtpRow(row: Record<string, unknown>): FamilyOtpChallenge {
-  return {
-    familyId: row.family_id == null ? null : String(row.family_id),
-    mobile: String(row.mobile),
-    status: row.status as FamilyOtpChallenge['status'],
-    expiresAt: new Date(String(row.expires_at)).toISOString(),
-  };
+  return { familyId: row.family_id == null ? null : String(row.family_id), mobile: String(row.mobile), status: row.status as FamilyOtpChallenge['status'], expiresAt: new Date(String(row.expires_at)).toISOString() };
+}
+function mapPaymentRow(row: Record<string, unknown>): FamilyPayment {
+  return { paymentId: String(row.payment_id), familyId: String(row.family_id), amountPaise: Number(row.amount_paise), currency: 'INR', provider: String(row.provider), providerReference: row.provider_reference == null ? null : String(row.provider_reference), status: row.status as FamilyPayment['status'], signatureVerified: Boolean(row.signature_verified) };
 }
 export class PostgresCustomerFamilyRepository implements CustomerFamilyRepository {
   private readonly sql = getClient();
@@ -41,7 +39,7 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
     if (!familyRows.length) throw new Error('FAMILY_NOT_FOUND');
     const mobile = String(familyRows[0].mobile);
     const otpRows = await this.sql`SELECT 1 FROM ycm_family_otp_challenges WHERE family_id = ${familyId} AND mobile = ${mobile} AND status = 'verified' ORDER BY verified_at DESC NULLS LAST, created_at DESC LIMIT 1`;
-    const paymentRows = await this.sql`SELECT 1 FROM ycm_family_payments WHERE family_id = ${familyId} AND status = 'success' AND signature_verified = TRUE ORDER BY created_at DESC LIMIT 1`;
+    const paymentRows = await this.sql`SELECT 1 FROM ycm_family_payments WHERE family_id = ${familyId} AND amount_paise = 9900 AND currency = 'INR' AND status = 'success' AND signature_verified = TRUE ORDER BY created_at DESC LIMIT 1`;
     return { otpVerified: otpRows.length > 0, paymentVerified: paymentRows.length > 0 };
   }
   async createOtpChallenge(input: { challengeId: string; familyId?: string; mobile: string; provider: string; expiresAt: string }): Promise<void> {
@@ -58,9 +56,18 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
     const rows = await this.sql`UPDATE ycm_family_otp_challenges SET status = 'verified', verified_at = NOW() WHERE challenge_id = ${challengeId} AND status IN ('created','sent') AND expires_at > NOW() RETURNING challenge_id`;
     return rows.length > 0;
   }
+  async createPayment(input: { paymentId: string; familyId: string; amountPaise: number; currency: 'INR'; provider: string; providerReference: string }): Promise<void> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    await this.sql`INSERT INTO ycm_family_payments (payment_id, family_id, amount_paise, currency, provider, provider_reference, status, signature_verified) VALUES (${input.paymentId}, ${input.familyId}, ${input.amountPaise}, ${input.currency}, ${input.provider}, ${input.providerReference}, 'created', FALSE)`;
+  }
+  async getPaymentByProviderReference(providerReference: string): Promise<FamilyPayment | null> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    const rows = await this.sql`SELECT payment_id, family_id, amount_paise, currency, provider, provider_reference, status, signature_verified FROM ycm_family_payments WHERE provider_reference = ${providerReference} LIMIT 1`;
+    return rows.length ? mapPaymentRow(rows[0] as unknown as Record<string, unknown>) : null;
+  }
   async markPaymentVerified(orderId: string, paymentId: string): Promise<boolean> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
-    const rows = await this.sql`UPDATE ycm_family_payments SET status = 'success', signature_verified = TRUE, provider_reference = ${paymentId} WHERE provider_reference = ${orderId} AND status IN ('created','pending') RETURNING payment_id`;
+    const rows = await this.sql`UPDATE ycm_family_payments SET status = 'success', signature_verified = TRUE, provider_reference = ${orderId} WHERE provider_reference = ${orderId} AND payment_id = ${paymentId} AND amount_paise = 9900 AND currency = 'INR' AND status IN ('created','pending') RETURNING payment_id`;
     return rows.length > 0;
   }
   async close(): Promise<void> { if (this.sql) await this.sql.end({ timeout: 5 }); }
