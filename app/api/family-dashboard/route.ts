@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const familyId = request.nextUrl.searchParams.get('familyId');
     if (!familyId) return NextResponse.json({ success: false, code: 'FAMILY_ID_REQUIRED' }, { status: 400 });
 
-    const auth = await requireFamilyOwner(request, familyId);
+    const auth = requireFamilyOwner(request, familyId);
     if (auth.response) return auth.response;
 
     const repository = getPostgresCustomerFamilyRepository();
