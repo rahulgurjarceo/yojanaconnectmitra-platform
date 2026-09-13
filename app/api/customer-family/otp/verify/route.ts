@@ -12,6 +12,7 @@ export async function POST(request: Request) {
   const repository = getPostgresCustomerFamilyRepository();
   if (!provider) return NextResponse.json({ success: false, code: 'OTP_PROVIDER_NOT_CONFIGURED' }, { status: 503 });
   if (!repository) return NextResponse.json({ success: false, code: 'DATABASE_NOT_CONFIGURED' }, { status: 503 });
+  if (!process.env.YCM_SESSION_SECRET) return NextResponse.json({ success: false, code: 'SESSION_SECRET_NOT_CONFIGURED' }, { status: 503 });
 
   const body = await request.json().catch(() => null) as { challengeId?: string; otp?: string } | null;
   if (!body?.challengeId || !body.otp || !/^\d{4,8}$/.test(body.otp)) {
