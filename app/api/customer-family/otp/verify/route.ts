@@ -27,16 +27,16 @@ export async function POST(request: Request) {
     const result = await provider.verifyOtp(body.challengeId, body.otp);
     if (!result.verified) return NextResponse.json({ success: false, code: 'OTP_INVALID' }, { status: 400 });
 
-    const persisted = await repository.markOtpChallengeVerified(body.challengeId);
-    if (!persisted) return NextResponse.json({ success: false, code: 'OTP_CHALLENGE_NOT_ACTIVE' }, { status: 409 });
     if (!challenge.familyId) return NextResponse.json({ success: false, code: 'OTP_FAMILY_NOT_LINKED' }, { status: 409 });
-
     const family = await repository.findById(challenge.familyId);
     if (!family) return NextResponse.json({ success: false, code: 'FAMILY_NOT_FOUND' }, { status: 404 });
     if (family.mobile !== challenge.mobile) return NextResponse.json({ success: false, code: 'OTP_MOBILE_MISMATCH' }, { status: 403 });
     if (family.status === 'expired' || family.status === 'suspended') {
       return NextResponse.json({ success: false, code: 'FAMILY_ACCESS_BLOCKED', status: family.status }, { status: 403 });
     }
+
+    const persisted = await repository.markOtpChallengeVerified(body.challengeId);
+    if (!persisted) return NextResponse.json({ success: false, code: 'OTP_CHALLENGE_NOT_ACTIVE' }, { status: 409 });
 
     const auditStore = getPostgresYcmAuditStore();
     if (!auditStore && process.env.NODE_ENV === 'production') {
