@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS ycm_family_payments (
   currency CHAR(3) NOT NULL DEFAULT 'INR',
   provider TEXT NOT NULL,
   provider_reference TEXT,
+  provider_payment_id TEXT,
   status TEXT NOT NULL CHECK (status IN ('created','pending','success','failed','refunded')),
   signature_verified BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -100,5 +101,6 @@ CREATE INDEX IF NOT EXISTS idx_ycm_family_documents_family ON ycm_family_documen
 CREATE INDEX IF NOT EXISTS idx_ycm_family_cases_family ON ycm_family_cases(family_id);
 CREATE INDEX IF NOT EXISTS idx_ycm_family_cases_category ON ycm_family_cases(case_category_id);
 CREATE INDEX IF NOT EXISTS idx_ycm_family_payments_family ON ycm_family_payments(family_id);
+CREATE INDEX IF NOT EXISTS idx_ycm_family_payments_order ON ycm_family_payments(provider_reference);
 CREATE INDEX IF NOT EXISTS idx_ycm_family_otp_mobile ON ycm_family_otp_challenges(mobile);
 CREATE INDEX IF NOT EXISTS idx_ycm_audit_family ON ycm_audit_events(family_id);
