@@ -9,19 +9,15 @@ export async function GET(request: NextRequest) {
   if (!session) return NextResponse.json({ authenticated: false }, { status: 401 });
 
   const revocationStore = getPostgresYcmSessionRevocationStore();
-  if (!revocationStore && process.env.NODE_ENV === 'production') {
+  if (!revocationStore) {
     return NextResponse.json({ authenticated: false, code: 'AUTH_SECURITY_STORE_UNAVAILABLE' }, { status: 503, headers: { 'Cache-Control': 'private, no-store' } });
   }
-  if (revocationStore) {
-    try {
-      if (await revocationStore.isRevoked(session.sessionId)) {
-        return NextResponse.json({ authenticated: false, code: 'SESSION_REVOKED' }, { status: 401, headers: { 'Cache-Control': 'private, no-store' } });
-      }
-    } catch {
-      if (process.env.NODE_ENV === 'production') {
-        return NextResponse.json({ authenticated: false, code: 'AUTH_SECURITY_STORE_UNAVAILABLE' }, { status: 503, headers: { 'Cache-Control': 'private, no-store' } });
-      }
+  try {
+    if (await revocationStore.isRevoked(session.sessionId)) {
+      return NextResponse.json({ authenticated: false, code: 'SESSION_REVOKED' }, { status: 401, headers: { 'Cache-Control': 'private, no-store' } });
     }
+  } catch {
+    return NextResponse.json({ authenticated: false, code: 'AUTH_SECURITY_STORE_UNAVAILABLE' }, { status: 503, headers: { 'Cache-Control': 'private, no-store' } });
   }
 
   return NextResponse.json({
