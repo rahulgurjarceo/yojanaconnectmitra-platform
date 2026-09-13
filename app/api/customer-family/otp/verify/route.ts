@@ -39,27 +39,20 @@ export async function POST(request: Request) {
     if (!persisted) return NextResponse.json({ success: false, code: 'OTP_CHALLENGE_NOT_ACTIVE' }, { status: 409 });
 
     const auditStore = getPostgresYcmAuditStore();
-    if (!auditStore && process.env.NODE_ENV === 'production') {
-      return NextResponse.json({ success: false, code: 'AUTH_AUDIT_STORE_UNAVAILABLE' }, { status: 503 });
-    }
-    if (auditStore) {
-      await auditStore.append(buildAuditRecord({
-        event: 'AUTH_OTP_VERIFIED',
-        subject: family.familyId,
-        role: 'family',
-        familyId: family.familyId,
-        resourceType: 'family',
-        resourceId: family.familyId,
-        success: true,
-      }));
-    }
+    if (!auditStore) return NextResponse.json({ success: false, code: 'AUTH_AUDIT_STORE_UNAVAILABLE' }, { status: 503 });
+    await auditStore.append(buildAuditRecord({
+      event: 'AUTH_OTP_VERIFIED',
+      subject: family.familyId,
+      role: 'family',
+      familyId: family.familyId,
+      resourceType: 'family',
+      resourceId: family.familyId,
+      success: true,
+    }));
 
     return issueVerifiedSession({ subject: family.familyId, role: 'family', familyId: family.familyId });
   } catch (error) {
     console.error('customer-family OTP verification failed', error);
-    if (process.env.NODE_ENV === 'production') {
-      return NextResponse.json({ success: false, code: 'OTP_AUTHENTICATION_FAILED' }, { status: 503 });
-    }
-    return NextResponse.json({ success: false, code: 'OTP_AUTHENTICATION_FAILED' }, { status: 500 });
+    return NextResponse.json({ success: false, code: 'OTP_AUTHENTICATION_FAILED' }, { status: 503 });
   }
 }
