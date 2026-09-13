@@ -15,7 +15,6 @@ export async function POST(request: Request) {
   const family = await repository.findById(familyId);
   if (!family) return NextResponse.json({ success: false, code: 'FAMILY_NOT_FOUND' }, { status: 404 });
   if (family.status !== 'pending_payment') return NextResponse.json({ success: false, code: 'FAMILY_NOT_PENDING_PAYMENT' }, { status: 409 });
-  if (family.amountPaise !== undefined && family.amountPaise !== 9900) return NextResponse.json({ success: false, code: 'FAMILY_PLAN_AMOUNT_MISMATCH' }, { status: 409 });
   try {
     const order = await provider.createOrder({ familyId, amount: 99, currency: 'INR' });
     return NextResponse.json({ success: true, order }, { status: 201 });
