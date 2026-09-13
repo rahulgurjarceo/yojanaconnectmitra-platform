@@ -18,6 +18,8 @@ export interface CustomerFamilyRepository {
   findById(familyId: string): Promise<FamilyRecord | null>;
   updateStatus(familyId: string, status: FamilyRecord['status']): Promise<FamilyRecord | null>;
   getActivationState(familyId: string): Promise<FamilyActivationState>;
+  markOtpChallengeVerified(challengeId: string): Promise<boolean>;
+  markPaymentVerified(orderId: string, paymentId: string): Promise<boolean>;
 }
 
 /** Production boundary: provide a Postgres/Supabase/Hostinger database implementation
