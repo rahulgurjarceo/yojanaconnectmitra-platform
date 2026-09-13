@@ -16,6 +16,17 @@ export type FamilyOtpChallenge = {
   expiresAt: string;
 };
 
+export type FamilyPayment = {
+  paymentId: string;
+  familyId: string;
+  amountPaise: number;
+  currency: 'INR';
+  provider: string;
+  providerReference: string | null;
+  status: 'created' | 'pending' | 'success' | 'failed' | 'refunded';
+  signatureVerified: boolean;
+};
+
 export interface CustomerFamilyRepository {
   create(input: Omit<FamilyRecord, 'createdAt' | 'updatedAt'>): Promise<FamilyRecord>;
   findById(familyId: string): Promise<FamilyRecord | null>;
@@ -24,8 +35,9 @@ export interface CustomerFamilyRepository {
   createOtpChallenge(input: { challengeId: string; familyId?: string; mobile: string; provider: string; expiresAt: string }): Promise<void>;
   getOtpChallenge(challengeId: string): Promise<FamilyOtpChallenge | null>;
   markOtpChallengeVerified(challengeId: string): Promise<boolean>;
+  createPayment(input: { paymentId: string; familyId: string; amountPaise: number; currency: 'INR'; provider: string; providerReference: string }): Promise<void>;
+  getPaymentByProviderReference(providerReference: string): Promise<FamilyPayment | null>;
   markPaymentVerified(orderId: string, paymentId: string): Promise<boolean>;
 }
 
-/** Production boundary: provide a Postgres/Supabase/Hostinger database implementation through environment-backed configuration. */
 export function getCustomerFamilyRepository(): CustomerFamilyRepository | null { return null; }
