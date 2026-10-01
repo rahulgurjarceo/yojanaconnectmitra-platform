@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   }
 
   const access = await requireFamilyOwner(request, familyId);
-  if (!access.ok) return access.response;
+  if (access.response) return access.response;
 
   const payment = await repository.getPaymentByProviderReference(body.orderId);
   if (!payment) return NextResponse.json({ success: false, code: 'PAYMENT_ORDER_NOT_FOUND' }, { status: 404 });
