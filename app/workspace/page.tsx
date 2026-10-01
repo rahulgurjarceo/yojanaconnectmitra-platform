@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 const roleRoutes: Record<string,string> = {
   family: '/family-dashboard', farmer: '/farmer', lawyer: '/lawyer', student: '/student',
-  employee: '/employee', management: '/management', ceo: '/ceo', admin: '/command-center',
+  employee: '/employee', management: '/command-center', ceo: '/command-center', admin: '/command-center',
   partner: '/crm', referral: '/crm',
 };
 
