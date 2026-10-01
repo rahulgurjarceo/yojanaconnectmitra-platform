@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TABLE IF NOT EXISTS ycm_users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id VARCHAR(32) UNIQUE NOT NULL,
