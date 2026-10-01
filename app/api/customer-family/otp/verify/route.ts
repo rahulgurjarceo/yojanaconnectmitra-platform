@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getCustomerFamilyOtpProvider } from '../../../../app/lib/customer-family-otp';
-import { getPostgresCustomerFamilyRepository } from '../../../../app/lib/customer-family-postgres';
-import { issueVerifiedSession } from '../../../../app/lib/ycm-auth-issuance';
-import { buildAuditRecord } from '../../../../app/lib/ycm-audit-events';
-import { getPostgresYcmAuditStore } from '../../../../app/lib/ycm-postgres-audit-store';
+import { getCustomerFamilyOtpProvider } from '../../../lib/customer-family-otp';
+import { getPostgresCustomerFamilyRepository } from '../../../lib/customer-family-postgres';
+import { issueVerifiedSession } from '../../../lib/ycm-auth-issuance';
+import { buildAuditRecord } from '../../../lib/ycm-audit-events';
+import { getPostgresYcmAuditStore } from '../../../lib/ycm-postgres-audit-store';
 
 export const runtime = 'nodejs';
 
