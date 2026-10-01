@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sessionCookieName, verifySession } from '../../../../lib/ycm-access-control';
-import { getPostgresYcmSessionRevocationStore } from '../../../../lib/ycm-postgres-session-revocation';
-import { buildAuditRecord } from '../../../../lib/ycm-audit-events';
-import { getPostgresYcmAuditStore } from '../../../../lib/ycm-postgres-audit-store';
+import { sessionCookieName, verifySession } from '../../../../app/lib/ycm-access-control';
+import { getPostgresYcmSessionRevocationStore } from '../../../../app/lib/ycm-postgres-session-revocation';
+import { buildAuditRecord } from '../../../../app/lib/ycm-audit-events';
+import { getPostgresYcmAuditStore } from '../../../../app/lib/ycm-postgres-audit-store';
 
 export const runtime = 'nodejs';
 
