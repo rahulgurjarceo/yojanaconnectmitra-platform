@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getCustomerFamilyPaymentProvider } from '../../../../lib/customer-family-payment';
 import { getPostgresCustomerFamilyRepository } from '../../../../lib/customer-family-postgres';
 import { requireFamilyOwner } from '../../../../lib/ycm-authorization';
 
 export const runtime = 'nodejs';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const provider = getCustomerFamilyPaymentProvider();
   const repository = getPostgresCustomerFamilyRepository();
   if (!provider) return NextResponse.json({ success: false, code: 'PAYMENT_PROVIDER_NOT_CONFIGURED' }, { status: 503 });
