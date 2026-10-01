@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getPostgresCustomerFamilyRepository } from '../../../app/lib/customer-family-postgres';
-import { getPostgresYcmSessionRevocationStore } from '../../../app/lib/ycm-postgres-session-revocation';
-import { getPostgresYcmAuditStore } from '../../../app/lib/ycm-postgres-audit-store';
-import { getCustomerFamilyOtpProvider } from '../../../app/lib/customer-family-otp';
+import { getPostgresCustomerFamilyRepository } from '../../lib/customer-family-postgres';
+import { getPostgresYcmSessionRevocationStore } from '../../lib/ycm-postgres-session-revocation';
+import { getPostgresYcmAuditStore } from '../../lib/ycm-postgres-audit-store';
+import { getCustomerFamilyOtpProvider } from '../../lib/customer-family-otp';
 
 export const runtime = 'nodejs';
 
