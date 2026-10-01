@@ -3,6 +3,9 @@
 import { useMemo, useRef, useState } from "react";
 import { LEGAL_CATEGORIES, COUNTRIES } from "./legal-data";
 
+type SpeechResultEvent = { resultIndex:number; results:ArrayLike<{0:{transcript:string}} & {isFinal?:boolean}> };
+type SpeechRecognitionLike = { lang:string; continuous:boolean; interimResults:boolean; onresult:((event:SpeechResultEvent)=>void)|null; onerror:(()=>void)|null; onend:(()=>void)|null; start:()=>void; stop:()=>void };
+type SpeechRecognitionConstructor = new()=>SpeechRecognitionLike;
 type FormState = {
  name:string; phone:string; whatsapp:string; email:string; address:string; country:string; jurisdiction:string;
  role:string; category:string; subcategory:string; incidentDate:string; incidentPlace:string; description:string;
@@ -15,18 +18,19 @@ export default function LegalMitraPage(){
  const [form,setForm]=useState<FormState>(initial);
  const [recording,setRecording]=useState(false);
  const [message,setMessage]=useState("");
- const recognition=useRef<any>(null);
+ const recognition=useRef<SpeechRecognitionLike|null>(null);
  const selected=useMemo(()=>LEGAL_CATEGORIES.find(c=>c.id===form.category),[form.category]);
 
  const update=(key:keyof FormState,value:string|boolean)=>setForm(v=>({...v,[key]:value}));
 
  const startVoice=()=>{
-   const SR=typeof window!=="undefined" && ((window as any).SpeechRecognition||(window as any).webkitSpeechRecognition);
+   const speechWindow=window as Window & { SpeechRecognition?:SpeechRecognitionConstructor; webkitSpeechRecognition?:SpeechRecognitionConstructor };
+   const SR=typeof window!=="undefined" && (speechWindow.SpeechRecognition||speechWindow.webkitSpeechRecognition);
    if(!SR){setMessage("इस browser में voice input उपलब्ध नहीं है। कृपया text से बयान लिखें।");return;}
    if(recording){recognition.current?.stop();setRecording(false);return;}
    const r=new SR(); recognition.current=r; r.lang="hi-IN"; r.continuous=true; r.interimResults=true;
    let committed=form.description;
-   r.onresult=(e:any)=>{let live=""; for(let i=e.resultIndex;i<e.results.length;i++){live+=e.results[i][0].transcript+" ";} const finalText=(committed+" "+live).trim(); update("description",finalText);};
+   r.onresult=(e:SpeechResultEvent)=>{let live=""; for(let i=e.resultIndex;i<e.results.length;i++){live+=e.results[i][0].transcript+" ";} const finalText=(committed+" "+live).trim(); update("description",finalText);};
    r.onerror=()=>{setRecording(false);setMessage("Voice input में समस्या हुई। आप दोबारा प्रयास कर सकते हैं।");};
    r.onend=()=>setRecording(false); r.start(); setRecording(true); setMessage("बोलिए… आपकी बात case statement में लिखी जा रही है।");
  };
@@ -38,7 +42,7 @@ export default function LegalMitraPage(){
      const data=await res.json();
      if(!res.ok) throw new Error(data.error||"Unable to create case");
      setMessage(`Case ID: ${data.caseId}. अब client confirmation और lawyer/legal-aid routing किया जा सकता है.`);
-   }catch(err:any){setMessage(err.message||"कुछ गलत हुआ।");}
+   }catch(err:unknown){setMessage(err instanceof Error?err.message:"कुछ गलत हुआ।");}
  };
 
  return <main className="min-h-screen bg-slate-50 text-slate-900">
