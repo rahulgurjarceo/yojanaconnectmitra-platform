@@ -1,4 +1,4 @@
-import { randomBytes, scrypt as nodeScrypt, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, scrypt as nodeScrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 
 const scrypt = promisify(nodeScrypt);
@@ -28,5 +28,5 @@ export async function verifyPassword(password: string, stored: string) {
 }
 
 export function hashResetToken(token:string) {
-  return require('node:crypto').createHash('sha256').update(token).digest('hex');
+  return createHash('sha256').update(token).digest('hex');
 }
