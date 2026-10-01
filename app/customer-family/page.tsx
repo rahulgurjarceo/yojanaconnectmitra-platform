@@ -79,7 +79,7 @@ export default function CustomerFamilyPage() {
   async function verifyPayment() {
     setBusy(true); setMessage('Verifying payment signature…');
     try {
-      await post('/api/customer-family/payment/verify', { orderId, paymentId, signature });
+      await post('/api/customer-family/payment/verify', { familyId, orderId, paymentId, signature });
       setStep(3);
       setMessage('Payment verified. Activating Family 360…');
       const activated = await post('/api/customer-family/activation', { familyId });
