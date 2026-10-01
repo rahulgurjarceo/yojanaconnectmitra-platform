@@ -3,6 +3,7 @@ import postgres from 'postgres';
 import { sessionCookieName, verifySession } from '../../../lib/ycm-access-control';
 
 export const runtime = 'nodejs';
+// Production evaluator: deterministic requirement state, safe for CI/build.
 
 type Member = {
   member_id: string;
