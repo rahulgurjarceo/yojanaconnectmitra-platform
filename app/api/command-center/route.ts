@@ -1,17 +1,15 @@
 import { NextResponse } from 'next/server';
 import { YCM_LIFECYCLE, YCM_MODULES } from '../../ycm-architecture';
-import { requireSession } from '../../lib/ycm-access-control';
+import { sessionCookieName, verifySession } from '../../lib/ycm-access-control';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: Request) {
-  const session = requireSession(request);
-  if (!session) {
-    return NextResponse.json({ success: false, code: 'AUTHENTICATION_REQUIRED' }, { status: 401 });
-  }
-
-  const allowed = ['ceo', 'admin', 'management'].includes(session.role);
-  if (!allowed) {
+  const cookie = request.headers.get('cookie') || '';
+  const token = cookie.split(';').map(v => v.trim()).find(v => v.startsWith(sessionCookieName() + '='))?.slice(sessionCookieName().length + 1);
+  const session = verifySession(token);
+  if (!session) return NextResponse.json({ success: false, code: 'AUTHENTICATION_REQUIRED' }, { status: 401 });
+  if (!['ceo', 'admin', 'management'].includes(session.role)) {
     return NextResponse.json({ success: false, code: 'FORBIDDEN_ROLE_SCOPE' }, { status: 403 });
   }
 
