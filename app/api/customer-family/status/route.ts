@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCustomerFamilyRepository } from '../../../lib/customer-family-db';
+import { getCustomerFamilyRepository } from '../../lib/customer-family-db';
 
 export const runtime = 'nodejs';
 
