@@ -7,6 +7,7 @@ export type VerifiedIdentity = {
   role: YcmRole;
   familyId?: string;
   employeeId?: string;
+  authVersion?: number;
 };
 
 const SESSION_TTL_SECONDS = 8 * 60 * 60;
@@ -20,6 +21,7 @@ export function issueVerifiedSession(identity: VerifiedIdentity) {
 
   const token = signSession({
     sub: identity.subject, role: identity.role, familyId: identity.familyId, employeeId: identity.employeeId,
+    authVersion: identity.authVersion ?? 1,
     permissions, iat: now, exp: now + SESSION_TTL_SECONDS, sessionId: randomUUID(),
   });
 
