@@ -5,7 +5,7 @@ import {
   buildFamilyId,
   validateFamilyRegistrationPayload,
 } from '../../customer-family';
-import { getPostgresCustomerFamilyRepository } from '../../lib/customer-family-postgres';
+import { getPostgresCustomerFamilyRepository } from '../lib/customer-family-postgres';
 
 export const runtime = 'nodejs';
 
