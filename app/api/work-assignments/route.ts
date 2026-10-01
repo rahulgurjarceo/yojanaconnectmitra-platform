@@ -1,33 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import {NextRequest,NextResponse} from 'next/server';
 import postgres from 'postgres';
-import { sessionCookieName, verifySession } from '../../../lib/ycm-access-control';
-
-export const runtime = 'nodejs';
-
-function session(request: NextRequest) {
-  const token = request.cookies.get(sessionCookieName())?.value;
-  return verifySession(token);
-}
-
-export async function POST(request: NextRequest) {
-  const s = session(request);
-  if (!s) return NextResponse.json({ success:false, code:'AUTHENTICATION_REQUIRED' }, {status:401});
-  if (!['ceo','admin','management'].includes(s.role)) return NextResponse.json({success:false,code:'FORBIDDEN_ROLE_SCOPE'},{status:403});
-  const body = await request.json().catch(()=>null) as {
-    familyId?: string; sourceType?: 'family'|'case'|'document'|'lead'|'task'; sourceId?: string;
-    assignedTo?: string; teamId?: string; priority?: 'low'|'normal'|'high'|'urgent'; reason?: string;
-  }|null;
-  if (!body?.familyId || !body.sourceType || !body.sourceId) return NextResponse.json({success:false,code:'ASSIGNMENT_FIELDS_REQUIRED'},{status:400});
-  const url=process.env.DATABASE_URL||process.env.POSTGRES_URL;
-  if(!url) return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
-  const sql=postgres(url,{max:2,prepare:false,connect_timeout:10,idle_timeout:20});
-  try {
-    const rows=await sql`INSERT INTO ycm_work_assignments (family_id,source_type,source_id,assigned_by,assigned_to,team_id,priority,reason)
-      VALUES (${body.familyId},${body.sourceType},${body.sourceId},(SELECT id FROM ycm_users WHERE user_id=${s.sub} LIMIT 1),${body.assignedTo||null},${body.teamId||null},${body.priority||'normal'},${body.reason||null})
-      RETURNING assignment_id,family_id,source_type,source_id,assigned_to,team_id,priority,status,reason,due_at,created_at`;
-    return NextResponse.json({success:true,assignment:rows[0]},{status:201,headers:{'Cache-Control':'private, no-store'}});
-  } catch(e) {
-    console.error('work assignment failed',e);
-    return NextResponse.json({success:false,code:'ASSIGNMENT_FAILED'},{status:500});
-  } finally { await sql.end({timeout:5}); }
-}
+import {sessionCookieName,verifySession} from '../../lib/ycm-access-control';
+export const runtime='nodejs';
+const sess=(r:NextRequest)=>verifySession(r.cookies.get(sessionCookieName())?.value);
+const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:3,prepare:false,connect_timeout:10,idle_timeout:20}):null};
+export async function GET(r:NextRequest){const s=sess(r);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});const u=new URL(r.url),familyId=u.searchParams.get('familyId'),status=u.searchParams.get('status'),mine=u.searchParams.get('mine')==='true',sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});try{let rows:any[];if(mine||!['ceo','admin','management'].includes(s.role)){rows=await sql`SELECT a.*,u.full_name assignee_name,t.name team_name FROM ycm_work_assignments a LEFT JOIN ycm_users u ON u.id=a.assigned_to LEFT JOIN ycm_teams t ON t.team_id=a.team_id WHERE a.assigned_to=(SELECT id FROM ycm_users WHERE user_id=${s.sub} LIMIT 1) AND (${status} IS NULL OR a.status=${status}) ORDER BY a.priority DESC,a.updated_at DESC LIMIT 200`;}else{rows=await sql`SELECT a.*,u.full_name assignee_name,t.name team_name FROM ycm_work_assignments a LEFT JOIN ycm_users u ON u.id=a.assigned_to LEFT JOIN ycm_teams t ON t.team_id=a.team_id WHERE (${familyId} IS NULL OR a.family_id=${familyId}) AND (${status} IS NULL OR a.status=${status}) ORDER BY a.priority DESC,a.updated_at DESC LIMIT 200`;}return NextResponse.json({success:true,assignments:rows},{headers:{'Cache-Control':'private,no-store'}});}finally{await sql.end({timeout:3});}}
+export async function POST(r:NextRequest){const s=sess(r);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});if(!['ceo','admin','management'].includes(s.role))return NextResponse.json({success:false,code:'FORBIDDEN_ROLE_SCOPE'},{status:403});const b=await r.json().catch(()=>null) as {familyId?:string;sourceType?:'family'|'case'|'document'|'lead'|'task';sourceId?:string;assignedTo?:string;teamId?:string;priority?:'low'|'normal'|'high'|'urgent';reason?:string;dueAt?:string}|null;if(!b?.familyId||!b.sourceType||!b.sourceId)return NextResponse.json({success:false,code:'ASSIGNMENT_FIELDS_REQUIRED'},{status:400});const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});try{const a=(await sql`INSERT INTO ycm_work_assignments(family_id,source_type,source_id,assigned_by,assigned_to,team_id,priority,reason,due_at) VALUES(${b.familyId},${b.sourceType},${b.sourceId},(SELECT id FROM ycm_users WHERE user_id=${s.sub} LIMIT 1),${b.assignedTo||null},${b.teamId||null},${b.priority||'normal'},${b.reason||null},${b.dueAt||null}) RETURNING *`)[0];return NextResponse.json({success:true,assignment:a},{status:201});}finally{await sql.end({timeout:3});}}
+export async function PATCH(r:NextRequest){const s=sess(r);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});const b=await r.json().catch(()=>null) as {assignmentId?:string;status?:'assigned'|'accepted'|'in_progress'|'blocked'|'completed'|'reassigned';note?:string;assignedTo?:string;priority?:'low'|'normal'|'high'|'urgent';dueAt?:string}|null;if(!b?.assignmentId||!b.status)return NextResponse.json({success:false,code:'ASSIGNMENT_ID_AND_STATUS_REQUIRED'},{status:400});const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});try{const a=(await sql`SELECT * FROM ycm_work_assignments WHERE assignment_id=${b.assignmentId} LIMIT 1`)[0];if(!a)return NextResponse.json({success:false,code:'ASSIGNMENT_NOT_FOUND'},{status:404});const management=['ceo','admin','management'].includes(s.role),own=(await sql`SELECT id FROM ycm_users WHERE user_id=${s.sub} AND id=${a.assigned_to} LIMIT 1`).length>0;if(!management&&!own)return NextResponse.json({success:false,code:'ASSIGNMENT_ACCESS_DENIED'},{status:403});let assignee=a.assigned_to;if(management&&b.assignedTo)assignee=(await sql`SELECT id FROM ycm_users WHERE user_id=${b.assignedTo} LIMIT 1`)[0]?.id||null;const updated=(await sql`UPDATE ycm_work_assignments SET status=${b.status},assigned_to=${assignee},priority=${b.priority||a.priority},due_at=${b.dueAt||a.due_at},updated_at=NOW() WHERE assignment_id=${b.assignmentId} RETURNING *`)[0];await sql`INSERT INTO ycm_work_assignment_events(assignment_id,actor_user_id,from_status,to_status,note) VALUES(${b.assignmentId},${s.sub},${a.status},${b.status},${b.note||null})`;return NextResponse.json({success:true,assignment:updated});}finally{await sql.end({timeout:3});}}
