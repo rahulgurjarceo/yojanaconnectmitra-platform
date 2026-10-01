@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireFamilyOwner } from '../../../lib/ycm-authorization';
-import { getPostgresCustomerFamilyRepository } from '../../../lib/customer-family-postgres';
+import { requireFamilyOwner } from '../../lib/ycm-authorization';
+import { getPostgresCustomerFamilyRepository } from '../../lib/customer-family-postgres';
 
 export const runtime = 'nodejs';
 
