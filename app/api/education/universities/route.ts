@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { searchEducationUniversities, UGC_DEB_DIRECTORY, UGC_UNIVERSITY_DIRECTORY } from "../../education-universities";
+import { searchEducationUniversities, UGC_DEB_DIRECTORY, UGC_UNIVERSITY_DIRECTORY } from "../../../education-universities";
 
 export const runtime = "nodejs";
 
