@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   if (!familyId) return NextResponse.json({ success: false, code: 'FAMILY_ID_REQUIRED' }, { status: 400 });
 
   const access = await requireFamilyOwner(request, familyId);
-  if (!access.ok) return access.response;
+  if (access.response) return access.response;
 
   const family = await repository.findById(familyId);
   if (!family) return NextResponse.json({ success: false, code: 'FAMILY_NOT_FOUND' }, { status: 404 });
