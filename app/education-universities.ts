@@ -32,7 +32,7 @@ export const OPEN_UNIVERSITIES: UniversityRecord[] = [
   ["Nalanda Open University","Bihar","STATE_OPEN"],
   ["Chhattisgarh Mukta Shiksha (Open) University","Chhattisgarh","STATE_OPEN"],
   ["Dr. Babasaheb Ambedkar Open University","Gujarat","STATE_OPEN"],
-  ["Himachal Pradesh University","Himachal Pradesh","STATE"],
+
   ["Karnataka State Open University","Karnataka","STATE_OPEN"],
   ["Sreenarayanaguru Open University","Kerala","STATE_OPEN"],
   ["Yashwantrao Chavan Maharashtra Open University","Maharashtra","STATE_OPEN"],
