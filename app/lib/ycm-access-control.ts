@@ -8,6 +8,7 @@ export type YcmSession = {
   role: YcmRole;
   familyId?: string;
   employeeId?: string;
+  authVersion?: number;
   permissions: string[];
   iat: number;
   exp: number;
@@ -39,6 +40,7 @@ export function verifySession(token: string | undefined): YcmSession | null {
   try {
     const session = JSON.parse(decode(payload)) as YcmSession;
     if (!session.sub || !YCM_ROLES.includes(session.role) || !session.sessionId) return null;
+    if (session.authVersion !== undefined && (!Number.isInteger(session.authVersion) || session.authVersion < 1)) return null;
     if (!Number.isFinite(session.exp) || session.exp <= Math.floor(Date.now() / 1000)) return null;
     return session;
   } catch { return null; }
