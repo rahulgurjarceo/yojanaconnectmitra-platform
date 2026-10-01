@@ -26,3 +26,5 @@ jobs:
 
 # CI verification checkpoint
 # Final lint/build verification
+
+# dependency-path verification
