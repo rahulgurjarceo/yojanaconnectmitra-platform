@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getPostgresCustomerFamilyRepository } from '../../../../lib/customer-family-postgres';
+import { getPostgresCustomerFamilyRepository } from '../../../../app/lib/customer-family-postgres';
 
 export const runtime = 'nodejs';
 
