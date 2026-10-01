@@ -24,7 +24,7 @@ export default function CaseUniversePage() {
             <h1 className="text-2xl font-black md:text-3xl">Case Universe</h1>
             <p className="mt-1 text-sm text-slate-500">India + International · {CASE_UNIVERSE.length} master domains</p>
           </div>
-          <a href="/" className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white">← YCM Home</a>
+          <a href="/" className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white">← YCM Home</Link>
         </div>
       </header>
 
