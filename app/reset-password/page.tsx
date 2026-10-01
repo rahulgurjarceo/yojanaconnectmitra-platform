@@ -1,1 +1,59 @@
-'use client'; import {useState} from 'react'; import {useSearchParams} from 'next/navigation'; export default function Reset(){const s=useSearchParams();const token=s.get('token')||'';const[p,setP]=useState('');const[c,setC]=useState('');const[m,setM]=useState('');const[l,setL]=useState(false);async function submit(e:React.FormEvent){e.preventDefault();if(p!==c)return setM('Passwords match नहीं हैं.');setL(true);try{const r=await fetch('/api/auth/reset-password',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token,password:p})});const d=await r.json();setM(d.message||'Password reset failed.')}catch{setM('Please try again.')}finally{setL(false)}}return <main className="min-h-screen bg-[#071a49] p-4 text-white"><div className="mx-auto max-w-lg pt-16"><div className="rounded-[32px] bg-white p-7 text-slate-950 shadow-2xl"><p className="text-xs font-black uppercase tracking-[.2em] text-blue-700">SECURE RECOVERY</p><h1 className="mt-2 text-3xl font-black">Set a new password</h1><form onSubmit={submit} className="mt-7 space-y-4"><input required minLength={12} type="password" value={p} onChange={e=>setP(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5" placeholder="New password"/><input required minLength={12} type="password" value={c} onChange={e=>setC(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5" placeholder="Confirm new password"/><p className="text-xs text-slate-500">Minimum 12 characters, uppercase, lowercase and number.</p><button disabled={l||!token} className="w-full rounded-2xl bg-slate-950 py-3.5 font-black text-white">{l?'Saving…':'Reset password →'}</button></form>{m&&<div className="mt-5 rounded-2xl bg-blue-50 p-4 text-sm text-blue-800">{m}</div>}<a href="/login" className="mt-5 block text-center text-sm font-bold text-blue-700">Back to login</a></div></div></main>}
+'use client';
+
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+
+function ResetForm() {
+  const s = useSearchParams();
+  const token = s.get('token') || '';
+  const [p, setP] = useState('');
+  const [c, setC] = useState('');
+  const [m, setM] = useState('');
+  const [l, setL] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (p !== c) return setM('Passwords match नहीं हैं.');
+    setL(true);
+    try {
+      const r = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ token, password: p }),
+      });
+      const d = await r.json();
+      setM(d.message || 'Password reset failed.');
+    } catch {
+      setM('Please try again.');
+    } finally {
+      setL(false);
+    }
+  }
+
+  return (
+    <div className="rounded-[32px] bg-white p-7 text-slate-950 shadow-2xl">
+      <p className="text-xs font-black uppercase tracking-[.2em] text-blue-700">SECURE RECOVERY</p>
+      <h1 className="mt-2 text-3xl font-black">Set a new password</h1>
+      <form onSubmit={submit} className="mt-7 space-y-4">
+        <input required minLength={12} type="password" value={p} onChange={e => setP(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5" placeholder="New password" />
+        <input required minLength={12} type="password" value={c} onChange={e => setC(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5" placeholder="Confirm new password" />
+        <p className="text-xs text-slate-500">Minimum 12 characters, uppercase, lowercase and number.</p>
+        <button disabled={l || !token} className="w-full rounded-2xl bg-slate-950 py-3.5 font-black text-white">{l ? 'Saving…' : 'Reset password →'}</button>
+      </form>
+      {m && <div className="mt-5 rounded-2xl bg-blue-50 p-4 text-sm text-blue-800">{m}</div>}
+      <a href="/login" className="mt-5 block text-center text-sm font-bold text-blue-700">Back to login</a>
+    </div>
+  );
+}
+
+export default function Reset() {
+  return (
+    <main className="min-h-screen bg-[#071a49] p-4 text-white">
+      <div className="mx-auto max-w-lg pt-16">
+        <Suspense fallback={<div className="rounded-[32px] bg-white p-7 text-slate-950 shadow-2xl">Loading secure recovery…</div>}>
+          <ResetForm />
+        </Suspense>
+      </div>
+    </main>
+  );
+}
