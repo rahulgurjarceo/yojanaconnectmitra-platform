@@ -11,15 +11,20 @@ export default function CommandCenterPage(){
   const modules = useMemo(()=>filter==='all'?YCM_MODULES:YCM_MODULES.filter(m=>m.status===filter),[filter]);
   const [assignments, setAssignments] = useState<Array<{assignment_id:string;family_id:string;source_type:string;priority:string;status:string;assignee_name:string|null;reason:string|null;due_at:string|null}>>([]);
   const [opsError, setOpsError] = useState('');
-  useEffect(() => {
-    fetch('/api/work-assignments?mine=false', { cache: 'no-store' })
+  const [users,setUsers] = useState<Array<{user_id:string;full_name:string|null;role:string}>>([]);
+  const [form,setForm] = useState({familyId:'',sourceType:'family',sourceId:'',assignedTo:'',priority:'normal',reason:'',dueAt:''});
+  const [saving,setSaving] = useState(false);
+  const [saveMessage,setSaveMessage] = useState('');
+  const loadAssignments = () => fetch('/api/work-assignments?mine=false', { cache: 'no-store' })
       .then(async r => {
         const d = await r.json().catch(() => null);
         if (!r.ok) throw new Error(d?.code || 'OPERATIONS_QUEUE_UNAVAILABLE');
         setAssignments(d.assignments || []);
       })
       .catch(e => setOpsError(e instanceof Error ? e.message : 'OPERATIONS_QUEUE_UNAVAILABLE'));
-  }, []);
+  useEffect(() => { loadAssignments(); fetch('/api/work-assignment-users',{cache:'no-store'}).then(async r=>{const d=await r.json().catch(()=>null); if(!r.ok) throw new Error(d?.code||'ASSIGNMENT_USERS_UNAVAILABLE'); setUsers(d.users||[]);}).catch(()=>setUsers([])); }, []);
+  const createAssignment = async (e:React.FormEvent) => { e.preventDefault(); setSaving(true); setSaveMessage(''); try { const r=await fetch('/api/work-assignments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({familyId:form.familyId.trim(),sourceType:form.sourceType,sourceId:form.sourceId.trim(),assignedTo:form.assignedTo||undefined,priority:form.priority,reason:form.reason.trim()||undefined,dueAt:form.dueAt||undefined})}); const d=await r.json().catch(()=>null); if(!r.ok) throw new Error(d?.code||'ASSIGNMENT_CREATE_FAILED'); setSaveMessage('Assignment created.'); setForm({familyId:'',sourceType:'family',sourceId:'',assignedTo:'',priority:'normal',reason:'',dueAt:''}); loadAssignments(); } catch(e){setSaveMessage(e instanceof Error?e.message:'ASSIGNMENT_CREATE_FAILED')} finally {setSaving(false)} };
+
   const opsCounts = { assigned: assignments.filter(a=>a.status==='assigned').length, inProgress: assignments.filter(a=>a.status==='in_progress').length, blocked: assignments.filter(a=>a.status==='blocked').length, completed: assignments.filter(a=>a.status==='completed').length };
   const counts = { foundation:YCM_MODULES.filter(m=>m.status==='foundation').length, partial:YCM_MODULES.filter(m=>m.status==='partial').length, planned:YCM_MODULES.filter(m=>m.status==='planned').length };
   return <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -37,6 +42,20 @@ export default function CommandCenterPage(){
           </div>
         </div>
         {opsError ? <div className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-700">{opsError}</div> : null}
+        <form onSubmit={createAssignment} className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/40 p-4">
+          <div className="text-sm font-black text-blue-800">Create assignment</div>
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
+            <input required value={form.familyId} onChange={e=>setForm({...form,familyId:e.target.value})} placeholder="Family ID" className="rounded-xl border bg-white px-3 py-2 text-sm"/>
+            <select value={form.sourceType} onChange={e=>setForm({...form,sourceType:e.target.value})} className="rounded-xl border bg-white px-3 py-2 text-sm"><option value="family">Family</option><option value="case">Case</option><option value="document">Document</option><option value="lead">Lead</option><option value="task">Task</option></select>
+            <input required value={form.sourceId} onChange={e=>setForm({...form,sourceId:e.target.value})} placeholder="Source ID" className="rounded-xl border bg-white px-3 py-2 text-sm"/>
+            <select value={form.assignedTo} onChange={e=>setForm({...form,assignedTo:e.target.value})} className="rounded-xl border bg-white px-3 py-2 text-sm"><option value="">Unassigned</option>{users.map(u=><option key={u.user_id} value={u.user_id}>{u.full_name||u.user_id} · {u.role}</option>)}</select>
+            <select value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})} className="rounded-xl border bg-white px-3 py-2 text-sm"><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select>
+            <input type="datetime-local" value={form.dueAt} onChange={e=>setForm({...form,dueAt:e.target.value})} className="rounded-xl border bg-white px-3 py-2 text-sm"/>
+            <input value={form.reason} onChange={e=>setForm({...form,reason:e.target.value})} placeholder="Reason / next action" className="rounded-xl border bg-white px-3 py-2 text-sm md:col-span-2"/>
+            <button disabled={saving} className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-black text-white disabled:opacity-50">{saving?'Creating…':'Create assignment'}</button>
+          </div>
+          {saveMessage ? <div className="mt-2 text-xs font-semibold text-slate-600">{saveMessage}</div> : null}
+        </form>
         <div className="mt-5 space-y-2">
           {assignments.slice(0,12).map(a => <div key={a.assignment_id} className="flex flex-col justify-between gap-2 rounded-2xl border border-slate-200 p-4 md:flex-row md:items-center">
             <div><div className="flex flex-wrap gap-2 text-xs font-bold"><span className="rounded-full bg-blue-50 px-2 py-1 text-blue-700">{a.source_type}</span><span className="rounded-full bg-slate-100 px-2 py-1">{a.priority}</span><span className="rounded-full bg-amber-50 px-2 py-1 text-amber-700">{a.status.replace('_',' ')}</span></div><div className="mt-2 font-bold">Family {a.family_id}</div><div className="text-sm text-slate-500">{a.reason || 'Operational assignment'}</div></div>
