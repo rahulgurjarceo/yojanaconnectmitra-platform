@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { getCustomerFamilyPaymentProvider } from '../../../../lib/customer-family-payment';
 import { getPostgresCustomerFamilyRepository } from '../../../../lib/customer-family-postgres';
-import { requireFamilyOwner } from '../../../../app/lib/ycm-authorization';
+import { requireFamilyOwner } from '../../../lib/ycm-authorization';
 
 export const runtime = 'nodejs';
 
