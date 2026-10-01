@@ -23,3 +23,5 @@ jobs:
         run: npm run lint
       - name: Production build
         run: npm run build
+
+# CI verification checkpoint
