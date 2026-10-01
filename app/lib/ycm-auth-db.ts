@@ -1,5 +1,5 @@
 import postgres from 'postgres';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { hashPassword, hashResetToken } from './ycm-password';
 import type { YcmRole } from './ycm-access-control';
 
@@ -15,12 +15,29 @@ export async function findUser(identifier:string) {
   return rows[0] ?? null;
 }
 
-export async function createUser(input:{fullName:string;email?:string;mobile?:string;password:string;role:YcmRole}) {
-  const db=authDb(); const normalizedEmail=input.email?.trim().toLowerCase()||null; const mobile=input.mobile?.trim()||null;
+export async function getUserAuthVersion(userId:string) {
+  const rows=await authDb()`SELECT auth_version,status FROM ycm_users WHERE user_id=${userId} LIMIT 1`;
+  return rows[0] ?? null;
+}
+
+export async function createUser(input:{fullName:string;email:string;mobile?:string;password:string;role:YcmRole}) {
+  const db=authDb(); const normalizedEmail=input.email.trim().toLowerCase(); const mobile=input.mobile?.trim()||null;
   const userId=`YCM-${randomBytes(5).toString('hex').toUpperCase()}`;
   const passwordHash=await hashPassword(input.password);
   const rows=await db`INSERT INTO ycm_users (user_id,full_name,email,mobile,password_hash,role) VALUES (${userId},${input.fullName.trim()},${normalizedEmail},${mobile},${passwordHash},${input.role}) RETURNING id,user_id,full_name,email,mobile,role,status,auth_version`;
   return rows[0];
+}
+
+export async function isPasswordResetRateLimited(identifier:string) {
+  const db=authDb();
+  const key= createHash('sha256').update(identifier.trim().toLowerCase()).digest('hex');
+  const rows=await db`INSERT INTO ycm_password_reset_attempts (key_hash,window_started_at,request_count)
+    VALUES (${key},NOW(),1)
+    ON CONFLICT (key_hash) DO UPDATE SET
+      request_count=CASE WHEN ycm_password_reset_attempts.window_started_at < NOW()-INTERVAL '1 hour' THEN 1 ELSE ycm_password_reset_attempts.request_count+1 END,
+      window_started_at=CASE WHEN ycm_password_reset_attempts.window_started_at < NOW()-INTERVAL '1 hour' THEN NOW() ELSE ycm_password_reset_attempts.window_started_at END
+    RETURNING request_count`;
+  return Number(rows[0]?.request_count ?? 99) > 5;
 }
 
 export async function createResetToken(userId:string) {
