@@ -5,7 +5,7 @@ export const runtime='nodejs';
 
 export async function POST(request:Request){
  const body=await request.json().catch(()=>null) as {fullName?:string;email?:string;mobile?:string;password?:string}|null;
- if(!body?.fullName?.trim() || !body.password) return NextResponse.json({success:false,code:'REGISTRATION_REQUIRED'},{status:400});
+ if(!body?.fullName?.trim() || !body.email?.trim() || !body.password) return NextResponse.json({success:false,code:'REGISTRATION_REQUIRED',message:'Name, email और password required हैं.'},{status:400});
  try{
   const user=await createUser({fullName:body.fullName,email:body.email,mobile:body.mobile,password:body.password,role:'family'});
   return NextResponse.json({success:true,userId:user.user_id,role:'family'});
