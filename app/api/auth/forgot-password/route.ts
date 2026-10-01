@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createResetToken, findUser } from '../../../lib/ycm-auth-db';
+import { sendPasswordResetEmail } from '../../../lib/ycm-email';
 
 export const runtime='nodejs';
 
@@ -12,8 +13,9 @@ export async function POST(request:Request){
     const token=await createResetToken(user.id as string);
     const base=(process.env.APP_URL||'http://localhost:3000').replace(/\/$/,'');
     const resetUrl=`${base}/reset-password?token=${encodeURIComponent(token)}`;
+    const delivery=await sendPasswordResetEmail(user.email || '', user.full_name as string, resetUrl);
     if(process.env.NODE_ENV!=='production') console.info('[YCM DEV PASSWORD RESET]',resetUrl);
-    // Production mail/SMS provider should deliver resetUrl; never return the token publicly in production.
+    if(process.env.NODE_ENV!=='production' && delivery.dev) return NextResponse.json({success:true,message:'Dev mode: reset link generated.',devResetUrl:resetUrl});
   }
   return NextResponse.json({success:true,message:'अगर account मौजूद है, तो password reset instructions भेज दी जाएंगी.'});
  }catch(e){
