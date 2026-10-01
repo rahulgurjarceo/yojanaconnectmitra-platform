@@ -1,4 +1,5 @@
 -- YCM ONE: location directory, community issues and requirement evaluation foundation
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TABLE IF NOT EXISTS ycm_location_units (
   location_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   parent_location_id UUID REFERENCES ycm_location_units(location_id) ON DELETE SET NULL,

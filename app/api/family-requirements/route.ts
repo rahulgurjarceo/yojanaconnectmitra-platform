@@ -38,11 +38,11 @@ export async function GET(request: Request) {
       documents,
       rules,
       summary: {
-        missing: statuses.filter((x: any) => x.status === 'missing').length,
-        required: statuses.filter((x: any) => x.status === 'required').length,
-        actionRequired: statuses.filter((x: any) => x.status === 'action_required').length,
-        expired: statuses.filter((x: any) => x.status === 'expired').length,
-        pendingAuthority: statuses.filter((x: any) => x.status === 'pending_authority').length,
+        missing: statuses.filter(x => x.status === 'missing').length,
+        required: statuses.filter(x => x.status === 'required').length,
+        actionRequired: statuses.filter(x => x.status === 'action_required').length,
+        expired: statuses.filter(x => x.status === 'expired').length,
+        pendingAuthority: statuses.filter(x => x.status === 'pending_authority').length,
       },
     });
   } finally {
