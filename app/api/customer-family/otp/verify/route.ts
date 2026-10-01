@@ -39,6 +39,18 @@ export async function POST(request: Request) {
     const persisted = await repository.markOtpChallengeVerified(body.challengeId);
     if (!persisted) return NextResponse.json({ success: false, code: 'OTP_CHALLENGE_NOT_ACTIVE' }, { status: 409 });
 
+    const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+    if (!dbUrl) return NextResponse.json({ success: false, code: 'DATABASE_NOT_CONFIGURED' }, { status: 503 });
+    const { default: postgres } = await import('postgres');
+    const sql = postgres(dbUrl, { max: 2, prepare: false, connect_timeout: 10, idle_timeout: 10 });
+    try {
+      await sql`INSERT INTO ycm_family_user_access (family_id, user_id, access_role, is_primary, status)
+        VALUES (${family.familyId}, ${family.familyId}, 'owner', TRUE, 'active')
+        ON CONFLICT (family_id, user_id) DO UPDATE SET access_role = 'owner', is_primary = TRUE, status = 'active', updated_at = NOW()`;
+    } finally {
+      await sql.end({ timeout: 2 });
+    }
+
     const auditStore = getPostgresYcmAuditStore();
     if (!auditStore) return NextResponse.json({ success: false, code: 'AUTH_AUDIT_STORE_UNAVAILABLE' }, { status: 503 });
     try {
