@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireFamilyOwner } from '../../../../app/lib/ycm-authorization';
 import { getPostgresCustomerFamilyRepository } from '../../../../app/lib/customer-family-postgres';
 
 export const runtime = 'nodejs';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const repository = getPostgresCustomerFamilyRepository();
   if (!repository) {
     return NextResponse.json({ success: false, code: 'DATABASE_NOT_CONFIGURED' }, { status: 503 });
@@ -13,6 +14,9 @@ export async function POST(request: Request) {
   if (!body?.familyId || !/^[A-Z0-9-]{6,64}$/.test(body.familyId)) {
     return NextResponse.json({ success: false, code: 'FAMILY_ID_REQUIRED' }, { status: 400 });
   }
+
+  const access = requireFamilyOwner(request, body.familyId);
+  if (access.response) return access.response;
 
   try {
     const family = await repository.findById(body.familyId);
