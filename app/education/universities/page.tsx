@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useState } from "react";
-import { OPEN_UNIVERSITIES, UGC_DEB_DIRECTORY, UGC_UNIVERSITY_DIRECTORY } from "../education-universities";
+import { OPEN_UNIVERSITIES, UGC_DEB_DIRECTORY, UGC_UNIVERSITY_DIRECTORY } from "../../education-universities";
 
 export default function EducationUniversitiesPage(){
  const [q,setQ]=useState("");
