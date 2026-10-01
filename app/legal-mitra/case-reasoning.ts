@@ -34,7 +34,6 @@ export function buildCaseReasoningChecklist(input: {
   category?: string;
   jurisdiction?: string;
 }): LegalReasoningReport {
-  const facts = input.facts.trim();
   const factualGaps = [
     "Exact timeline and sequence of events",
     "Who was present and what each person directly observed",
