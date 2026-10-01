@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { createUser } from '../../../lib/ycm-auth-db';
-import { YCM_ROLES, type YcmRole } from '../../../lib/ycm-access-control';
 
 export const runtime='nodejs';
 
