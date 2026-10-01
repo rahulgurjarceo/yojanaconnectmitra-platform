@@ -25,3 +25,4 @@ jobs:
         run: npm run build
 
 # CI verification checkpoint
+# Final lint/build verification
