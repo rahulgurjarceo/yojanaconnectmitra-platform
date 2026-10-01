@@ -29,7 +29,7 @@ export default function LegalMitraPage(){
    if(!SR){setMessage("इस browser में voice input उपलब्ध नहीं है। कृपया text से बयान लिखें।");return;}
    if(recording){recognition.current?.stop();setRecording(false);return;}
    const r=new SR(); recognition.current=r; r.lang="hi-IN"; r.continuous=true; r.interimResults=true;
-   let committed=form.description;
+   const committed=form.description;
    r.onresult=(e:SpeechResultEvent)=>{let live=""; for(let i=e.resultIndex;i<e.results.length;i++){live+=e.results[i][0].transcript+" ";} const finalText=(committed+" "+live).trim(); update("description",finalText);};
    r.onerror=()=>{setRecording(false);setMessage("Voice input में समस्या हुई। आप दोबारा प्रयास कर सकते हैं।");};
    r.onend=()=>setRecording(false); r.start(); setRecording(true); setMessage("बोलिए… आपकी बात case statement में लिखी जा रही है।");
