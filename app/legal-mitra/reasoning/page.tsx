@@ -23,7 +23,7 @@ export default function LegalReasoningPage(){
    const data=await res.json();
    if(!res.ok) throw new Error(data.error||"Analysis failed");
    setReport(data.report);
-  }catch(e:any){setError(e.message||"Analysis failed");}finally{setLoading(false);}
+  }catch(e:unknown){setError(e instanceof Error?e.message:"Analysis failed");}finally{setLoading(false);}
  }
  const box=(title:string,items:string[])=> <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><h2 className="font-bold">{title}</h2><ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-700">{items.map(x=><li key={x}>{x}</li>)}</ul></section>;
  return <main className="min-h-screen bg-slate-50 text-slate-900">
