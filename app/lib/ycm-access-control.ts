@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-export const YCM_ROLES = ['family', 'employee', 'management', 'ceo', 'admin', 'partner', 'referral'] as const;
+export const YCM_ROLES = ['family', 'farmer', 'lawyer', 'student', 'employee', 'management', 'ceo', 'admin', 'partner', 'referral'] as const;
 export type YcmRole = (typeof YCM_ROLES)[number];
 
 export type YcmSession = {
@@ -46,6 +46,9 @@ export function verifySession(token: string | undefined): YcmSession | null {
 
 const ROLE_PERMISSIONS: Record<YcmRole, readonly string[]> = {
   family: ['family:self', 'case:self', 'document:self', 'consent:self', 'cri:self'],
+  farmer: ['farmer:self', 'scheme:self', 'agri:self', 'market:self', 'document:self'],
+  lawyer: ['case:assigned', 'case:lawyer', 'customer:assigned', 'document:assigned', 'legal:all'],
+  student: ['education:self', 'scholarship:self', 'document:self', 'career:self'],
   employee: ['case:assigned', 'customer:assigned', 'document:assigned', 'cri:assigned'],
   management: ['case:all', 'customer:all', 'crm:all', 'reports:all', 'cri:all'],
   ceo: ['case:all', 'customer:all', 'crm:all', 'reports:all', 'finance:all', 'hr:all', 'security:all', 'cri:all', 'management:all'],
@@ -58,16 +61,24 @@ export function roleHasPermission(role: YcmRole, permission: string) {
   return ROLE_PERMISSIONS[role].includes(permission) || ROLE_PERMISSIONS[role].includes('platform:all');
 }
 
+export function permissionsForRole(role: YcmRole) {
+  return [...ROLE_PERMISSIONS[role]];
+}
+
 export function roleCanAccessPath(role: YcmRole, pathname: string) {
   if (pathname.startsWith('/ceo') || pathname.startsWith('/api/ceo')) return role === 'ceo';
   if (pathname.startsWith('/management') || pathname.startsWith('/api/management')) return ['management', 'ceo', 'admin'].includes(role);
   if (pathname.startsWith('/employee') || pathname.startsWith('/api/employee')) return ['employee', 'management', 'ceo', 'admin'].includes(role);
+  if (pathname.startsWith('/lawyer') || pathname.startsWith('/api/lawyer')) return ['lawyer', 'management', 'ceo', 'admin'].includes(role);
+  if (pathname.startsWith('/farmer') || pathname.startsWith('/api/farmer')) return ['farmer', 'management', 'ceo', 'admin'].includes(role);
+  if (pathname.startsWith('/student') || pathname.startsWith('/api/student')) return ['student', 'family', 'management', 'ceo', 'admin'].includes(role);
   if (pathname.startsWith('/crm') || pathname.startsWith('/api/crm')) return ['employee', 'management', 'ceo', 'admin', 'partner', 'referral'].includes(role);
   if (pathname.startsWith('/family-dashboard') || pathname.startsWith('/api/family-dashboard')) return role === 'family';
-  if (pathname.startsWith('/api/command-center') || pathname.startsWith('/command-center')) return ['ceo', 'management', 'admin'].includes(role);
+  if (pathname.startsWith('/command-center') || pathname.startsWith('/api/command-center')) return ['ceo', 'management', 'admin'].includes(role);
   return true;
 }
 
 export function isProtectedPath(pathname: string) {
-  return ['/ceo', '/management', '/employee', '/crm', '/family-dashboard', '/command-center', '/api/ceo', '/api/management', '/api/employee', '/api/crm', '/api/family-dashboard', '/api/command-center'].some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  return ['/ceo', '/management', '/employee', '/lawyer', '/farmer', '/student', '/crm', '/family-dashboard', '/command-center', '/api/ceo', '/api/management', '/api/employee', '/api/lawyer', '/api/farmer', '/api/student', '/api/crm', '/api/family-dashboard', '/api/command-center']
+    .some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
