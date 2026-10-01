@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 type DashboardData = { family: { familyId: string; status: string; fullName: string; mobile: string; country: string; createdAt: string; updatedAt: string; modules: string[] } };
-type ResourceData = { cases: any[]; documents: any[]; consents: any[]; cri: any[] };
+type ResourceData = { cases: unknown[]; documents: unknown[]; consents: unknown[]; cri: unknown[] };
 
 export default function FamilyDashboardPage() {
   const [state, setState] = useState<{ loading: boolean; error?: string; data?: DashboardData; resources?: ResourceData }>({ loading: true });

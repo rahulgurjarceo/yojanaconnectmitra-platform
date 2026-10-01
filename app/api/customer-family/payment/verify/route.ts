@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getCustomerFamilyPaymentProvider } from '../../../../lib/customer-family-payment';
 import { getPostgresCustomerFamilyRepository } from '../../../../lib/customer-family-postgres';
 import { requireFamilyOwner } from '../../../../lib/ycm-authorization';
 
 export const runtime = 'nodejs';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const provider = getCustomerFamilyPaymentProvider();
   const repository = getPostgresCustomerFamilyRepository();
   if (!provider) return NextResponse.json({ success: false, code: 'PAYMENT_PROVIDER_NOT_CONFIGURED' }, { status: 503 });
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   }
 
   const access = await requireFamilyOwner(request, familyId);
-  if (!access.ok) return access.response;
+  if (access.response) return access.response;
 
   const payment = await repository.getPaymentByProviderReference(body.orderId);
   if (!payment) return NextResponse.json({ success: false, code: 'PAYMENT_ORDER_NOT_FOUND' }, { status: 404 });

@@ -1,50 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sessionCookieName, verifySession } from '../../../../lib/ycm-access-control';
-import { getPostgresYcmSessionRevocationStore } from '../../../../lib/ycm-postgres-session-revocation';
-import { buildAuditRecord } from '../../../../lib/ycm-audit-events';
-import { getPostgresYcmAuditStore } from '../../../../lib/ycm-postgres-audit-store';
+import { sessionCookieName, verifySession } from '../../../lib/ycm-access-control';
+import { getPostgresYcmSessionRevocationStore } from '../../../lib/ycm-postgres-session-revocation';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
-  const token = request.cookies.get(sessionCookieName())?.value;
-  const session = verifySession(token);
-  const response = NextResponse.json({ success: true, loggedOut: true });
+  const session = verifySession(request.cookies.get(sessionCookieName())?.value);
+  const store = getPostgresYcmSessionRevocationStore();
 
-  if (session) {
-    const store = getPostgresYcmSessionRevocationStore();
-    const auditStore = getPostgresYcmAuditStore();
-    if ((!store || !auditStore) && process.env.NODE_ENV === 'production') {
-      return NextResponse.json({ success: false, code: 'AUTH_SECURITY_STORE_UNAVAILABLE' }, { status: 503, headers: { 'Cache-Control': 'private, no-store' } });
-    }
+  if (session && store) {
     try {
-      if (store) await store.revoke(session.sessionId, session.exp, 'user_logout');
-      if (auditStore) {
-        await auditStore.append(buildAuditRecord({
-          event: 'AUTH_LOGOUT',
-          subject: session.sub,
-          role: session.role,
-          sessionId: session.sessionId,
-          familyId: session.familyId,
-          employeeId: session.employeeId,
-          success: true,
-        }));
-      }
+      await store.revoke(session.sessionId, session.exp, 'logout');
     } catch {
-      if (process.env.NODE_ENV === 'production') {
-        return NextResponse.json({ success: false, code: 'AUTH_SECURITY_STORE_UNAVAILABLE' }, { status: 503, headers: { 'Cache-Control': 'private, no-store' } });
-      }
+      // Logout still clears the browser cookie even if the revocation store is temporarily unavailable.
     }
   }
 
+  const response = NextResponse.json({ success: true });
   response.cookies.set({
     name: sessionCookieName(),
     value: '',
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
+    expires: new Date(0),
     path: '/',
-    maxAge: 0,
   });
   response.headers.set('Cache-Control', 'private, no-store');
   return response;

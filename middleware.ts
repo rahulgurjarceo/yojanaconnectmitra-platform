@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isProtectedPath, roleCanAccessPath, sessionCookieName, verifySession } from './app/lib/ycm-access-control';
 import { getPostgresYcmSessionRevocationStore } from './app/lib/ycm-postgres-session-revocation';
+import { getUserAuthVersion } from './app/lib/ycm-auth-db';
 
 export const runtime = 'nodejs';
 
@@ -16,8 +17,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Revocation is checked server-side for every protected request. If production
-  // cannot reach the revocation store, fail closed rather than granting access.
   const revocationStore = getPostgresYcmSessionRevocationStore();
   if (!revocationStore) {
     if (process.env.NODE_ENV === 'production') {
@@ -33,6 +32,16 @@ export async function middleware(request: NextRequest) {
         url.searchParams.set('next', pathname);
         url.searchParams.set('reason', 'session_revoked');
         return NextResponse.redirect(url);
+      }
+      if (session.authVersion !== undefined) {
+        const current = await getUserAuthVersion(session.sub);
+        if (!current || current.status !== 'active' || Number(current.auth_version) !== Number(session.authVersion)) {
+          if (pathname.startsWith('/api/')) return NextResponse.json({ success: false, code: 'SESSION_VERSION_EXPIRED' }, { status: 401 });
+          const url = new URL('/login', request.url);
+          url.searchParams.set('next', pathname);
+          url.searchParams.set('reason', 'session_expired');
+          return NextResponse.redirect(url);
+        }
       }
     } catch {
       if (process.env.NODE_ENV === 'production') {
@@ -55,5 +64,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/ceo/:path*', '/management/:path*', '/employee/:path*', '/crm/:path*', '/family-dashboard/:path*', '/command-center/:path*', '/api/ceo/:path*', '/api/management/:path*', '/api/employee/:path*', '/api/crm/:path*', '/api/family-dashboard/:path*', '/api/command-center/:path*'],
+  matcher: ['/ceo/:path*', '/management/:path*', '/employee/:path*', '/lawyer/:path*', '/farmer/:path*', '/student/:path*', '/crm/:path*', '/family-dashboard/:path*', '/command-center/:path*', '/api/ceo/:path*', '/api/management/:path*', '/api/employee/:path*', '/api/lawyer/:path*', '/api/farmer/:path*', '/api/student/:path*', '/api/crm/:path*', '/api/family-dashboard/:path*', '/api/command-center/:path*'],
 };

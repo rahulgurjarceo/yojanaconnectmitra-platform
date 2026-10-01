@@ -2,7 +2,7 @@ name: YCM One CI
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: ["main", "master", "test/legal-mitra-ci"]
   pull_request:
     branches: ["main", "master"]
 
@@ -23,3 +23,8 @@ jobs:
         run: npm run lint
       - name: Production build
         run: npm run build
+
+# CI verification checkpoint
+# Final lint/build verification
+
+# dependency-path verification

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { CASE_UNIVERSE } from '../case-universe';
+import Link from 'next/link';
 
 export default function CaseUniversePage() {
   const [query, setQuery] = useState('');
@@ -24,7 +25,7 @@ export default function CaseUniversePage() {
             <h1 className="text-2xl font-black md:text-3xl">Case Universe</h1>
             <p className="mt-1 text-sm text-slate-500">India + International · {CASE_UNIVERSE.length} master domains</p>
           </div>
-          <a href="/" className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white">← YCM Home</a>
+          <Link href="/" className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white">← YCM Home</Link>
         </div>
       </header>
 
@@ -57,7 +58,7 @@ export default function CaseUniversePage() {
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((item, index) => (
+          {filtered.map((item) => (
             <article key={item.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
               <div className="flex items-start justify-between gap-3">
                 <span className="text-3xl">{item.icon}</span>

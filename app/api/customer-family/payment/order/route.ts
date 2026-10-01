@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { getCustomerFamilyPaymentProvider } from '../../../../lib/customer-family-payment';
 import { getPostgresCustomerFamilyRepository } from '../../../../lib/customer-family-postgres';
@@ -6,7 +6,7 @@ import { requireFamilyOwner } from '../../../../lib/ycm-authorization';
 
 export const runtime = 'nodejs';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const provider = getCustomerFamilyPaymentProvider();
   const repository = getPostgresCustomerFamilyRepository();
   if (!provider) return NextResponse.json({ success: false, code: 'PAYMENT_PROVIDER_NOT_CONFIGURED' }, { status: 503 });
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   if (!familyId) return NextResponse.json({ success: false, code: 'FAMILY_ID_REQUIRED' }, { status: 400 });
 
   const access = await requireFamilyOwner(request, familyId);
-  if (!access.ok) return access.response;
+  if (access.response) return access.response;
 
   const family = await repository.findById(familyId);
   if (!family) return NextResponse.json({ success: false, code: 'FAMILY_NOT_FOUND' }, { status: 404 });

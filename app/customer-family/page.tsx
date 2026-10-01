@@ -27,7 +27,7 @@ export default function CustomerFamilyPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
 
-  const readiness = useMemo(() => [
+  const readiness = useMemo<Array<[string, boolean]>>(() => [
     ['Master family model', true],
     ['35-domain case linkage', true],
     ['Registration → OTP → payment → activation UI', true],
