@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sessionCookieName, verifySession } from '../../../lib/ycm-access-control';
 import { getPostgresYcmSessionRevocationStore } from '../../../lib/ycm-postgres-session-revocation';
+import { getUserAuthVersion } from '../../../lib/ycm-auth-db';
 
 export const runtime = 'nodejs';
 
@@ -15,6 +16,12 @@ export async function GET(request: NextRequest) {
   try {
     if (await revocationStore.isRevoked(session.sessionId)) {
       return NextResponse.json({ authenticated: false, code: 'SESSION_REVOKED' }, { status: 401, headers: { 'Cache-Control': 'private, no-store' } });
+    }
+    if (session.authVersion !== undefined) {
+      const current = await getUserAuthVersion(session.sub);
+      if (!current || current.status !== 'active' || Number(current.auth_version) !== Number(session.authVersion)) {
+        return NextResponse.json({ authenticated: false, code: 'SESSION_VERSION_EXPIRED' }, { status: 401, headers: { 'Cache-Control': 'private, no-store' } });
+      }
     }
   } catch {
     return NextResponse.json({ authenticated: false, code: 'AUTH_SECURITY_STORE_UNAVAILABLE' }, { status: 503, headers: { 'Cache-Control': 'private, no-store' } });
