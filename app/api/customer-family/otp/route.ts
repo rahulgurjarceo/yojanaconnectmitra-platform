@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getCustomerFamilyOtpProvider } from '../../../lib/customer-family-otp';
-import { getPostgresCustomerFamilyRepository } from '../../../lib/customer-family-postgres';
+import { getCustomerFamilyOtpProvider } from '../../../app/lib/customer-family-otp';
+import { getPostgresCustomerFamilyRepository } from '../../../app/lib/customer-family-postgres';
 
 export const runtime = 'nodejs';
 
