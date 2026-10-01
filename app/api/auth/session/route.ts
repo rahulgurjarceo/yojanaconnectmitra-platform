@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sessionCookieName, verifySession } from '../../../app/lib/ycm-access-control';
-import { getPostgresYcmSessionRevocationStore } from '../../../app/lib/ycm-postgres-session-revocation';
+import { sessionCookieName, verifySession } from '../../../lib/ycm-access-control';
+import { getPostgresYcmSessionRevocationStore } from '../../../lib/ycm-postgres-session-revocation';
 
 export const runtime = 'nodejs';
 
