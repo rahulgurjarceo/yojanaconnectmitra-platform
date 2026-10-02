@@ -31,5 +31,7 @@ jobs:
         run: npm run test:work-control
       - name: Business domain/team contract test
         run: npm run test:business-domains
+      - name: Unified service master contract test
+        run: npm run test:service-master
       - name: Production build
         run: npm run build
