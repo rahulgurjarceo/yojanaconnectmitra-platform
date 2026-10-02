@@ -37,3 +37,10 @@ CREATE TABLE IF NOT EXISTS ycm_settlement_events (
 
 COMMENT ON COLUMN ycm_wallet_accounts.withdrawable_paise IS 'Commission released for payout after the configured settlement window. Ledger balance may appear before payout eligibility.';
 COMMENT ON TABLE ycm_payout_destinations IS 'User payout destinations. Sensitive account credentials/secrets are never stored here; use provider beneficiary references where applicable.';
+
+ALTER TABLE ycm_wallet_entries DROP CONSTRAINT IF EXISTS ycm_wallet_entries_entry_type_check;
+ALTER TABLE ycm_wallet_entries ADD CONSTRAINT ycm_wallet_entries_entry_type_check
+  CHECK (entry_type IN ('commission_credit','commission_reversal','settlement_release','settlement_debit','adjustment_credit','adjustment_debit'));
+
+CREATE INDEX IF NOT EXISTS idx_ycm_transaction_splits_settlement_eligible
+  ON ycm_transaction_splits(recipient_user_id,settlement_eligible_at,status);
