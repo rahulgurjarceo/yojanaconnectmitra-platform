@@ -30,7 +30,7 @@ console.log("CONTRACT_TEST_PASS");
 
 assert.match(ui, /EmployeeKpiPanel/);
 assert.match(ui, /\/api\/ceo\/employee-kpi/);
-assert.match(ui, /Login time/);
+assert.match(ui, /Login h/);
 assert.match(ui, /Calls received/);
 assert.match(ui, /Calls made/);
 assert.match(ui, /Disconnected/);
