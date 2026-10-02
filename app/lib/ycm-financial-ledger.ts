@@ -1,11 +1,13 @@
 import postgres from 'postgres';
+
+type YcmSql = ReturnType<typeof postgres>;
 import {randomUUID} from 'node:crypto';
 import {calculateUnifiedAllocation,UnifiedCommissionRule,defaultServiceCommissionRule} from './ycm-unified-commission';
 
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:8,prepare:false,connect_timeout:10,idle_timeout:20}):null};
 const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-async function resolveUserId(tx:any,value?:string){if(!value)return null;const rows=UUID_RE.test(value)?await tx`SELECT id FROM ycm_users WHERE id=${value}::uuid LIMIT 1`:await tx`SELECT id FROM ycm_users WHERE user_id=${value} LIMIT 1`;return rows[0]?.id??null;}
-async function resolveCommissionRule(tx:any,serviceCode:string|undefined,transactionType:string,provided?:UnifiedCommissionRule){if(provided)return provided;const rows=await tx`SELECT ycm_percent,agent_percent,referral_percent,referral_funded_by FROM ycm_commission_rules WHERE status='active' AND effective_from<=NOW() AND (effective_to IS NULL OR effective_to>NOW()) AND transaction_type=${transactionType} AND (service_code=${serviceCode??null} OR service_code IS NULL) ORDER BY CASE WHEN service_code IS NULL THEN 1 ELSE 0 END,effective_from DESC LIMIT 1`;const row=rows[0];return row?{partnerPercent:Number(row.agent_percent),referralPercent:Number(row.referral_percent),ycmPercent:Number(row.ycm_percent),referralFundedBy:row.referral_funded_by as 'agent'|'ycm'}:defaultServiceCommissionRule();}
+async function resolveUserId(tx:YcmSql,value?:string){if(!value)return null;const rows=UUID_RE.test(value)?await tx`SELECT id FROM ycm_users WHERE id=${value}::uuid LIMIT 1`:await tx`SELECT id FROM ycm_users WHERE user_id=${value} LIMIT 1`;return rows[0]?.id??null;}
+async function resolveCommissionRule(tx:YcmSql,serviceCode:string|undefined,transactionType:string,provided?:UnifiedCommissionRule){if(provided)return provided;const rows=await tx`SELECT ycm_percent,agent_percent,referral_percent,referral_funded_by FROM ycm_commission_rules WHERE status='active' AND effective_from<=NOW() AND (effective_to IS NULL OR effective_to>NOW()) AND transaction_type=${transactionType} AND (service_code=${serviceCode??null} OR service_code IS NULL) ORDER BY CASE WHEN service_code IS NULL THEN 1 ELSE 0 END,effective_from DESC LIMIT 1`;const row=rows[0];return row?{partnerPercent:Number(row.agent_percent),referralPercent:Number(row.referral_percent),ycmPercent:Number(row.ycm_percent),referralFundedBy:row.referral_funded_by as 'agent'|'ycm'}:defaultServiceCommissionRule();}
 
 export type RecordFinancialTransactionInput={
  externalReference:string;transactionType:string;serviceCode?:string;customerUserId?:string;agentUserId?:string;referralUserId?:string;providerCode?:string;providerTransactionId?:string;grossAmountPaise:number;providerFeePaise?:number;currency?:string;metadata?:Record<string,unknown>;rule?:UnifiedCommissionRule;
