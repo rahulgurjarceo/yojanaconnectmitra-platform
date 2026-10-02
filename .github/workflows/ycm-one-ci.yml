@@ -27,5 +27,7 @@ jobs:
         run: npm run test:migration
       - name: Command Center contract test
         run: npm run test:command-center
+      - name: Work control contract test
+        run: npm run test:work-control
       - name: Production build
         run: npm run build
