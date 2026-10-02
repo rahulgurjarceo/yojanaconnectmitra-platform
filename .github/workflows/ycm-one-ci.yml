@@ -33,5 +33,7 @@ jobs:
         run: npm run test:business-domains
       - name: Unified service master contract test
         run: npm run test:service-master
+      - name: Dynamic service operating layer contract test
+        run: npm run test:dynamic-service-layer
       - name: Production build
         run: npm run build
