@@ -1,14 +1,85 @@
 import {NextRequest,NextResponse} from 'next/server';
 import postgres from 'postgres';
-import {sessionCookieName,verifySession} from '../../lib/ycm-access-control';
+import {sessionCookieName,verifySession,roleHasPermission} from '../../lib/ycm-access-control';
+
 export const runtime='nodejs';
-const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:3,prepare:false,connect_timeout:10,idle_timeout:20}):null};
+
+const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:4,prepare:false,connect_timeout:10,idle_timeout:20}):null};
+
+function actor(r:NextRequest){return verifySession(r.cookies.get(sessionCookieName())?.value);}
+function canManage(role:string){return ['ceo','management','admin'].includes(role)||roleHasPermission(role as never,'service:manage');}
+
 export async function GET(r:NextRequest){
- const s=verifySession(r.cookies.get(sessionCookieName())?.value); if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
- const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
+ const s=actor(r); if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
+ const sql=db(); if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
-  const u=new URL(r.url),type=u.searchParams.get('type'),domain=u.searchParams.get('domain');
-  const rows=await sql`SELECT service_id,service_code,service_name,service_type,business_domain_code,parent_service_code,channel,requires_case,requires_documents,requires_provider,status,metadata FROM ycm_service_master WHERE status='active' AND (${type} IS NULL OR service_type=${type}) AND (${domain} IS NULL OR business_domain_code=${domain}) ORDER BY service_name`;
+  const u=new URL(r.url),type=u.searchParams.get('type'),domain=u.searchParams.get('domain'),vertical=u.searchParams.get('vertical'),q=u.searchParams.get('q');
+  const rows=await sql`
+   SELECT sm.service_id,sm.service_code,sm.service_name,sm.service_type,sm.business_domain_code,
+          sm.parent_service_code,sm.channel,sm.requires_case,sm.requires_documents,sm.requires_provider,
+          sm.status,sm.metadata,
+          COALESCE(jsonb_agg(DISTINCT jsonb_build_object('vertical_code',sv.vertical_code,'is_primary',sv.is_primary))
+            FILTER (WHERE sv.vertical_code IS NOT NULL),'[]'::jsonb) AS verticals
+   FROM ycm_service_master sm
+   LEFT JOIN ycm_service_verticals sv ON sv.service_code=sm.service_code AND sv.status='active'
+   WHERE sm.status='active'
+     AND (${type} IS NULL OR sm.service_type=${type})
+     AND (${domain} IS NULL OR sm.business_domain_code=${domain})
+     AND (${vertical} IS NULL OR EXISTS (
+       SELECT 1 FROM ycm_service_verticals vx
+       WHERE vx.service_code=sm.service_code AND vx.vertical_code=${vertical} AND vx.status='active'
+     ))
+     AND (${q} IS NULL OR sm.service_name ILIKE '%'||${q}||'%' OR sm.service_code ILIKE '%'||${q}||'%')
+   GROUP BY sm.service_id
+   ORDER BY sm.service_name
+  `;
   return NextResponse.json({success:true,services:rows},{headers:{'Cache-Control':'private,no-store'}});
+ }finally{await sql.end({timeout:3});}
+}
+
+export async function POST(r:NextRequest){
+ const s=actor(r); if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
+ if(!canManage(s.role))return NextResponse.json({success:false,code:'FORBIDDEN'},{status:403});
+ const sql=db(); if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
+ try{
+  const b=await r.json();
+  const code=String(b.serviceCode||'').trim().toUpperCase(),name=String(b.serviceName||'').trim(),type=String(b.serviceType||'other').trim();
+  if(!code||!name)return NextResponse.json({success:false,code:'SERVICE_CODE_AND_NAME_REQUIRED'},{status:400});
+  const rows=await sql`INSERT INTO ycm_service_master
+   (service_code,service_name,service_type,business_domain_code,parent_service_code,channel,requires_case,requires_documents,requires_provider,status,metadata)
+   VALUES (${code},${name},${type},${b.businessDomainCode||null},${b.parentServiceCode||null},${b.channel||'assisted'},
+           ${b.requiresCase!==false},${b.requiresDocuments===true},${b.requiresProvider===true},${b.status||'draft'},${b.metadata||{}})
+   RETURNING service_id,service_code,service_name,service_type,business_domain_code,parent_service_code,channel,requires_case,requires_documents,requires_provider,status,metadata`;
+  return NextResponse.json({success:true,service:rows[0]},{status:201});
+ }catch(e){
+  return NextResponse.json({success:false,code:'SERVICE_CREATE_FAILED',message:e instanceof Error?e.message:'unknown_error'},{status:400});
+ }finally{await sql.end({timeout:3});}
+}
+
+export async function PATCH(r:NextRequest){
+ const s=actor(r); if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
+ if(!canManage(s.role))return NextResponse.json({success:false,code:'FORBIDDEN'},{status:403});
+ const sql=db(); if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
+ try{
+  const b=await r.json(),code=String(b.serviceCode||'').trim().toUpperCase();
+  if(!code)return NextResponse.json({success:false,code:'SERVICE_CODE_REQUIRED'},{status:400});
+  const rows=await sql`UPDATE ycm_service_master SET
+    service_name=COALESCE(${b.serviceName??null},service_name),
+    service_type=COALESCE(${b.serviceType??null},service_type),
+    business_domain_code=COALESCE(${b.businessDomainCode??null},business_domain_code),
+    parent_service_code=COALESCE(${b.parentServiceCode??null},parent_service_code),
+    channel=COALESCE(${b.channel??null},channel),
+    requires_case=COALESCE(${b.requiresCase??null},requires_case),
+    requires_documents=COALESCE(${b.requiresDocuments??null},requires_documents),
+    requires_provider=COALESCE(${b.requiresProvider??null},requires_provider),
+    status=COALESCE(${b.status??null},status),
+    metadata=COALESCE(${b.metadata??null},metadata),
+    updated_at=now()
+    WHERE service_code=${code}
+    RETURNING service_id,service_code,service_name,service_type,business_domain_code,parent_service_code,channel,requires_case,requires_documents,requires_provider,status,metadata`;
+  if(!rows.length)return NextResponse.json({success:false,code:'SERVICE_NOT_FOUND'},{status:404});
+  return NextResponse.json({success:true,service:rows[0]});
+ }catch(e){
+  return NextResponse.json({success:false,code:'SERVICE_UPDATE_FAILED',message:e instanceof Error?e.message:'unknown_error'},{status:400});
  }finally{await sql.end({timeout:3});}
 }
