@@ -13,5 +13,8 @@ assert.match(ui, /Impact & Proof/);
 assert.match(ui, /State.*District.*Block/);
 assert.match(ui, /selectedState/);
 assert.match(ui, /selectedDistrict/);
+assert.match(ui, /Refresh live data/);
+assert.match(ui, /loadCommandCenter/);
+assert.match(ui, /Last refreshed/);
 assert.match(ui, /\/impact-proof\/packet\?district=/);
 console.log("COMMAND_CENTER_HEALTH_CONTRACT_TEST: PASS");
