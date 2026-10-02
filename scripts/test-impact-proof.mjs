@@ -39,6 +39,7 @@ assert.match(ui,/Intervention/);
 assert.match(ui,/Follow-up/);
 assert.match(ui,/Verified Evidence/);
 assert.match(ui,/Change/);
+assert.match(ui,/\/impact-proof\/packet\?district=/);
 assert.doesNotMatch(ui,/setState\\(/);
 
 console.log('IMPACT_PROOF_CONTRACT_TEST: PASS');
