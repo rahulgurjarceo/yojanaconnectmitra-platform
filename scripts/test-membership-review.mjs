@@ -73,3 +73,11 @@ assert.match(commissionMigration,/ycm_financial_transactions/);
 assert.match(commissionMigration,/ycm_transaction_splits/);
 assert.match(commissionMigration,/ycm_settlements/);
 assert.match(defaultRule,/60,40,0/);
+
+const aepsApi=await fs.readFile('app/api/aeps/transactions/route.ts','utf8');
+const serviceFinancialApi=await fs.readFile('app/api/service-financial/transactions/route.ts','utf8');
+assert.match(aepsApi,/recordSuccessfulFinancialTransaction/);
+assert.match(aepsApi,/YCM_AEPS_WEBHOOK_SECRET/);
+assert.match(aepsApi,/reverseFinancialTransaction/);
+assert.match(serviceFinancialApi,/recordSuccessfulFinancialTransaction/);
+assert.match(serviceFinancialApi,/YCM_SERVICE_FINANCIAL_WEBHOOK_SECRET/);
