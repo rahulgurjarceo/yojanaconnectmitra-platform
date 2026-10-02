@@ -17,4 +17,4 @@ assert.match(script, /await tx`INSERT INTO ycm_schema_migrations/);
 assert.equal(pkg.scripts["db:migrate"], "node scripts/migrate-production.mjs");
 assert.match(readme, /010_ycm_impact_proof\.sql/);\nassert.match(readme, /011_ceo_entity_kpi\.sql/);\nassert.match(readme, /012_ceo_growth_insights\.sql/);\nassert.match(readme, /013_employee_productivity_telemetry\.sql/);\nassert.match(readme, /014_employee_compensation_targets\.sql/);
 assert.match(readme, /npm run db:migrate/);
-console.log("Migration runner contract PASS");
+console.log("CONTRACT_TEST_PASS");
