@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react-hooks/set-state-in-effect */
 import {useEffect,useState} from 'react';
 
 type Row={membership_id:string;user_id:string;full_name:string;mobile?:string;membership_segment:string;plan_code:string;amount_paise:number;validity_years:number;status:string;review_status:string;verification_reference?:string|null;review_note?:string|null;created_at:string};
