@@ -42,3 +42,6 @@ Production prerequisites:
 - Provider API credentials must be stored in deployment secrets/secret manager, never in PostgreSQL service configuration.
 
 Never store database credentials or provider secrets in source control.
+
+
+Membership pricing rule: ₹99 standard Individual/Household = 1 year; ₹99 Defense/Army Family and Widow Household = 2 years, subject to category verification before activation.
