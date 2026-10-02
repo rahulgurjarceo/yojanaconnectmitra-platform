@@ -19,6 +19,7 @@ Run in numeric order:
 015_organization_hierarchy_team_lead.sql
 16. 016_work_approval_and_org_targets.sql
 17. 017_geographic_franchise_targets.sql
+18. 018_business_domains_and_team_mapping.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
 
