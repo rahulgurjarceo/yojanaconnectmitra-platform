@@ -20,3 +20,14 @@ CREATE TABLE IF NOT EXISTS ycm_impact_audit (
  actor_id TEXT NOT NULL, action TEXT NOT NULL, before_data JSONB NULL, after_data JSONB NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_ycm_impact_audit_impact ON ycm_impact_audit(impact_id,created_at DESC);
+
+CREATE TABLE IF NOT EXISTS ycm_education_measurements (
+ measurement_id UUID PRIMARY KEY DEFAULT gen_random_uuid(), impact_id UUID NOT NULL REFERENCES ycm_impact_records(impact_id) ON DELETE CASCADE,
+ student_ref TEXT NOT NULL, institution_ref TEXT NULL, subject TEXT NULL, grade_level TEXT NULL,
+ baseline_value NUMERIC NOT NULL, intervention_value NUMERIC NULL, followup_value NUMERIC NULL, unit TEXT NOT NULL,
+ baseline_date DATE NOT NULL, intervention_date DATE NULL, followup_date DATE NULL,
+ evidence_required BOOLEAN NOT NULL DEFAULT TRUE, verification_status TEXT NOT NULL DEFAULT 'pending' CHECK (verification_status IN ('pending','verified','rejected')),
+ methodology_note TEXT NULL, consent_captured BOOLEAN NOT NULL DEFAULT FALSE, created_by TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_ycm_education_geo ON ycm_impact_records(outcome_type,state_code,district_code,block_code,village_code) WHERE outcome_type='education_improvement';
+CREATE INDEX IF NOT EXISTS idx_ycm_education_student ON ycm_education_measurements(student_ref,baseline_date);
