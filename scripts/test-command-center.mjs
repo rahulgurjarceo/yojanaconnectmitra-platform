@@ -50,3 +50,12 @@ assert.match(ui, /Target %/);
 assert.match(ui, /Task %/);
 assert.match(ui, /Attendance %/);
 console.log("EMPLOYEE_PERFORMANCE_CONTRACT_TEST: PASS");
+
+const pageSource = await fs.readFile(path.join(process.cwd(), "app/command-center/page.tsx"), "utf8");
+assert.equal((pageSource.match(/<EmployeeKpiPanel\/>/g)||[]).length, 1);
+assert.doesNotMatch(pageSource, /<EmployeeCompensationPanel\/>/);
+assert.match(pageSource, /Single Matrix/);
+assert.match(pageSource, /Salary/);
+assert.match(pageSource, /Target %/);
+assert.match(pageSource, /Attendance %/);
+console.log("EMPLOYEE_360_SINGLE_MATRIX_TEST: PASS");
