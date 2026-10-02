@@ -26,6 +26,7 @@ Run in numeric order:
 22. 022_unified_lead_intake.sql
 23. 023_individual_family_memberships.sql
 24. 024_membership_review_and_special_activation.sql
+25. 025_membership_payment_ledger.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
 
