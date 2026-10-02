@@ -17,7 +17,8 @@
     "test:dynamic-service-layer": "node scripts/test-dynamic-service-layer.mjs",
     "test:provider-workflow": "node scripts/test-service-provider-workflow.mjs",
     "test:unified-lead-intake": "node scripts/test-unified-lead-intake.mjs",
-    "test:membership": "node scripts/test-individual-family-membership.mjs"
+    "test:membership": "node scripts/test-individual-family-membership.mjs",
+    "test:service-governance-ui": "node scripts/test-service-governance-ui.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
