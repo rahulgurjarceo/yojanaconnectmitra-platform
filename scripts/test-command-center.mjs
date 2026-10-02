@@ -17,7 +17,7 @@ assert.match(ui, /Refresh live data/);
 assert.match(ui, /loadCommandCenter/);
 assert.match(ui, /Last refreshed/);
 assert.match(ui, /\/impact-proof\/packet\?district=/);\nassert.match(ui, /\/api\/ceo\/entity-kpi/);\nassert.match(ui, /EntityKpiPanel/);\nassert.match(ui, /Revenue/);\nassert.match(ui, /Commission/);\nassert.match(ui, /completed_transactions/);\nassert.match(ui, /GrowthAdvisor/);\nassert.match(ui, /Personal Advisor/);\nassert.match(ui, /Business Health/);\nassert.match(ui, /\/api\/ceo\/growth-advisor/);
-console.log("COMMAND_CENTER_HEALTH_CONTRACT_TEST: PASS");
+console.log("CONTRACT_TEST_PASS");
 
 assert.match(ui, /EmployeeKpiPanel/);
 assert.match(ui, /\/api\/ceo\/employee-kpi/);
@@ -39,7 +39,7 @@ assert.match(telemetry, /WEBHOOK_UNAUTHORIZED/);
 assert.match(telemetry, /providerCallId/);
 assert.match(telemetry, /providerMessageId/);
 assert.match(telemetry, /ON CONFLICT/);
-console.log("EMPLOYEE_360_TELEMETRY_CONTRACT_TEST: PASS");
+console.log("CONTRACT_TEST_PASS");
 
 const compensationApi = await fs.readFile(path.join(process.cwd(), "app/api/ceo/employee-compensation/route.ts"), "utf8");
 assert.match(compensationApi, /target_achievement_pct/);
@@ -49,7 +49,7 @@ assert.match(compensationApi, /worked_hours/);
 assert.match(ui, /Target %/);
 assert.match(ui, /Task %/);
 assert.match(ui, /Attendance %/);
-console.log("EMPLOYEE_PERFORMANCE_CONTRACT_TEST: PASS");
+console.log("CONTRACT_TEST_PASS");
 
 const pageSource = await fs.readFile(path.join(process.cwd(), "app/command-center/page.tsx"), "utf8");
 assert.equal((pageSource.match(/<EmployeeKpiPanel\/>/g)||[]).length, 1);
@@ -58,4 +58,4 @@ assert.match(pageSource, /Single Matrix/);
 assert.match(pageSource, /Salary/);
 assert.match(pageSource, /Target %/);
 assert.match(pageSource, /Attendance %/);
-console.log("EMPLOYEE_360_SINGLE_MATRIX_TEST: PASS");
+console.log("CONTRACT_TEST_PASS");
