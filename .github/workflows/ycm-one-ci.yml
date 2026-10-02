@@ -37,5 +37,7 @@ jobs:
         run: npm run test:dynamic-service-layer
       - name: Provider workflow contract test
         run: npm run test:provider-workflow
+      - name: Unified lead intake contract test
+        run: npm run test:unified-lead-intake
       - name: Production build
         run: npm run build
