@@ -60,15 +60,28 @@ export async function resetPassword(rawToken:string,newPassword:string) {
 }
 
 
-export async function createMembership(input:{userId:string;membershipType:'individual'|'family'}) {
+export type YcmMembershipType = 'individual'|'family';
+export type YcmMembershipSegment = 'standard'|'defense_family'|'widow_household';
+
+export async function createMembership(input:{userId:string;membershipType:YcmMembershipType;membershipSegment:YcmMembershipSegment}) {
   const db=authDb();
+  const isSpecial=input.membershipSegment !== 'standard';
+  if(isSpecial && input.membershipType !== 'family') throw new Error('SPECIAL_MEMBERSHIP_REQUIRES_FAMILY');
+  const validityYears=isSpecial ? 2 : 1;
+  const planCode=isSpecial
+    ? (input.membershipSegment === 'defense_family' ? 'YCM_99_DEFENSE_2Y' : 'YCM_99_WIDOW_2Y')
+    : 'YCM_99_1Y';
   const rows=await db`INSERT INTO ycm_memberships
-    (user_id,membership_type,plan_code,amount_paise,currency,validity_years,status)
+    (user_id,membership_type,membership_segment,plan_code,amount_paise,currency,validity_years,status)
     VALUES
-    (${input.userId},${input.membershipType},'YCM_99_2Y',9900,'INR',2,'pending_payment')
+    (${input.userId},${input.membershipType},${input.membershipSegment},${planCode},9900,'INR',${validityYears},'pending_payment')
     ON CONFLICT (user_id,membership_type) WHERE status='pending_payment'
-    DO UPDATE SET updated_at=NOW()
-    RETURNING membership_id,membership_type,plan_code,amount_paise,currency,validity_years,status,family_id`;
+    DO UPDATE SET
+      membership_segment=EXCLUDED.membership_segment,
+      plan_code=EXCLUDED.plan_code,
+      validity_years=EXCLUDED.validity_years,
+      updated_at=NOW()
+    RETURNING membership_id,membership_type,membership_segment,plan_code,amount_paise,currency,validity_years,status,family_id`;
   return rows[0];
 }
 
