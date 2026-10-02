@@ -1,6 +1,6 @@
 import postgres from 'postgres';
 import {randomUUID} from 'node:crypto';
-import {calculateUnifiedAllocation,UnifiedCommissionRule} from './ycm-unified-commission';
+import {calculateUnifiedAllocation,UnifiedCommissionRule,defaultServiceCommissionRule} from './ycm-unified-commission';
 
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:8,prepare:false,connect_timeout:10,idle_timeout:20}):null};
 const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -16,10 +16,9 @@ export async function recordSuccessfulFinancialTransaction(input:RecordFinancial
  const providerFee=input.providerFeePaise??0;
  if(!Number.isInteger(input.grossAmountPaise)||input.grossAmountPaise<0)throw new Error('GROSS_AMOUNT_INVALID');
  if(!Number.isInteger(providerFee)||providerFee<0||providerFee>input.grossAmountPaise)throw new Error('PROVIDER_FEE_INVALID');
- const allocation=calculateUnifiedAllocation(input.grossAmountPaise,input.rule??defaultServiceCommissionRule());
  try{return await sql.begin(async tx=>{
   const existing=(await tx`SELECT transaction_id,state FROM ycm_financial_transactions WHERE external_reference=${input.externalReference} LIMIT 1`)[0];
-  if(existing?.state==='success'||existing?.state==='reconciled')return {transactionId:existing.transaction_id,idempotent:true,allocation};
+  if(existing?.state==='success'||existing?.state==='reconciled')return {transactionId:existing.transaction_id,idempotent:true};
   const transactionId=existing?.transaction_id??randomUUID();
   const rule=await resolveCommissionRule(tx,input.serviceCode,input.transactionType,input.rule);
   const allocation=calculateUnifiedAllocation(input.grossAmountPaise,rule);
@@ -32,7 +31,8 @@ export async function recordSuccessfulFinancialTransaction(input:RecordFinancial
    const splitId=randomUUID();
    await tx`INSERT INTO ycm_transaction_splits(split_id,transaction_id,recipient_type,recipient_user_id,percent,amount_paise,funding_source,status) VALUES(${splitId},${transactionId},${type},${userId},${percent},${amount},${funding},'pending') ON CONFLICT DO NOTHING`;
    if(userId&&amount>0){
-    const wallet=(await tx`INSERT INTO ycm_wallet_accounts(user_id) VALUES(${userId}) ON CONFLICT(user_id) DO UPDATE SET updated_at=NOW() RETURNING wallet_id,available_paise`)[0];
+    const wallet=(await tx`INSERT INTO ycm_wallet_accounts(user_id) VALUES(${userId}) ON CONFLICT(user_id) DO UPDATE SET updated_at=NOW() RETURNING wallet_id,available_paise,status`)[0];
+    if(wallet.status!=='active')throw new Error('WALLET_FROZEN');
     const balance=Number(wallet.available_paise)+amount;
     await tx`UPDATE ycm_wallet_accounts SET available_paise=${balance},lifetime_credited_paise=lifetime_credited_paise+${amount},updated_at=NOW() WHERE wallet_id=${wallet.wallet_id}`;
     await tx`INSERT INTO ycm_wallet_entries(entry_id,wallet_id,transaction_id,split_id,entry_type,amount_paise,balance_after_paise,idempotency_key) VALUES(${randomUUID()},${wallet.wallet_id},${transactionId},${splitId},'commission_credit',${amount},${balance},${input.externalReference+':'+type}) ON CONFLICT(idempotency_key) DO NOTHING`;
@@ -40,8 +40,8 @@ export async function recordSuccessfulFinancialTransaction(input:RecordFinancial
    }
   };
   await addSplit('ycm',null,rule.ycmPercent,allocation.ycmPaise,'gross');
-  await addSplit('agent',input.agentUserId??null,rule.partnerPercent,allocation.agentPaise,'gross');
-  await addSplit('referral',input.referralUserId??null,rule.referralPercent,allocation.referralPaise,rule.referralFundedBy??'agent');
+  await addSplit('agent',agentUserId,rule.partnerPercent,allocation.agentPaise,'gross');
+  await addSplit('referral',referralUserId,rule.referralPercent,allocation.referralPaise,rule.referralFundedBy??'agent');
   return {transactionId,idempotent:false,allocation,rule};
  });}finally{await sql.end({timeout:3});}
 }
