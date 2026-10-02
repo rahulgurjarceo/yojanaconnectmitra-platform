@@ -24,7 +24,13 @@ assert.match(readme, /npm run db:migrate/);
 console.log("CONTRACT_TEST_PASS");
 
 assert.match(readme, /015_organization_hierarchy_team_lead\.sql/);
+assert.match(readme, /016_work_approval_and_org_targets\.sql/);
 const orgMigration = await fs.readFile(path.join(process.cwd(), "database/migrations/015_organization_hierarchy_team_lead.sql"), "utf8");
 assert.match(orgMigration, /team_lead/);
 assert.doesNotMatch(orgMigration, /CHECK\s*\([^)]*SELECT/);
 console.log("ORG_MIGRATION_CONTRACT_TEST: PASS");
+const workMigration = await fs.readFile(path.join(process.cwd(), "database/migrations/016_work_approval_and_org_targets.sql"), "utf8");
+assert.match(workMigration, /approval_status/);
+assert.match(workMigration, /ycm_org_targets/);
+assert.match(workMigration, /parent_target_id/);
+console.log("WORK_APPROVAL_MIGRATION_CONTRACT_TEST: PASS");
