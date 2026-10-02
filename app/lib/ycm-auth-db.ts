@@ -71,14 +71,16 @@ export async function createMembership(input:{userId:string;membershipType:YcmMe
   const planCode='YCM_99_1Y';
   const reviewStatus=isSpecial ? 'pending' : 'not_required';
   const rows=await db`INSERT INTO ycm_memberships
-    (user_id,membership_type,membership_segment,plan_code,amount_paise,currency,validity_years,status)
+    (user_id,membership_type,membership_segment,plan_code,amount_paise,currency,validity_years,status,review_status,review_type)
     VALUES
-    (${input.userId},${input.membershipType},${input.membershipSegment},${planCode},9900,'INR',${validityYears},'pending_payment')
+    (${input.userId},${input.membershipType},${input.membershipSegment},${planCode},9900,'INR',${validityYears},'pending_payment',${reviewStatus},${isSpecial ? input.membershipSegment : null})
     ON CONFLICT (user_id,membership_type) WHERE status='pending_payment'
     DO UPDATE SET
       membership_segment=EXCLUDED.membership_segment,
       plan_code=EXCLUDED.plan_code,
       validity_years=EXCLUDED.validity_years,
+      review_status=EXCLUDED.review_status,
+      review_type=EXCLUDED.review_type,
       updated_at=NOW()
     RETURNING membership_id,membership_type,membership_segment,plan_code,amount_paise,currency,validity_years,status,review_status,review_type,family_id`;
   return rows[0];
