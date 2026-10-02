@@ -28,6 +28,7 @@ Run in numeric order:
 24. 024_membership_review_and_special_activation.sql
 25. 025_membership_payment_ledger.sql
 26. 026_unified_transaction_commission_ledger.sql
+27. 027_default_commission_rule.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
 
