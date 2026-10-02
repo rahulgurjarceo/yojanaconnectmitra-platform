@@ -25,7 +25,8 @@
     "test:settlement": "node scripts/test-settlement.mjs",
     "test:eko-retailer-flow": "node scripts/test-eko-retailer-flow.mjs",
     "test:ycm-package-kyc": "node scripts/test-ycm-package-kyc.mjs",
-    "test:aeps-provider-modes": "node scripts/test-aeps-provider-modes.mjs"
+    "test:aeps-provider-modes": "node scripts/test-aeps-provider-modes.mjs",
+    "test:auth-login-security": "node scripts/test-auth-login-security.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
