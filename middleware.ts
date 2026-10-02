@@ -59,10 +59,15 @@ export async function middleware(request: NextRequest) {
 
   const response = NextResponse.next();
   response.headers.set('Cache-Control', 'private, no-store');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(self), payment=()');
+  response.headers.set('Content-Security-Policy', "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'");
   response.headers.set('X-YCM-Auth', 'verified-session');
   return response;
 }
 
 export const config = {
-  matcher: ['/ceo/:path*', '/management/:path*', '/employee/:path*', '/lawyer/:path*', '/farmer/:path*', '/student/:path*', '/crm/:path*', '/family-dashboard/:path*', '/command-center/:path*', '/impact-proof/:path*', '/api/ceo/:path*', '/api/management/:path*', '/api/employee/:path*', '/api/lawyer/:path*', '/api/farmer/:path*', '/api/student/:path*', '/api/crm/:path*', '/api/family-dashboard/:path*', '/api/command-center/:path*', '/api/impact-proof/:path*'],
+  matcher: ['/api/:path*', '/ceo/:path*', '/management/:path*', '/employee/:path*', '/lawyer/:path*', '/farmer/:path*', '/student/:path*', '/crm/:path*', '/family-dashboard/:path*', '/command-center/:path*', '/impact-proof/:path*', '/api/ceo/:path*', '/api/management/:path*', '/api/employee/:path*', '/api/lawyer/:path*', '/api/farmer/:path*', '/api/student/:path*', '/api/crm/:path*', '/api/family-dashboard/:path*', '/api/command-center/:path*', '/api/impact-proof/:path*'],
 };
