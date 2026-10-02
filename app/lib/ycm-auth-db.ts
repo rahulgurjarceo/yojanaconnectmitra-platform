@@ -67,10 +67,9 @@ export async function createMembership(input:{userId:string;membershipType:YcmMe
   const db=authDb();
   const isSpecial=input.membershipSegment !== 'standard';
   if(isSpecial && input.membershipType !== 'family') throw new Error('SPECIAL_MEMBERSHIP_REQUIRES_FAMILY');
-  const validityYears=isSpecial ? 2 : 1;
-  const planCode=isSpecial
-    ? (input.membershipSegment === 'defense_family' ? 'YCM_99_DEFENSE_2Y' : 'YCM_99_WIDOW_2Y')
-    : 'YCM_99_1Y';
+  const validityYears=1;
+  const planCode='YCM_99_1Y';
+  const reviewStatus=isSpecial ? 'pending' : 'not_required';
   const rows=await db`INSERT INTO ycm_memberships
     (user_id,membership_type,membership_segment,plan_code,amount_paise,currency,validity_years,status)
     VALUES
@@ -81,7 +80,7 @@ export async function createMembership(input:{userId:string;membershipType:YcmMe
       plan_code=EXCLUDED.plan_code,
       validity_years=EXCLUDED.validity_years,
       updated_at=NOW()
-    RETURNING membership_id,membership_type,membership_segment,plan_code,amount_paise,currency,validity_years,status,family_id`;
+    RETURNING membership_id,membership_type,membership_segment,plan_code,amount_paise,currency,validity_years,status,review_status,review_type,family_id`;
   return rows[0];
 }
 
