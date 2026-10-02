@@ -16,7 +16,16 @@ assert.match(ui, /selectedDistrict/);
 assert.match(ui, /Refresh live data/);
 assert.match(ui, /loadCommandCenter/);
 assert.match(ui, /Last refreshed/);
-assert.match(ui, /\/impact-proof\/packet\?district=/);\nassert.match(ui, /\/api\/ceo\/entity-kpi/);\nassert.match(ui, /EntityKpiPanel/);\nassert.match(ui, /Revenue/);\nassert.match(ui, /Commission/);\nassert.match(ui, /completed_transactions/);\nassert.match(ui, /GrowthAdvisor/);\nassert.match(ui, /Personal Advisor/);\nassert.match(ui, /Business Health/);\nassert.match(ui, /\/api\/ceo\/growth-advisor/);
+assert.match(ui, /\/impact-proof\/packet\?district=/);
+assert.match(ui, /\/api\/ceo\/entity-kpi/);
+assert.match(ui, /EntityKpiPanel/);
+assert.match(ui, /Revenue/);
+assert.match(ui, /Commission/);
+assert.match(ui, /completed_transactions/);
+assert.match(ui, /GrowthAdvisor/);
+assert.match(ui, /Personal Advisor/);
+assert.match(ui, /Business Health/);
+assert.match(ui, /\/api\/ceo\/growth-advisor/);
 console.log("CONTRACT_TEST_PASS");
 
 assert.match(ui, /EmployeeKpiPanel/);
