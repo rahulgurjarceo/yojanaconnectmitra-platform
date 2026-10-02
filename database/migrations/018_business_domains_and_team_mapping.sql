@@ -1,5 +1,7 @@
 -- 018: YCM business-domain catalog and team/domain mapping
 -- Keeps team function (sales/operations/field/etc.) separate from the 35 business domains.
+ALTER TABLE ycm_teams DROP CONSTRAINT IF EXISTS ycm_teams_team_type_check;
+ALTER TABLE ycm_teams ADD CONSTRAINT ycm_teams_team_type_check CHECK (team_type IN ('sales','operations','document','field','support','legal','education','finance','customer','agriculture','farmer','fpo','dairy','kirana','insurance','loans','banking','aeps','business','msme','tax','compliance','crm','telecalling','digital','technology','content','marketing','partnerships','franchise','training','quality','verification','grievance','legal_operations','vertical','custom'));
 CREATE TABLE IF NOT EXISTS ycm_business_domains (
   domain_code VARCHAR(120) PRIMARY KEY,
   name VARCHAR(180) NOT NULL,
