@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {NextRequest,NextResponse} from 'next/server';
 import postgres from 'postgres';
 import {sessionCookieName,verifySession} from '../../../../lib/ycm-access-control';
