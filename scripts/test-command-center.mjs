@@ -40,3 +40,13 @@ assert.match(telemetry, /providerCallId/);
 assert.match(telemetry, /providerMessageId/);
 assert.match(telemetry, /ON CONFLICT/);
 console.log("EMPLOYEE_360_TELEMETRY_CONTRACT_TEST: PASS");
+
+const compensationApi = await fs.readFile(path.join(process.cwd(), "app/api/ceo/employee-compensation/route.ts"), "utf8");
+assert.match(compensationApi, /target_achievement_pct/);
+assert.match(compensationApi, /task_completion_pct/);
+assert.match(compensationApi, /attendance_pct/);
+assert.match(compensationApi, /worked_hours/);
+assert.match(ui, /Target %/);
+assert.match(ui, /Task %/);
+assert.match(ui, /Attendance %/);
+console.log("EMPLOYEE_PERFORMANCE_CONTRACT_TEST: PASS");
