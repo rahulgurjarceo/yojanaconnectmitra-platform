@@ -13,3 +13,12 @@ ON CONFLICT (service_code) DO UPDATE SET
  updated_at=NOW();
 
 COMMENT ON COLUMN ycm_financial_transactions.service_code IS 'Canonical YCM service code. AEPS uses FIN_AEPS; paid services use their service-master code.';
+
+
+INSERT INTO ycm_commission_rules
+(service_code,transaction_type,ycm_percent,agent_percent,referral_percent,referral_funded_by,status)
+SELECT 'FIN_AEPS','aeps',60,40,0,'agent','active'
+WHERE NOT EXISTS (
+ SELECT 1 FROM ycm_commission_rules
+ WHERE service_code='FIN_AEPS' AND transaction_type='aeps' AND status='active'
+);
