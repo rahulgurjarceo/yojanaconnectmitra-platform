@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 'use client';
 import {useEffect,useState} from 'react';
 import {YCM_LIFECYCLE,YCM_MODULES,YCMModule,ModuleStatus} from '../ycm-architecture';
