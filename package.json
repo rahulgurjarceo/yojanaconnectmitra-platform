@@ -13,7 +13,8 @@
     "test:command-center": "node scripts/test-command-center.mjs",
     "test:work-control": "node scripts/test-work-control.mjs",
     "test:business-domains": "node scripts/test-business-domains.mjs",
-    "test:service-master": "node scripts/test-unified-service-master.mjs"
+    "test:service-master": "node scripts/test-unified-service-master.mjs",
+    "test:dynamic-service-layer": "node scripts/test-dynamic-service-layer.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
