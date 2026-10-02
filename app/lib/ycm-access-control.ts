@@ -82,7 +82,24 @@ export function roleCanAccessPath(role: YcmRole, pathname: string) {
   return true;
 }
 
+const PUBLIC_API_PATHS = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/auth/session',
+  '/api/auth/logout',
+  '/api/health',
+  '/api/impact-proof/health',
+  '/api/integrations/eko/aeps/callback',
+  '/api/aeps/transactions',
+  '/api/settlements/release',
+];
+
 export function isProtectedPath(pathname: string) {
+  if (pathname.startsWith('/api/')) {
+    return !PUBLIC_API_PATHS.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  }
   return ['/ceo', '/management', '/employee', '/lawyer', '/farmer', '/student', '/crm', '/family-dashboard', '/command-center', '/impact-proof', '/api/ceo', '/api/management', '/api/employee', '/api/lawyer', '/api/farmer', '/api/student', '/api/crm', '/api/family-dashboard', '/api/command-center', '/api/impact-proof']
     .some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
