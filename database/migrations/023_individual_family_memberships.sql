@@ -19,11 +19,9 @@ CREATE TABLE IF NOT EXISTS ycm_memberships (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT ycm_membership_family_scope_check
     CHECK (
-      (membership_type = 'family' AND family_id IS NOT NULL)
+      (membership_type = 'family' AND (family_id IS NOT NULL OR status = 'pending_payment'))
       OR
       (membership_type = 'individual' AND family_id IS NULL)
-      OR
-      (status = 'pending_payment' AND family_id IS NULL)
     )
 );
 
