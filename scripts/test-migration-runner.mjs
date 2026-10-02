@@ -26,5 +26,5 @@ console.log("CONTRACT_TEST_PASS");
 assert.match(readme, /015_organization_hierarchy_team_lead\.sql/);
 const orgMigration = await fs.readFile(path.join(process.cwd(), "database/migrations/015_organization_hierarchy_team_lead.sql"), "utf8");
 assert.match(orgMigration, /team_lead/);
-assert.doesNotMatch(orgMigration, /CHECK\\s*\\([^)]*SELECT/);
+assert.doesNotMatch(orgMigration, /CHECK\s*\([^)]*SELECT/);
 console.log("ORG_MIGRATION_CONTRACT_TEST: PASS");
