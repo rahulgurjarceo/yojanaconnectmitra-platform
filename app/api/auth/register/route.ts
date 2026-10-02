@@ -45,12 +45,14 @@ export async function POST(request:Request){
       amount:99,
       currency:'INR',
       validityYears:Number(membership.validity_years),
+      reviewStatus:membership.review_status,
+      reviewType:membership.review_type,
       status:membership.status
     },
     next: accountType === 'family'
       ? (membershipSegment === 'standard'
         ? 'Complete ₹99 payment, then create/activate the Household / Family 360 profile for 1 year.'
-        : 'Complete ₹99 payment and required category verification, then activate the 2-year special Family membership.')
+        : 'Complete ₹99 payment. Special Family review starts at 1 year; after High Management approval the membership plan changes to 2 years before activation.')
       : 'Complete ₹99 payment, then activate the Individual YCM profile for 1 year.'
   });
  }catch(e){
