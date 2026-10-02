@@ -16,5 +16,5 @@ assert.match(migration,/business_domain_code/);
 assert.match(migration,/ON CONFLICT \(domain_code\) DO UPDATE/);
 assert.match(catalog,/YCM_TEAM_FUNCTIONS/);
 assert.match(catalog,/YCM_BUSINESS_DOMAINS/);
-assert.match(catalog,/35/);
+assert.match(catalog,/YCM_BUSINESS_DOMAIN_COUNT = YCM_BUSINESS_DOMAINS.length/);
 console.log("BUSINESS_DOMAIN_TEAM_CONTRACT_TEST: PASS");
