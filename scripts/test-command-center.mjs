@@ -68,3 +68,9 @@ assert.match(pageSource, /Salary/);
 assert.match(pageSource, /Target %/);
 assert.match(pageSource, /Attendance %/);
 console.log("CONTRACT_TEST_PASS");
+
+const accessControl = await fs.readFile(path.join(process.cwd(), "app/lib/ycm-access-control.ts"), "utf8");
+assert.match(accessControl, /team_lead/);
+assert.match(accessControl, /attendance:team/);
+assert.match(accessControl, /work:team/);
+console.log("ORG_RBAC_CONTRACT_TEST: PASS");
