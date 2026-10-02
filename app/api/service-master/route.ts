@@ -1,13 +1,13 @@
 import {NextRequest,NextResponse} from 'next/server';
 import postgres from 'postgres';
-import {sessionCookieName,verifySession,roleHasPermission} from '../../lib/ycm-access-control';
+import {sessionCookieName,verifySession} from '../../lib/ycm-access-control';
 
 export const runtime='nodejs';
 
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:4,prepare:false,connect_timeout:10,idle_timeout:20}):null};
 
 function actor(r:NextRequest){return verifySession(r.cookies.get(sessionCookieName())?.value);}
-function canManage(role:string){return ['ceo','management','admin'].includes(role)||roleHasPermission(role as never,'service:manage');}
+function canManage(role:string){return ['ceo','management','admin'].includes(role);}
 
 export async function GET(r:NextRequest){
  const s=actor(r); if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
