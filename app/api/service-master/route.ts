@@ -13,7 +13,7 @@ export async function GET(r:NextRequest){
  const s=actor(r); if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
  const sql=db(); if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
-  const u=new URL(r.url),type=u.searchParams.get('type'),domain=u.searchParams.get('domain'),vertical=u.searchParams.get('vertical'),q=u.searchParams.get('q');
+  const u=new URL(r.url),type=u.searchParams.get('type'),domain=u.searchParams.get('domain'),vertical=u.searchParams.get('vertical'),q=u.searchParams.get('q'),includeAll=u.searchParams.get('includeAll')==='true'&&canManage(s.role);
   const rows=await sql`
    SELECT sm.service_id,sm.service_code,sm.service_name,sm.service_type,sm.business_domain_code,
           sm.parent_service_code,sm.channel,sm.requires_case,sm.requires_documents,sm.requires_provider,
@@ -22,7 +22,7 @@ export async function GET(r:NextRequest){
             FILTER (WHERE sv.vertical_code IS NOT NULL),'[]'::jsonb) AS verticals
    FROM ycm_service_master sm
    LEFT JOIN ycm_service_verticals sv ON sv.service_code=sm.service_code AND sv.status='active'
-   WHERE sm.status='active'
+   WHERE (${includeAll} OR sm.status='active')
      AND (${type} IS NULL OR sm.service_type=${type})
      AND (${domain} IS NULL OR sm.business_domain_code=${domain})
      AND (${vertical} IS NULL OR EXISTS (
