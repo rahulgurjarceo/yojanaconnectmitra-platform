@@ -17,7 +17,7 @@ export type YcmServicePermission = typeof YCM_SERVICE_PERMISSIONS[keyof typeof Y
 
 export function hasServicePermission(role: string, permission: YcmServicePermission) {
   const permissions = YCM_SERVICE_PERMISSIONS[role as keyof typeof YCM_SERVICE_PERMISSIONS];
-  return Boolean(permissions?.includes(permission as never));
+  return Boolean(permissions?.some((item) => item === permission));
 }
 
 export function canTransitionServiceStatus(role: string, from: YcmServiceStatus, to: YcmServiceStatus) {
