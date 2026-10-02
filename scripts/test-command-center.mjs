@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 
 const ui = await fs.readFile(path.join(process.cwd(), "app/command-center/page.tsx"), "utf8");
 assert.match(ui, /\/api\/impact-proof\/health/);
-assert.match(ui, /health\.\?\.ready/);
+assert.match(ui, /health\?\.ready/);
 assert.match(ui, /databaseConfigured/);
 assert.match(ui, /DATABASE_NOT_CONFIGURED/);
 assert.match(ui, /All Impact tables detected/);
