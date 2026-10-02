@@ -9,7 +9,8 @@ const readme = await fs.readFile(path.join(root, "database/migrations/README.md"
 
 assert.match(script, /DATABASE_URL \|\| process\.env\.POSTGRES_URL/);
 assert.match(script, /ycm_schema_migrations/);
-assert.match(script, /pg_advisory_xact_lock/);
+assert.match(script, /pg_advisory_lock/);
+assert.match(script, /pg_advisory_unlock/);
 assert.match(script, /numeric: true/);
 assert.match(script, /await tx\.unsafe\(migration\)/);
 assert.match(script, /await tx`INSERT INTO ycm_schema_migrations/);
