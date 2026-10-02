@@ -10,7 +10,8 @@
     "test:impact-proof": "node scripts/test-impact-proof.mjs",
     "db:migrate": "node scripts/migrate-production.mjs",
     "test:migration": "node scripts/test-migration-runner.mjs",
-    "test:command-center": "node scripts/test-command-center.mjs"
+    "test:command-center": "node scripts/test-command-center.mjs",
+    "test:work-control": "node scripts/test-work-control.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
