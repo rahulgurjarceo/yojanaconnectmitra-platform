@@ -16,7 +16,7 @@ Run in numeric order:
 11. 012_ceo_growth_insights.sql
 12. 013_employee_productivity_telemetry.sql
 13. 014_employee_compensation_targets.sql
-015_organization_hierarchy_team_lead.sql
+15. 015_organization_hierarchy_team_lead.sql
 16. 016_work_approval_and_org_targets.sql
 17. 017_geographic_franchise_targets.sql
 18. 018_business_domains_and_team_mapping.sql
