@@ -19,3 +19,17 @@ const ui=await fs.readFile('app/membership-review/page.tsx','utf8');
 assert.match(ui,/Approve → 2 Years/);
 assert.match(ui,/Death certificate \/ case reference/);
 assert.match(ui,/Employees, Sales and Team Leads do not receive approval authority/);
+
+const paymentMigration=await fs.readFile('database/migrations/025_membership_payment_ledger.sql','utf8');
+const paymentLib=await fs.readFile('app/lib/ycm-membership-payment.ts','utf8');
+const orderApi=await fs.readFile('app/api/membership/payment/order/route.ts','utf8');
+const verifyApi=await fs.readFile('app/api/membership/payment/verify/route.ts','utf8');
+assert.match(paymentMigration,/ycm_membership_payments/);
+assert.match(paymentMigration,/signature_verified/);
+assert.match(paymentLib,/SPECIAL_MEMBERSHIP_NOT_APPROVED/);
+assert.match(paymentLib,/status='active'/);
+assert.match(paymentLib,/expires_at<=NOW/);
+assert.match(orderApi,/PAYMENT_PROVIDER_NOT_CONFIGURED/);
+assert.match(orderApi,/SPECIAL_MEMBERSHIP_NOT_APPROVED/);
+assert.match(verifyApi,/verifyPayment/);
+assert.match(verifyApi,/activateVerifiedMembership/);
