@@ -3,9 +3,12 @@ import {randomUUID} from 'node:crypto';
 import {calculateUnifiedAllocation,UnifiedCommissionRule} from './ycm-unified-commission';
 
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:8,prepare:false,connect_timeout:10,idle_timeout:20}):null};
+const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+async function resolveUserId(tx:any,value?:string){if(!value)return null;const rows=UUID_RE.test(value)?await tx`SELECT id FROM ycm_users WHERE id=${value}::uuid LIMIT 1`:await tx`SELECT id FROM ycm_users WHERE user_id=${value} LIMIT 1`;return rows[0]?.id??null;}
+async function resolveCommissionRule(tx:any,serviceCode:string|undefined,transactionType:string,provided?:UnifiedCommissionRule){if(provided)return provided;const rows=await tx`SELECT ycm_percent,agent_percent,referral_percent,referral_funded_by FROM ycm_commission_rules WHERE status='active' AND effective_from<=NOW() AND (effective_to IS NULL OR effective_to>NOW()) AND transaction_type=${transactionType} AND (service_code=${serviceCode??null} OR service_code IS NULL) ORDER BY CASE WHEN service_code IS NULL THEN 1 ELSE 0 END,effective_from DESC LIMIT 1`;const row=rows[0];return row?{partnerPercent:Number(row.agent_percent),referralPercent:Number(row.referral_percent),ycmPercent:Number(row.ycm_percent),referralFundedBy:row.referral_funded_by as 'agent'|'ycm'}:defaultServiceCommissionRule();}
 
 export type RecordFinancialTransactionInput={
- externalReference:string;transactionType:string;serviceCode?:string;customerUserId?:string;agentUserId?:string;referralUserId?:string;providerCode?:string;providerTransactionId?:string;grossAmountPaise:number;providerFeePaise?:number;currency?:string;metadata?:Record<string,unknown>;rule:UnifiedCommissionRule;
+ externalReference:string;transactionType:string;serviceCode?:string;customerUserId?:string;agentUserId?:string;referralUserId?:string;providerCode?:string;providerTransactionId?:string;grossAmountPaise:number;providerFeePaise?:number;currency?:string;metadata?:Record<string,unknown>;rule?:UnifiedCommissionRule;
 };
 
 export async function recordSuccessfulFinancialTransaction(input:RecordFinancialTransactionInput){
@@ -13,12 +16,17 @@ export async function recordSuccessfulFinancialTransaction(input:RecordFinancial
  const providerFee=input.providerFeePaise??0;
  if(!Number.isInteger(input.grossAmountPaise)||input.grossAmountPaise<0)throw new Error('GROSS_AMOUNT_INVALID');
  if(!Number.isInteger(providerFee)||providerFee<0||providerFee>input.grossAmountPaise)throw new Error('PROVIDER_FEE_INVALID');
- const allocation=calculateUnifiedAllocation(input.grossAmountPaise,input.rule);
+ const allocation=calculateUnifiedAllocation(input.grossAmountPaise,input.rule??defaultServiceCommissionRule());
  try{return await sql.begin(async tx=>{
   const existing=(await tx`SELECT transaction_id,state FROM ycm_financial_transactions WHERE external_reference=${input.externalReference} LIMIT 1`)[0];
   if(existing?.state==='success'||existing?.state==='reconciled')return {transactionId:existing.transaction_id,idempotent:true,allocation};
   const transactionId=existing?.transaction_id??randomUUID();
-  if(!existing)await tx`INSERT INTO ycm_financial_transactions(transaction_id,external_reference,transaction_type,service_code,customer_user_id,agent_user_id,referral_user_id,provider_code,provider_transaction_id,gross_amount_paise,provider_fee_paise,net_amount_paise,currency,state,metadata) VALUES(${transactionId},${input.externalReference},${input.transactionType},${input.serviceCode??null},${input.customerUserId??null},${input.agentUserId??null},${input.referralUserId??null},${input.providerCode??null},${input.providerTransactionId??null},${input.grossAmountPaise},${providerFee},${input.grossAmountPaise-providerFee},${input.currency??'INR'},'success',${JSON.stringify(input.metadata??{})}::jsonb)`;
+  const rule=await resolveCommissionRule(tx,input.serviceCode,input.transactionType,input.rule);
+  const allocation=calculateUnifiedAllocation(input.grossAmountPaise,rule);
+  const customerUserId=await resolveUserId(tx,input.customerUserId);
+  const agentUserId=await resolveUserId(tx,input.agentUserId);
+  const referralUserId=await resolveUserId(tx,input.referralUserId);
+  if(!existing)await tx`INSERT INTO ycm_financial_transactions(transaction_id,external_reference,transaction_type,service_code,customer_user_id,agent_user_id,referral_user_id,provider_code,provider_transaction_id,gross_amount_paise,provider_fee_paise,net_amount_paise,currency,state,metadata) VALUES(${transactionId},${input.externalReference},${input.transactionType},${input.serviceCode??null},${customerUserId},${agentUserId},${referralUserId},${input.providerCode??null},${input.providerTransactionId??null},${input.grossAmountPaise},${providerFee},${input.grossAmountPaise-providerFee},${input.currency??'INR'},'success',${JSON.stringify(input.metadata??{})}::jsonb)`;
   else await tx`UPDATE ycm_financial_transactions SET state='success',provider_transaction_id=${input.providerTransactionId??null},updated_at=NOW() WHERE transaction_id=${transactionId}`;
   const addSplit=async(type:string,userId:string|null,percent:number,amount:number,funding:string)=>{
    const splitId=randomUUID();
@@ -31,10 +39,10 @@ export async function recordSuccessfulFinancialTransaction(input:RecordFinancial
     await tx`UPDATE ycm_transaction_splits SET status='credited' WHERE split_id=${splitId}`;
    }
   };
-  await addSplit('ycm',null,input.rule.ycmPercent,allocation.ycmPaise,'gross');
-  await addSplit('agent',input.agentUserId??null,input.rule.partnerPercent,allocation.agentPaise,'gross');
-  await addSplit('referral',input.referralUserId??null,input.rule.referralPercent,allocation.referralPaise,input.rule.referralFundedBy??'agent');
-  return {transactionId,idempotent:false,allocation};
+  await addSplit('ycm',null,rule.ycmPercent,allocation.ycmPaise,'gross');
+  await addSplit('agent',input.agentUserId??null,rule.partnerPercent,allocation.agentPaise,'gross');
+  await addSplit('referral',input.referralUserId??null,rule.referralPercent,allocation.referralPaise,rule.referralFundedBy??'agent');
+  return {transactionId,idempotent:false,allocation,rule};
  });}finally{await sql.end({timeout:3});}
 }
 
