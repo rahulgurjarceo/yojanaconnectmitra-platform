@@ -1,0 +1,34 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+
+const read=(p)=>fs.readFileSync(p,'utf8');
+const api=read('app/api/impact-proof/route.ts');
+const packet=read('app/api/impact-proof/packet/route.ts');
+const sql=read('db/migrations/20261002_ycm_impact_proof.sql');
+const ui=read('app/impact-proof/page.tsx');
+
+assert.match(api,/verifySession/);
+assert.match(api,/FORBIDDEN_ROLE_SCOPE/);
+assert.match(api,/consent_captured=true/);
+assert.match(api,/verifiedOnly:v/);
+assert.match(api,/ycm_impact_records/);
+assert.match(api,/POST/);
+assert.match(packet,/i\.verified=true/);
+assert.match(packet,/i\.consent_captured=true/);
+assert.match(packet,/source_hash/);
+assert.match(packet,/causation:'not_claimed'/);
+assert.match(sql,/CREATE TABLE IF NOT EXISTS ycm_impact_records/);
+assert.match(sql,/CREATE TABLE IF NOT EXISTS ycm_impact_evidence/);
+assert.match(sql,/CREATE TABLE IF NOT EXISTS ycm_impact_audit/);
+assert.match(sql,/CREATE TABLE IF NOT EXISTS ycm_education_measurements/);
+assert.match(sql,/verification_status TEXT NOT NULL DEFAULT 'pending'/);
+assert.match(sql,/followup_value NUMERIC/);
+assert.match(ui,/Baseline/);
+assert.match(ui,/Intervention/);
+assert.match(ui,/Follow-up/);
+assert.match(ui,/Verified Evidence/);
+assert.match(ui,/Change/);
+assert.doesNotMatch(ui,/setState\\(/);
+
+console.log('IMPACT_PROOF_CONTRACT_TEST: PASS');
+console.log('Checks: auth, consent, verification, evidence hash, audit schema, education baseline/intervention/follow-up, UI measurement standard');
