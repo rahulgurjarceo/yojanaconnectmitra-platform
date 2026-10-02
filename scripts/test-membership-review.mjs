@@ -9,7 +9,7 @@ assert.match(api,/role==='management'||role==='ceo'/);
 assert.match(api,/HIGH_MANAGEMENT_ONLY/);
 assert.match(api,/review_status='pending'/);
 assert.match(api,/decision==='approve'/);
-assert.match(api,/validity_years=\\$\{approved\?2:1\}/);
+assert.match(api,/validity_years=\$\{approved\?2:1\}/);
 assert.match(auth,/const validityYears=1/);
 assert.match(auth,/const reviewStatus=isSpecial \? 'pending' : 'not_required'/);
 assert.match(reg,/reviewStatus:membership.review_status/);
