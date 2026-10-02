@@ -35,5 +35,7 @@ jobs:
         run: npm run test:service-master
       - name: Dynamic service operating layer contract test
         run: npm run test:dynamic-service-layer
+      - name: Provider workflow contract test
+        run: npm run test:provider-workflow
       - name: Production build
         run: npm run build
