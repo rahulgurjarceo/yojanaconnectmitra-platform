@@ -57,5 +57,7 @@ jobs:
         run: npm run test:ycm-package-kyc
       - name: AEPS provider mode contract test
         run: npm run test:aeps-provider-modes
+      - name: Auth login security contract test
+        run: npm run test:auth-login-security
       - name: Production build
         run: npm run build
