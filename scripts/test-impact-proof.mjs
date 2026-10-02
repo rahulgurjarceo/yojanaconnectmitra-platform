@@ -48,7 +48,7 @@ assert.match(ui,/Follow-up/);
 assert.match(ui,/Verified Evidence/);
 assert.match(ui,/Change/);
 assert.match(ui,/\/impact-proof\/packet\?district=/);
-assert.doesNotMatch(ui,/setState\\(/);
+assert.doesNotMatch(ui,/setState\(/);
 
 console.log('IMPACT_PROOF_CONTRACT_TEST: PASS');
 console.log('Checks: auth, consent, verification, evidence hash, audit schema, education baseline/intervention/follow-up, UI measurement standard');
