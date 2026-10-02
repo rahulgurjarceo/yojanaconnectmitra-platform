@@ -2,10 +2,12 @@ import fs from 'node:fs';
 const files=[
  'database/migrations/031_eko_aeps_retailer_transactions.sql',
  'app/lib/eko-transaction-inquiry.ts',
+ 'app/lib/eko-user-services.ts',
  'app/api/management/eko/retailers/route.ts',
  'app/api/aeps/eko/transactions/route.ts',
  'app/api/integrations/eko/aeps/callback/route.ts',
- 'app/api/aeps/eko/inquiry/route.ts'
+ 'app/api/aeps/eko/inquiry/route.ts',
+ 'app/api/management/eko/retailers/sync-status/route.ts'
 ];
 for(const f of files)if(!fs.existsSync(f))throw new Error('MISSING_'+f);
 const migration=fs.readFileSync(files[0],'utf8');
