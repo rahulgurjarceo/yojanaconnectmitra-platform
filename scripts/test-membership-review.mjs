@@ -4,7 +4,7 @@ const migration=await fs.readFile("database/migrations/024_membership_review_and
 const api=await fs.readFile("app/api/membership/review/route.ts","utf8");
 const auth=await fs.readFile("app/lib/ycm-auth-db.ts","utf8");
 const reg=await fs.readFile("app/api/auth/register/route.ts","utf8");
-for(const token of ["review_status","review_type","verification_reference","reviewed_by","validity_years=1","validity_years=2"]) assert.match(migration,new RegExp(token.replace(/[=]/g,"\\=")));
+for(const token of ["review_status","review_type","verification_reference","reviewed_by","validity_years=1","validity_years=2"]) assert.ok(migration.includes(token), `missing ${token}`);
 assert.match(api,/role==='management'||role==='ceo'/);
 assert.match(api,/HIGH_MANAGEMENT_ONLY/);
 assert.match(api,/review_status='pending'/);
@@ -15,3 +15,7 @@ assert.match(auth,/const reviewStatus=isSpecial \? 'pending' : 'not_required'/);
 assert.match(reg,/reviewStatus:membership.review_status/);
 console.log("MEMBERSHIP_REVIEW_CONTRACT_TEST: PASS");
 console.log("Checks: standard one-year base, special pending review, management/CEO-only approval, two-year promotion after approval, no team-lead/employee approval.");
+const ui=await fs.readFile('app/membership-review/page.tsx','utf8');
+assert.match(ui,/Approve → 2 Years/);
+assert.match(ui,/Death certificate \/ case reference/);
+assert.match(ui,/Employees, Sales and Team Leads do not receive approval authority/);
