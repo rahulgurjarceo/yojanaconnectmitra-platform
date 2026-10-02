@@ -53,5 +53,7 @@ jobs:
         run: npm run test:settlement
       - name: Eko retailer flow contract test
         run: npm run test:eko-retailer-flow
+      - name: YCM package and KYC contract test
+        run: npm run test:ycm-package-kyc
       - name: Production build
         run: npm run build
