@@ -16,7 +16,7 @@ export async function GET(r:NextRequest){
 export async function POST(r:NextRequest){
  const s=sess(r);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
  if(!['ceo','admin','management','team_lead'].includes(s.role))return NextResponse.json({success:false,code:'FORBIDDEN_ROLE_SCOPE'},{status:403});
- const b=await r.json().catch(()=>null) as {targetType?:'company'|'team'|'employee';ownerUserId?:string;teamId?:string;parentTargetId?:string;metricCode?:string;targetValue?:number;unit?:string;periodStart?:string;periodEnd?:string;notes?:string}|null;
+ const b=await r.json().catch(()=>null) as {targetType?:'company'|'state'|'district'|'block'|'franchise'|'team'|'employee';ownerUserId?:string;teamId?:string;parentTargetId?:string;stateCode?:string;districtCode?:string;blockCode?:string;franchiseEntityId?:string;teamType?:string;metricCode?:string;targetValue?:number;unit?:string;periodStart?:string;periodEnd?:string;notes?:string}|null;
  if(!b?.targetType||!b.metricCode||b.targetValue==null||!b.periodStart||!b.periodEnd)return NextResponse.json({success:false,code:'TARGET_FIELDS_REQUIRED'},{status:400});
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
@@ -31,7 +31,7 @@ export async function POST(r:NextRequest){
   }
   let ownerId=null;if(b.ownerUserId)ownerId=(await sql`SELECT id FROM ycm_users WHERE user_id=${b.ownerUserId} LIMIT 1`)[0]?.id||null;
   if(b.targetType==='employee'&&!ownerId)return NextResponse.json({success:false,code:'OWNER_NOT_FOUND'},{status:400});
-  const row=(await sql`INSERT INTO ycm_org_targets(target_type,owner_user_id,team_id,parent_target_id,metric_code,target_value,unit,period_start,period_end,assigned_by,notes) VALUES(${b.targetType},${ownerId},${b.teamId||null},${b.parentTargetId||null},${b.metricCode},${b.targetValue},${b.unit||'count'},${b.periodStart},${b.periodEnd},${actor},${b.notes||null}) RETURNING *`)[0];
+  const row=(await sql`INSERT INTO ycm_org_targets(target_type,owner_user_id,team_id,parent_target_id,state_code,district_code,block_code,franchise_entity_id,team_type,metric_code,target_value,unit,period_start,period_end,assigned_by,notes) VALUES(${b.targetType},${ownerId},${b.teamId||null},${b.parentTargetId||null},${b.stateCode||null},${b.districtCode||null},${b.blockCode||null},${b.franchiseEntityId||null},${b.teamType||null},${b.metricCode},${b.targetValue},${b.unit||'count'},${b.periodStart},${b.periodEnd},${actor},${b.notes||null}) RETURNING *`)[0];
   return NextResponse.json({success:true,target:row},{status:201});
  }finally{await sql.end({timeout:3});}
 }
