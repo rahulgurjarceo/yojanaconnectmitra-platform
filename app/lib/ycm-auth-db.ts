@@ -58,3 +58,26 @@ export async function resetPassword(rawToken:string,newPassword:string) {
   });
   return token.user_id as string;
 }
+
+
+export async function createMembership(input:{userId:string;membershipType:'individual'|'family'}) {
+  const db=authDb();
+  const rows=await db`INSERT INTO ycm_memberships
+    (user_id,membership_type,plan_code,amount_paise,currency,validity_years,status)
+    VALUES
+    (${input.userId},${input.membershipType},'YCM_99_2Y',9900,'INR',2,'pending_payment')
+    ON CONFLICT (user_id,membership_type) WHERE status='pending_payment'
+    DO UPDATE SET updated_at=NOW()
+    RETURNING membership_id,membership_type,plan_code,amount_paise,currency,validity_years,status,family_id`;
+  return rows[0];
+}
+
+export async function getUserPrimaryMembership(userId:string) {
+  const rows=await authDb()`SELECT membership_id,membership_type,plan_code,amount_paise,currency,validity_years,status,family_id
+    FROM ycm_memberships
+    WHERE user_id=(SELECT id FROM ycm_users WHERE user_id=${userId} LIMIT 1)
+      AND status IN ('active','pending_payment')
+    ORDER BY CASE WHEN status='active' THEN 0 ELSE 1 END, created_at DESC
+    LIMIT 1`;
+  return rows[0] ?? null;
+}
