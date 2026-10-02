@@ -31,7 +31,7 @@ export async function recordSuccessfulFinancialTransaction(input:RecordFinancial
   else await tx`UPDATE ycm_financial_transactions SET state='success',provider_transaction_id=${input.providerTransactionId??null},updated_at=NOW() WHERE transaction_id=${transactionId}`;
   const addSplit=async(type:string,userId:string|null,percent:number,amount:number,funding:string)=>{
    const splitId=randomUUID();
-   await tx`INSERT INTO ycm_transaction_splits(split_id,transaction_id,recipient_type,recipient_user_id,percent,amount_paise,funding_source,status) VALUES(${splitId},${transactionId},${type},${userId},${percent},${amount},${funding},'pending') ON CONFLICT DO NOTHING`;
+   await tx`INSERT INTO ycm_transaction_splits(split_id,transaction_id,recipient_type,recipient_user_id,percent,amount_paise,funding_source,status,settlement_eligible_at) VALUES(${splitId},${transactionId},${type},${userId},${percent},${amount},${funding},'pending',NOW()+INTERVAL '1 day') ON CONFLICT DO NOTHING`;
    if(userId&&amount>0){
     const wallet=(await tx`INSERT INTO ycm_wallet_accounts(user_id) VALUES(${userId}) ON CONFLICT(user_id) DO UPDATE SET updated_at=NOW() RETURNING wallet_id,available_paise,status`)[0];
     if(wallet.status!=='active')throw new Error('WALLET_FROZEN');
