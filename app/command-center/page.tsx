@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 import {useEffect,useState} from 'react';
 import {YCM_LIFECYCLE,YCM_MODULES,YCMModule,ModuleStatus} from '../ycm-architecture';
