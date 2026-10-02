@@ -16,5 +16,5 @@ assert.match(ui, /selectedDistrict/);
 assert.match(ui, /Refresh live data/);
 assert.match(ui, /loadCommandCenter/);
 assert.match(ui, /Last refreshed/);
-assert.match(ui, /\/impact-proof\/packet\?district=/);
+assert.match(ui, /\/impact-proof\/packet\?district=/);\nassert.match(ui, /\/api\/ceo\/entity-kpi/);\nassert.match(ui, /EntityKpiPanel/);\nassert.match(ui, /Revenue/);\nassert.match(ui, /Commission/);\nassert.match(ui, /completed_transactions/);
 console.log("COMMAND_CENTER_HEALTH_CONTRACT_TEST: PASS");
