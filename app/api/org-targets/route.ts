@@ -24,9 +24,11 @@ export async function POST(r:NextRequest){
   if(s.role==='team_lead'&&b.targetType!=='employee')return NextResponse.json({success:false,code:'TEAM_LEAD_CAN_ONLY_SET_EMPLOYEE_TARGETS'},{status:403});
   if(s.role==='team_lead'&&!b.teamId)return NextResponse.json({success:false,code:'TEAM_ID_REQUIRED'},{status:400});
   if(s.role==='team_lead'){
-   const team=(await sql`SELECT 1 FROM ycm_teams WHERE team_id=${b.teamId} AND manager_user_id=${actor} AND status='active' LIMIT 1`)[0];
+   const teamId=b.teamId;
+   const team=(await sql`SELECT 1 FROM ycm_teams WHERE team_id=${teamId} AND manager_user_id=${actor} AND status='active' LIMIT 1`)[0];
    if(!team)return NextResponse.json({success:false,code:'TEAM_SCOPE_DENIED'},{status:403});
-   const member=(await sql`SELECT 1 FROM ycm_users WHERE user_id=${b.ownerUserId||''} AND team_id=${b.teamId} AND role='employee' AND status='active' LIMIT 1`)[0];
+   const ownerUserId=b.ownerUserId||'';
+   const member=(await sql`SELECT 1 FROM ycm_users WHERE user_id=${ownerUserId} AND team_id=${teamId} AND role='employee' AND status='active' LIMIT 1`)[0];
    if(!member)return NextResponse.json({success:false,code:'EMPLOYEE_OUTSIDE_TEAM'},{status:403});
   }
   let ownerId=null;if(b.ownerUserId)ownerId=(await sql`SELECT id FROM ycm_users WHERE user_id=${b.ownerUserId} LIMIT 1`)[0]?.id||null;
