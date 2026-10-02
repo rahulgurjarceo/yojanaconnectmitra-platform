@@ -21,5 +21,9 @@ jobs:
         run: npm ci
       - name: Lint
         run: npm run lint
+      - name: Impact Proof contract test
+        run: npm run test:impact-proof
+      - name: Migration runner contract test
+        run: npm run test:migration
       - name: Production build
         run: npm run build
