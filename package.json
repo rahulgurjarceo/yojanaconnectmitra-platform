@@ -19,7 +19,8 @@
     "test:unified-lead-intake": "node scripts/test-unified-lead-intake.mjs",
     "test:membership": "node scripts/test-individual-family-membership.mjs",
     "test:service-governance-ui": "node scripts/test-service-governance-ui.mjs",
-    "test:membership-review": "node scripts/test-membership-review.mjs"
+    "test:membership-review": "node scripts/test-membership-review.mjs",
+    "test:financial-ledger": "node scripts/test-financial-ledger.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
