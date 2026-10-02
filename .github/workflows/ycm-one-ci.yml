@@ -25,5 +25,7 @@ jobs:
         run: npm run test:impact-proof
       - name: Migration runner contract test
         run: npm run test:migration
+      - name: Command Center contract test
+        run: npm run test:command-center
       - name: Production build
         run: npm run build
