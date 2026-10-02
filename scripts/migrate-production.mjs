@@ -19,15 +19,13 @@ const files = (await fs.readdir(migrationDir))
   .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
 try {
-  await sql.begin(async (tx) => {
-    await tx.unsafe(`
-      CREATE TABLE IF NOT EXISTS ycm_schema_migrations (
-        filename TEXT PRIMARY KEY,
-        applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-    await tx.unsafe("SELECT pg_advisory_xact_lock(hashtext('ycm-one-schema-migrations'))");
-  });
+  await sql`
+    CREATE TABLE IF NOT EXISTS ycm_schema_migrations (
+      filename TEXT PRIMARY KEY,
+      applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`SELECT pg_advisory_lock(hashtext('ycm-one-schema-migrations'))`;
 
   for (const file of files) {
     const existing = await sql`SELECT filename FROM ycm_schema_migrations WHERE filename = ${file}`;
@@ -51,5 +49,9 @@ try {
 
   console.log("YCM database migrations complete.");
 } finally {
-  await sql.end({ timeout: 5 });
+  try {
+    await sql`SELECT pg_advisory_unlock(hashtext('ycm-one-schema-migrations'))`;
+  } finally {
+    await sql.end({ timeout: 5 });
+  }
 }
