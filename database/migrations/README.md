@@ -16,6 +16,7 @@ Run in numeric order:
 11. 012_ceo_growth_insights.sql
 12. 013_employee_productivity_telemetry.sql
 13. 014_employee_compensation_targets.sql
+015_organization_hierarchy_team_lead.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
 
