@@ -58,3 +58,18 @@ assert.match(ledgerMigration,/ycm_transaction_splits/);
 assert.match(ledgerMigration,/ycm_wallet_accounts/);
 assert.match(ledgerMigration,/ycm_wallet_entries/);
 assert.match(ledgerMigration,/ycm_settlements/);
+
+const financialApi=await fs.readFile('app/api/financial/transactions/route.ts','utf8');
+const walletApi=await fs.readFile('app/api/wallet/route.ts','utf8');
+const commissionMigration=await fs.readFile('database/migrations/026_unified_transaction_commission_ledger.sql','utf8');
+const defaultRule=await fs.readFile('database/migrations/027_default_commission_rule.sql','utf8');
+assert.match(financialApi,/recordSuccessfulFinancialTransaction/);
+assert.match(financialApi,/reverseFinancialTransaction/);
+assert.match(financialApi,/YCM_FINANCIAL_WEBHOOK_SECRET/);
+assert.match(walletApi,/ycm_wallet_accounts/);
+assert.match(walletApi,/ycm_wallet_entries/);
+assert.match(commissionMigration,/ycm_commission_rules/);
+assert.match(commissionMigration,/ycm_financial_transactions/);
+assert.match(commissionMigration,/ycm_transaction_splits/);
+assert.match(commissionMigration,/ycm_settlements/);
+assert.match(defaultRule,/60,40,0/);
