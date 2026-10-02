@@ -45,3 +45,5 @@ ALTER TABLE ycm_wallet_entries ADD CONSTRAINT ycm_wallet_entries_entry_type_chec
 
 CREATE INDEX IF NOT EXISTS idx_ycm_transaction_splits_settlement_eligible
   ON ycm_transaction_splits(recipient_user_id,settlement_eligible_at,status);
+
+UPDATE ycm_transaction_splits sp SET settlement_eligible_at=t.created_at+INTERVAL '1 day' FROM ycm_financial_transactions t WHERE sp.transaction_id=t.transaction_id AND sp.settlement_eligible_at IS NULL AND sp.status='credited';
