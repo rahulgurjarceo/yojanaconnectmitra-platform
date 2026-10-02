@@ -20,6 +20,9 @@ Run in numeric order:
 16. 016_work_approval_and_org_targets.sql
 17. 017_geographic_franchise_targets.sql
 18. 018_business_domains_and_team_mapping.sql
+19. 019_unified_service_master.sql
+20. 020_unified_franchise_models.sql
+21. 021_dynamic_service_operating_layer.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
 
@@ -34,5 +37,6 @@ Production prerequisites:
 - YCM_SESSION_SECRET
 - OTP provider configuration
 - Payment provider configuration
+- Provider API credentials must be stored in deployment secrets/secret manager, never in PostgreSQL service configuration.
 
 Never store database credentials or provider secrets in source control.
