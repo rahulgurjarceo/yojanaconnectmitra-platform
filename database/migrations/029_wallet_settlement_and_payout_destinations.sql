@@ -4,6 +4,7 @@ ALTER TABLE ycm_wallet_accounts
 
 ALTER TABLE ycm_transaction_splits
   ADD COLUMN IF NOT EXISTS settlement_eligible_at TIMESTAMPTZ;
+ALTER TABLE ycm_transaction_splits ADD COLUMN IF NOT EXISTS settlement_released_at TIMESTAMPTZ;
 
 CREATE TABLE IF NOT EXISTS ycm_payout_destinations (
   destination_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
