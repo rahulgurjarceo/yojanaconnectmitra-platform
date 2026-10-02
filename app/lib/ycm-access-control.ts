@@ -76,11 +76,11 @@ export function roleCanAccessPath(role: YcmRole, pathname: string) {
   if (pathname.startsWith('/student') || pathname.startsWith('/api/student')) return ['student', 'family', 'management', 'ceo', 'admin'].includes(role);
   if (pathname.startsWith('/crm') || pathname.startsWith('/api/crm')) return ['employee', 'management', 'ceo', 'admin', 'partner', 'referral'].includes(role);
   if (pathname.startsWith('/family-dashboard') || pathname.startsWith('/api/family-dashboard')) return role === 'family';
-  if (pathname.startsWith('/command-center') || pathname.startsWith('/api/command-center')) return ['ceo', 'management', 'admin'].includes(role);
+  if (pathname.startsWith('/command-center') || pathname.startsWith('/api/command-center')) return ['ceo', 'management', 'admin'].includes(role);\n  if (pathname === '/impact-proof' || pathname.startsWith('/impact-proof/') || pathname === '/api/impact-proof' || pathname.startsWith('/api/impact-proof/')) return ['ceo', 'management', 'admin'].includes(role);
   return true;
 }
 
 export function isProtectedPath(pathname: string) {
-  return ['/ceo', '/management', '/employee', '/lawyer', '/farmer', '/student', '/crm', '/family-dashboard', '/command-center', '/api/ceo', '/api/management', '/api/employee', '/api/lawyer', '/api/farmer', '/api/student', '/api/crm', '/api/family-dashboard', '/api/command-center']
+  return ['/ceo', '/management', '/employee', '/lawyer', '/farmer', '/student', '/crm', '/family-dashboard', '/command-center', '/impact-proof', '/api/ceo', '/api/management', '/api/employee', '/api/lawyer', '/api/farmer', '/api/student', '/api/crm', '/api/family-dashboard', '/api/command-center', '/api/impact-proof']
     .some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
