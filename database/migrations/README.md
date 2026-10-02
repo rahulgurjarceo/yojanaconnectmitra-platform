@@ -11,8 +11,15 @@ Run in numeric order:
 6. 007_family_intelligence_operations.sql
 7. 008_location_community_requirement_engine.sql
 8. 009_family_access_and_flow_hardening.sql
+9. 010_ycm_impact_proof.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
+
+Migration runner:
+- `npm run db:migrate` runs the canonical migrations in numeric order.
+- It requires `DATABASE_URL` or `POSTGRES_URL` and records applied files in `ycm_schema_migrations`.
+- It is intentionally not part of CI; run it explicitly against the intended production database.
+- Optional `DATABASE_SSL=disable` can be used only when the database endpoint does not require TLS.
 
 Production prerequisites:
 - DATABASE_URL or POSTGRES_URL
