@@ -36,3 +36,11 @@ assert.match(workMigration, /approval_status/);
 assert.match(workMigration, /ycm_org_targets/);
 assert.match(workMigration, /parent_target_id/);
 console.log("WORK_APPROVAL_MIGRATION_CONTRACT_TEST: PASS");
+
+assert.match(readme, /019_unified_service_master\.sql/);
+assert.match(readme, /020_unified_franchise_models\.sql/);
+assert.match(readme, /021_dynamic_service_operating_layer\.sql/);
+const dynamicMigration = await fs.readFile(path.join(process.cwd(), "database/migrations/021_dynamic_service_operating_layer.sql"), "utf8");
+assert.match(dynamicMigration, /ycm_service_providers/);
+assert.match(dynamicMigration, /ycm_service_workflows/);
+console.log("DYNAMIC_SERVICE_MIGRATION_CONTRACT_TEST: PASS");
