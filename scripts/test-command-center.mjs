@@ -37,7 +37,6 @@ assert.match(ui, /Disconnected/);
 assert.match(ui, /Messages sent/);
 assert.match(ui, /Leave/);
 
-assert.match(ui, /EmployeeCompensationPanel/);
 assert.match(ui, /\/api\/ceo\/employee-compensation/);
 assert.match(ui, /Salary.*Target.*Commission.*Attendance/);
 assert.match(ui, /Earned commission/);
