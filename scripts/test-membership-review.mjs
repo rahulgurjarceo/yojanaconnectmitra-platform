@@ -44,3 +44,17 @@ assert.match(envExample,/YCM_PAYMENT_PROVIDERS=razorpay,payu,paytm/);
 assert.match(envExample,/RAZORPAY_WEBHOOK_SECRET/);
 assert.match(envExample,/PAYU_WEBHOOK_SECRET/);
 assert.match(envExample,/PAYTM_WEBHOOK_SECRET/);
+
+const commission=await fs.readFile('app/lib/ycm-unified-commission.ts','utf8');
+const ledger=await fs.readFile('app/lib/ycm-financial-ledger.ts','utf8');
+const ledgerMigration=await fs.readFile('database/migrations/026_unified_transaction_commission_ledger.sql','utf8');
+assert.match(commission,/partnerPercent:40/);
+assert.match(commission,/ycmPercent:60/);
+assert.match(commission,/referralFundedBy/);
+assert.match(ledger,/recordSuccessfulFinancialTransaction/);
+assert.match(ledger,/reverseFinancialTransaction/);
+assert.match(ledgerMigration,/ycm_financial_transactions/);
+assert.match(ledgerMigration,/ycm_transaction_splits/);
+assert.match(ledgerMigration,/ycm_wallet_accounts/);
+assert.match(ledgerMigration,/ycm_wallet_entries/);
+assert.match(ledgerMigration,/ycm_settlements/);
