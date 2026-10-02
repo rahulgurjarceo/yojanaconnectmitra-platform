@@ -55,5 +55,7 @@ jobs:
         run: npm run test:eko-retailer-flow
       - name: YCM package and KYC contract test
         run: npm run test:ycm-package-kyc
+      - name: AEPS provider mode contract test
+        run: npm run test:aeps-provider-modes
       - name: Production build
         run: npm run build
