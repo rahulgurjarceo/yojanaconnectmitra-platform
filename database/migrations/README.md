@@ -23,6 +23,7 @@ Run in numeric order:
 19. 019_unified_service_master.sql
 20. 020_unified_franchise_models.sql
 21. 021_dynamic_service_operating_layer.sql
+22. 022_unified_lead_intake.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
 
