@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-export const YCM_ROLES = ['family', 'farmer', 'lawyer', 'student', 'employee', 'management', 'ceo', 'admin', 'partner', 'referral'] as const;
+export const YCM_ROLES = ['family', 'farmer', 'lawyer', 'student', 'employee', 'team_lead', 'management', 'ceo', 'admin', 'partner', 'referral'] as const;
 export type YcmRole = (typeof YCM_ROLES)[number];
 
 export type YcmSession = {
@@ -51,7 +51,8 @@ const ROLE_PERMISSIONS: Record<YcmRole, readonly string[]> = {
   farmer: ['farmer:self', 'scheme:self', 'agri:self', 'market:self', 'document:self'],
   lawyer: ['case:assigned', 'case:lawyer', 'customer:assigned', 'document:assigned', 'legal:all'],
   student: ['education:self', 'scholarship:self', 'document:self', 'career:self'],
-  employee: ['case:assigned', 'customer:assigned', 'document:assigned', 'cri:assigned'],
+  employee: ['case:assigned', 'customer:assigned', 'document:assigned', 'cri:assigned', 'attendance:self', 'work:self'],
+  team_lead: ['case:assigned', 'customer:assigned', 'document:assigned', 'cri:assigned', 'attendance:team', 'work:team', 'team:manage'],
   management: ['case:all', 'customer:all', 'crm:all', 'reports:all', 'cri:all'],
   ceo: ['case:all', 'customer:all', 'crm:all', 'reports:all', 'finance:all', 'hr:all', 'security:all', 'cri:all', 'management:all'],
   admin: ['platform:all', 'security:all', 'user:all'],
@@ -69,8 +70,8 @@ export function permissionsForRole(role: YcmRole) {
 
 export function roleCanAccessPath(role: YcmRole, pathname: string) {
   if (pathname.startsWith('/ceo') || pathname.startsWith('/api/ceo')) return role === 'ceo';
-  if (pathname.startsWith('/management') || pathname.startsWith('/api/management')) return ['management', 'ceo', 'admin'].includes(role);
-  if (pathname.startsWith('/employee') || pathname.startsWith('/api/employee')) return ['employee', 'management', 'ceo', 'admin'].includes(role);
+  if (pathname.startsWith('/management') || pathname.startsWith('/api/management')) return ['team_lead', 'management', 'ceo', 'admin'].includes(role);
+  if (pathname.startsWith('/employee') || pathname.startsWith('/api/employee')) return ['employee', 'team_lead', 'management', 'ceo', 'admin'].includes(role);
   if (pathname.startsWith('/lawyer') || pathname.startsWith('/api/lawyer')) return ['lawyer', 'management', 'ceo', 'admin'].includes(role);
   if (pathname.startsWith('/farmer') || pathname.startsWith('/api/farmer')) return ['farmer', 'management', 'ceo', 'admin'].includes(role);
   if (pathname.startsWith('/student') || pathname.startsWith('/api/student')) return ['student', 'family', 'management', 'ceo', 'admin'].includes(role);
