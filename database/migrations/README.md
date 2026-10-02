@@ -30,6 +30,8 @@ Run in numeric order:
 26. 026_unified_transaction_commission_ledger.sql
 27. 027_default_commission_rule.sql
 28. 028_aeps_financial_service.sql
+29. 029_wallet_settlement_and_payout_destinations.sql
+30. 030_settlement_destination_binding.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
 
