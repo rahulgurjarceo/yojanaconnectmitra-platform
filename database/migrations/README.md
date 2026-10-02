@@ -25,6 +25,7 @@ Run in numeric order:
 21. 021_dynamic_service_operating_layer.sql
 22. 022_unified_lead_intake.sql
 23. 023_individual_family_memberships.sql
+24. 024_membership_review_and_special_activation.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
 
@@ -44,4 +45,4 @@ Production prerequisites:
 Never store database credentials or provider secrets in source control.
 
 
-Membership pricing rule: ₹99 standard Individual/Household = 1 year; ₹99 Defense/Army Family and Widow Household = 2 years, subject to category verification before activation.
+Membership pricing rule: ₹99 standard Individual/Household = 1 year. Special Family review starts at ₹99 / 1-year base state; after High Management approval, Widow Household or Defense Family becomes ₹99 / 2 years. No defense/government source credentials or raw sensitive government documents are stored in the membership record.
