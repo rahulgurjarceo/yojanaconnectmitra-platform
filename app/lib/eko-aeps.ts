@@ -3,7 +3,7 @@ import type {YcmAepsProvider,YcmAepsRequest,YcmAepsResult,YcmAepsTransactionType
 
 const SERVICE_TYPE:Record<YcmAepsTransactionType,number>={
  cash_withdrawal:2,
- cash_deposit:0,
+ cash_deposit:2,
  balance_enquiry:3,
  mini_statement:4,
  aadhaar_to_aadhaar_transfer:5,
@@ -49,7 +49,7 @@ export class EkoAepsProvider implements YcmAepsProvider{
   const timestamp=Date.now().toString();
   const security=ekoSecurityHeaders(timestamp);
   const amount=String(Math.round((input.amountPaise??0)/100));
-  const userCode=env('EKO_RETAILER_USER_CODE');
+  const userCode=String(input.metadata?.ekoUserCode??'');if(!userCode)throw new Error('EKO_RETAILER_USER_CODE_REQUIRED');
   const body={
    service_type:SERVICE_TYPE[input.transactionType],
    initiator_id:env('EKO_INITIATOR_ID'),
@@ -65,7 +65,8 @@ export class EkoAepsProvider implements YcmAepsProvider{
    latlong:input.latLong,
    source_ip:input.sourceIp,
   };
-  const requestHash=ekoRequestHash(timestamp,[input.aadhaarEncrypted,amount,userCode]);
+  const hashValues=input.transactionType==='cash_withdrawal'?[input.customerMobile,amount,userCode]:[input.customerMobile,userCode];
+  const requestHash=ekoRequestHash(timestamp,hashValues);
   const response=await fetch(env('EKO_BASE_URL')+'/ekoapi/v2/aeps',{
    method:'POST',
    headers:{'Content-Type':'application/json',developer_key:env('EKO_DEVELOPER_KEY'),'secret-key':security.secretKey,'secret-key-timestamp':security.secretKeyTimestamp,request_hash:requestHash},
@@ -77,6 +78,7 @@ export class EkoAepsProvider implements YcmAepsProvider{
  }
 
  async status(transactionId:string):Promise<YcmAepsResult>{
-  throw new Error('EKO_AEPS_STATUS_ENDPOINT_NOT_CONFIGURED');
+  if(!transactionId)throw new Error('EKO_TRANSACTION_ID_REQUIRED');
+  throw new Error('EKO_AEPS_STATUS_REQUIRES_TRANSACTION_INQUIRY_ADAPTER');
  }
 }
