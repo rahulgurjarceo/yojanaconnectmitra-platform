@@ -7,6 +7,7 @@ const packet=read('app/api/impact-proof/packet/route.ts');
 const sql=read('db/migrations/20261002_ycm_impact_proof.sql');
 const ui=read('app/impact-proof/page.tsx');
 const educationApi=read('app/api/education/measurements/route.ts');
+const packetPage=read('app/impact-proof/packet/page.tsx');
 
 assert.match(api,/verifySession/);
 assert.match(api,/FORBIDDEN_ROLE_SCOPE/);
@@ -25,6 +26,8 @@ assert.match(packet,/i\.verified=true/);
 assert.match(packet,/i\.consent_captured=true/);
 assert.match(packet,/source_hash/);
 assert.match(packet,/causation:'not_claimed'/);
+assert.match(packetPage,/Print \/ Save PDF/);
+assert.match(packetPage,/source_hash/);
 assert.match(sql,/CREATE TABLE IF NOT EXISTS ycm_impact_records/);
 assert.match(sql,/CREATE TABLE IF NOT EXISTS ycm_impact_evidence/);
 assert.match(sql,/CREATE TABLE IF NOT EXISTS ycm_impact_audit/);
