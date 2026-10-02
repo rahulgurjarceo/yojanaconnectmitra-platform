@@ -1,0 +1,46 @@
+import postgres from 'postgres';
+import { randomUUID } from 'node:crypto';
+
+const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:5,prepare:false,connect_timeout:10,idle_timeout:20}):null};
+
+export type MembershipPaymentProvider={
+ createOrder(input:{membershipId:string;amount:number;currency:'INR'}):Promise<{orderId:string;amount:number;currency:'INR';status:'created'}>;
+ verifyPayment(input:{orderId:string;paymentId:string;signature:string}):Promise<{verified:boolean}>;
+};
+
+export function getMembershipPaymentProvider():MembershipPaymentProvider|null{return null;}
+
+export async function createMembershipPaymentRecord(input:{membershipId:string;provider:string;providerOrderId:string}){
+ const sql=db();if(!sql)throw new Error('DATABASE_NOT_CONFIGURED');
+ try{
+  const rows=await sql`INSERT INTO ycm_membership_payments(payment_id,membership_id,amount_paise,currency,provider,provider_order_id,status)
+   VALUES(${randomUUID()},${input.membershipId},9900,'INR',${input.provider},${input.providerOrderId},'created')
+   RETURNING payment_id,membership_id,amount_paise,currency,provider,provider_order_id,status`;
+  return rows[0];
+ }finally{await sql.end({timeout:3});}
+}
+
+export async function activateVerifiedMembership(membershipId:string,providerPaymentId:string,providerSignature:string){
+ const sql=db();if(!sql)throw new Error('DATABASE_NOT_CONFIGURED');
+ try{
+  return await sql.begin(async tx=>{
+   const m=(await tx`SELECT membership_id,membership_type,membership_segment,plan_code,validity_years,status,review_status
+     FROM ycm_memberships WHERE membership_id=${membershipId} FOR UPDATE`)[0];
+   if(!m)throw new Error('MEMBERSHIP_NOT_FOUND');
+   if(m.status==='active')return m;
+   if(m.membership_segment!=='standard' && m.review_status!=='approved')throw new Error('SPECIAL_MEMBERSHIP_NOT_APPROVED');
+   const p=(await tx`SELECT payment_id,status,signature_verified FROM ycm_membership_payments
+     WHERE membership_id=${membershipId} AND status IN ('created','pending') ORDER BY created_at DESC LIMIT 1 FOR UPDATE`)[0];
+   if(!p)throw new Error('MEMBERSHIP_PAYMENT_NOT_FOUND');
+   await tx`UPDATE ycm_membership_payments SET status='success',signature_verified=true,provider_payment_id=${providerPaymentId},provider_signature=${providerSignature},paid_at=NOW(),updated_at=NOW() WHERE payment_id=${p.payment_id}`;
+   const years=Number(m.validity_years);
+   return (await tx`UPDATE ycm_memberships SET status='active',starts_at=NOW(),expires_at=NOW()+(${years}||' years')::interval,updated_at=NOW() WHERE membership_id=${membershipId} RETURNING membership_id,membership_type,membership_segment,plan_code,validity_years,status,review_status,starts_at,expires_at`)[0];
+  });
+ }finally{await sql.end({timeout:3});}
+}
+
+export async function expireMemberships(){
+ const sql=db();if(!sql)throw new Error('DATABASE_NOT_CONFIGURED');
+ try{return await sql`UPDATE ycm_memberships SET status='expired',updated_at=NOW() WHERE status='active' AND expires_at IS NOT NULL AND expires_at<=NOW() RETURNING membership_id`;}
+ finally{await sql.end({timeout:3});}
+}
