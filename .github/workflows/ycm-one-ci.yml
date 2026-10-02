@@ -43,5 +43,7 @@ jobs:
         run: npm run test:membership
       - name: Service governance UI contract test
         run: npm run test:service-governance-ui
+      - name: Membership review contract test
+        run: npm run test:membership-review
       - name: Production build
         run: npm run build
