@@ -47,5 +47,9 @@ jobs:
         run: npm run test:membership-review
       - name: Financial ledger contract test
         run: npm run test:financial-ledger
+      - name: Eko AePS contract test
+        run: npm run test:eko-aeps
+      - name: T+1 settlement contract test
+        run: npm run test:settlement
       - name: Production build
         run: npm run build
