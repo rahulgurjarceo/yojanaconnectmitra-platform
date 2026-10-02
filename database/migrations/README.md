@@ -12,6 +12,10 @@ Run in numeric order:
 7. 008_location_community_requirement_engine.sql
 8. 009_family_access_and_flow_hardening.sql
 9. 010_ycm_impact_proof.sql
+10. 011_ceo_entity_kpi.sql
+11. 012_ceo_growth_insights.sql
+12. 013_employee_productivity_telemetry.sql
+13. 014_employee_compensation_targets.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
 
