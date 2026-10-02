@@ -22,7 +22,8 @@
     "test:membership-review": "node scripts/test-membership-review.mjs",
     "test:financial-ledger": "node scripts/test-financial-ledger.mjs",
     "test:eko-aeps": "node scripts/test-eko-aeps.mjs",
-    "test:settlement": "node scripts/test-settlement.mjs"
+    "test:settlement": "node scripts/test-settlement.mjs",
+    "test:eko-retailer-flow": "node scripts/test-eko-retailer-flow.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
