@@ -33,3 +33,14 @@ assert.match(orderApi,/PAYMENT_PROVIDER_NOT_CONFIGURED/);
 assert.match(orderApi,/SPECIAL_MEMBERSHIP_NOT_APPROVED/);
 assert.match(verifyApi,/verifyPayment/);
 assert.match(verifyApi,/activateVerifiedMembership/);
+
+const paymentArchitecture=await fs.readFile('app/lib/payment/unified-payment.ts','utf8');
+const envExample=await fs.readFile('.env.example','utf8');
+assert.match(paymentArchitecture,/razorpay.*payu.*paytm/s);
+assert.match(paymentArchitecture,/RAZORPAY_KEY_ID/);
+assert.match(paymentArchitecture,/PAYU_MERCHANT_KEY/);
+assert.match(paymentArchitecture,/PAYTM_MID/);
+assert.match(envExample,/YCM_PAYMENT_PROVIDERS=razorpay,payu,paytm/);
+assert.match(envExample,/RAZORPAY_WEBHOOK_SECRET/);
+assert.match(envExample,/PAYU_WEBHOOK_SECRET/);
+assert.match(envExample,/PAYTM_WEBHOOK_SECRET/);
