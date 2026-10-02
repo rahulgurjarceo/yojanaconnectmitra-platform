@@ -1,11 +1,12 @@
 import postgres from 'postgres';
+import {randomBytes} from 'node:crypto';
 import {NextRequest,NextResponse} from 'next/server';
 import {sessionCookieName,verifySession} from '../../../../lib/ycm-access-control';
 import {EkoAepsProvider} from '../../../../lib/eko-aeps';
 import {recordSuccessfulFinancialTransaction,reverseFinancialTransaction} from '../../../../lib/ycm-financial-ledger';
 export const runtime='nodejs';
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:6,prepare:false,connect_timeout:10,idle_timeout:20}):null};
-function ref(){return ('YCM'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)).slice(0,20).toUpperCase();}
+function ref(){return ('Y'+randomBytes(12).toString('hex')).slice(0,20).toUpperCase();}
 export async function POST(r:NextRequest){
  const s=verifySession(r.cookies.get(sessionCookieName())?.value);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
  const b=await r.json().catch(()=>null) as {transactionType?:'cash_withdrawal'|'balance_enquiry'|'mini_statement'|'aadhaar_to_aadhaar_transfer';amountPaise?:number;customerMobile?:string;bankCode?:string;aadhaarEncrypted?:string;pidData?:string;latLong?:string;sourceIp?:string;notifyCustomer?:0|1}|null;
