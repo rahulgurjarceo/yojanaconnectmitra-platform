@@ -23,7 +23,8 @@
     "test:financial-ledger": "node scripts/test-financial-ledger.mjs",
     "test:eko-aeps": "node scripts/test-eko-aeps.mjs",
     "test:settlement": "node scripts/test-settlement.mjs",
-    "test:eko-retailer-flow": "node scripts/test-eko-retailer-flow.mjs"
+    "test:eko-retailer-flow": "node scripts/test-eko-retailer-flow.mjs",
+    "test:ycm-package-kyc": "node scripts/test-ycm-package-kyc.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
