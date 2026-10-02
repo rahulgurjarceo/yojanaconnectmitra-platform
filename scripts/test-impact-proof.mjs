@@ -9,6 +9,7 @@ const productionSql=read('database/migrations/010_ycm_impact_proof.sql');
 const ui=read('app/impact-proof/page.tsx');
 const educationApi=read('app/api/education/measurements/route.ts');
 const packetPage=read('app/impact-proof/packet/page.tsx');
+const health=read('app/api/impact-proof/health/route.ts');
 
 assert.match(api,/verifySession/);
 assert.match(api,/FORBIDDEN_ROLE_SCOPE/);
@@ -27,6 +28,10 @@ assert.match(packet,/i\.verified=true/);
 assert.match(packet,/i\.consent_captured=true/);
 assert.match(packet,/source_hash/);
 assert.match(packet,/causation:'not_claimed'/);
+assert.match(health,/DATABASE_NOT_CONFIGURED/);
+assert.match(health,/ycm_impact_records/);
+assert.match(health,/ycm_education_measurements/);
+assert.match(health,/IMPACT_PROOF_DATABASE_CHECK_FAILED/);
 assert.match(packetPage,/Print \/ Save PDF/);
 assert.match(packetPage,/source_hash/);
 assert.match(sql,/CREATE TABLE IF NOT EXISTS ycm_impact_records/);
