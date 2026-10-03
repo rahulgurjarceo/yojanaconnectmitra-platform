@@ -109,3 +109,43 @@ jobs:
         run: npm run build
 
 # CI verification trigger: keep this workflow intentionally explicit and auditable.
+
+  release-audit:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audited commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24.x"
+          cache: npm
+      - name: Install exact lockfile
+        run: npm ci
+      - name: Dependency security audit
+        run: npm audit --audit-level=high
+      - name: Release audit contract
+        run: npm run test:release-audit
+      - name: Production build
+        run: npm run build
+      - name: Portable Docker build
+        run: docker build --pull -t ycm-one-release-audit:${{ github.sha }} .
+      - name: Emit release audit evidence
+        run: |
+          mkdir -p audit-artifact
+          cat > audit-artifact/release-audit.txt <<EOF
+          YCM ONE RELEASE AUDIT
+          commit=${{ github.event.pull_request.head.sha || github.sha }}
+          dependency_audit=PASS
+          release_contract=PASS
+          production_build=PASS
+          portable_docker_build=PASS
+          EOF
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ycm-release-audit-${{ github.sha }}
+          path: audit-artifact/release-audit.txt
