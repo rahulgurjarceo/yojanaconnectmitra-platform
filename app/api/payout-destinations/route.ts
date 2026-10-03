@@ -33,7 +33,7 @@ export async function POST(r:NextRequest){
   const id=randomUUID();
   const initialStatus=['ceo','management','admin'].includes(s.role)?'active':'pending_verification';
   const row=(await tx`INSERT INTO ycm_payout_destinations(destination_id,user_id,method,label,account_holder_name,bank_account_last4,bank_ifsc,upi_id,provider,provider_beneficiary_id,status,is_default)
-    VALUES(\${id},\${user.id},\${b.method},\${b.label},\${b.accountHolderName??null},\${b.bankAccountLast4??null},\${b.bankIfsc?.toUpperCase()??null},\${b.upiId??null},\${b.provider??null},\${b.providerBeneficiaryId??null},\${b.isDefault??false})
+    VALUES(\${id},\${user.id},\${b.method},\${b.label},\${b.accountHolderName??null},\${b.bankAccountLast4??null},\${b.bankIfsc?.toUpperCase()??null},\${b.upiId??null},\${b.provider??null},\${b.providerBeneficiaryId??null},\${initialStatus},\${b.isDefault??false})
     RETURNING destination_id,method,label,account_holder_name,bank_account_last4,bank_ifsc,upi_id,provider,status,is_default`)[0];
   const audit=getPostgresYcmAuditStore(); if(audit) await audit.append(buildAuditRecord({event:'PAYOUT_DESTINATION_CHANGED',subject:s.sub,role:s.role,sessionId:s.sessionId,resourceType:'payout_destination',resourceId:id,success:true})).catch(()=>{});
   return NextResponse.json({success:true,destination:row},{status:201});
