@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     const allDocs = ([...docs, ...intel] as DocumentRecord[]).filter(d => !member?.member_id || !d.member_id || d.member_id === member.member_id);
     const snapshot: SnapshotEntry[] = [];
-    const missing: any[] = [];
+    const missing: Array<{documentCode:string;documentName:string;required:boolean;action:string;reason:string;reuploadOnExpiry:boolean;validityDays:number|null;expiryWarningDays:number}> = [];
 
     for (const rule of rules) {
       if (!rule.required_for_application) continue;
