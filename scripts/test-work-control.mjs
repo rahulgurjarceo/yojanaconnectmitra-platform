@@ -38,3 +38,7 @@ assert.match(geo,/block_code/);
 assert.match(geo,/franchise_entity_id/);
 assert.match(geo,/team_type/);
 console.log("WORK_CONTROL_CONTRACT_TEST: PASS");
+
+assert.match(work,/ASSIGNMENT_STATUS_TRANSITION_INVALID/);
+assert.match(work,/allowedTransitions/);
+assert.match(work,/completed:\[\]/);
