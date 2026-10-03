@@ -31,7 +31,8 @@
     "test:jan-aadhaar-integration": "node scripts/test-jan-aadhaar-integration.mjs",
     "test:company-financial-control": "node scripts/test-company-financial-control.mjs",
     "test:security-primitives": "node scripts/test-security-primitives.mjs",
-    "test:api-request-policy": "node scripts/test-api-request-policy.mjs"
+    "test:api-request-policy": "node scripts/test-api-request-policy.mjs",
+    "test:company-asset-control": "node scripts/test-company-asset-control.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
