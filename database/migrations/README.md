@@ -34,9 +34,10 @@ Run in numeric order:
 29. 030_settlement_destination_binding.sql
 30. 031_auth_login_rate_limit.sql
 31. 032_company_financial_control.sql
-32. 032_ycm_packages_entitlements_kyc.sql
-33. 033_aeps_provider_modes.sql
-34. 034_service_geography_scope.sql
+32. 033_aeps_provider_modes.sql
+33. 034_service_geography_scope.sql
+34. 035_eko_aeps_retailer_transactions.sql
+35. 036_ycm_packages_entitlements_kyc.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
 
