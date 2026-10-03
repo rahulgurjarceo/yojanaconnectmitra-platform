@@ -29,7 +29,8 @@
     "test:auth-login-security": "node scripts/test-auth-login-security.mjs",
     "test:jan-aadhaar-crypto": "node scripts/test-jan-aadhaar-crypto.mjs",
     "test:jan-aadhaar-integration": "node scripts/test-jan-aadhaar-integration.mjs",
-    "test:company-financial-control": "node scripts/test-company-financial-control.mjs"
+    "test:company-financial-control": "node scripts/test-company-financial-control.mjs",
+    "test:security-primitives": "node scripts/test-security-primitives.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
