@@ -1,0 +1,17 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import assert from "node:assert/strict";
+const provider=await fs.readFile(path.join(process.cwd(),"app/api/service-providers/route.ts"),"utf8");
+const workflow=await fs.readFile(path.join(process.cwd(),"app/api/service-workflows/route.ts"),"utf8");
+const link=await fs.readFile(path.join(process.cwd(),"app/api/service-provider-links/route.ts"),"utf8");
+assert.match(provider,/ycm_service_providers/);
+assert.match(workflow,/ycm_service_workflows/);
+assert.match(workflow,/version/);
+assert.match(link,/ycm_service_provider_links/);
+assert.match(link,/ON CONFLICT/);
+assert.match(link,/PROVIDER_LINK_PRIORITY_INVALID/);
+assert.match(link,/PROVIDER_LINK_COMMISSION_INVALID/);
+assert.match(provider,/PROVIDER_STATUS_INVALID/);
+assert.match(workflow,/WORKFLOW_STATUS_INVALID/);
+assert.match(workflow,/WORKFLOW_STEPS_LIMIT_EXCEEDED/);
+console.log("SERVICE_PROVIDER_WORKFLOW_CONTRACT_TEST: PASS");

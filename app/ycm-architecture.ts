@@ -1,28 +1,20 @@
-export type ModuleStatus = 'foundation' | 'partial' | 'planned';
+export type ModuleStatus = 'live' | 'partial' | 'planned';
+export type YCMModule = { id:string; number:number; name:string; section:string; status:ModuleStatus; progress:number; description:string; metrics:string[]; nextBuild:string[]; };
 
-export type YCMModule = {
-  id: string;
-  number: number;
-  name: string;
-  status: ModuleStatus;
-  description: string;
-  capabilities: string[];
-  nextBuild: string[];
-};
-
-export const YCM_MODULES: YCMModule[] = [
-  { id:'public-platform', number:1, name:'Public Platform', status:'foundation', description:'Citizen-facing discovery and service entry point.', capabilities:['Website','Search','Services','Jobs','Scholarships','Schemes','Education','Business','Centres'], nextBuild:['Verified catalogue','Authenticated search','Centre directory'] },
-  { id:'family-360', number:2, name:'Customer + Family 360', status:'partial', description:'Master customer and family record shared across YCM.', capabilities:['Customer Index','Family','Members','Consent','Verified Facts','Documents'], nextBuild:['Customer master ID','Family/member APIs','Consent ledger','Document vault'] },
-  { id:'universal-assistance', number:3, name:'Universal Assistance', status:'partial', description:'AI Mitra and Human Mitra intake-to-ticket assistance.', capabilities:['Need','AI Mitra','Human Mitra','Voice','WhatsApp','Ticket'], nextBuild:['Need intake API','Ticket lifecycle','AI-to-human handoff'] },
-  { id:'service-intelligence', number:4, name:'Service + Opportunity Intelligence', status:'foundation', description:'Canonical 35-domain service universe and opportunity routing.', capabilities:['35 Service Domains','Sub-services','Government','Jobs','Scholarships','Education','Business','Finance','Insurance','Legal'], nextBuild:['Sub-service registry','Eligibility rules','Opportunity catalogue'] },
-  { id:'execution', number:5, name:'Execution', status:'partial', description:'Turns an eligible case into a tracked application and outcome.', capabilities:['Eligibility','Documents','Preparation','Application','Payment','Provider/Authority','Tracking','Outcome'], nextBuild:['Case state machine','Application records','Provider routing','TAT engine'] },
-  { id:'crm', number:6, name:'CRM', status:'foundation', description:'Operational relationship and case management layer.', capabilities:['Lead','Opportunity','Task','Call','Application','Ticket','Complaint','Referral'], nextBuild:['Dedicated case fields','Opportunity/task APIs','Application/ticket routing'] },
-  { id:'business-network', number:7, name:'Business Network', status:'planned', description:'Partner and vendor ecosystem with fulfilment and settlement.', capabilities:['Business','Products','Services','Stock','Partners','Vendors','Leads','Fulfilment','Settlement'], nextBuild:['Partner registry','Vendor onboarding','Order/fulfilment workflow','Settlement ledger'] },
-  { id:'field-offline', number:8, name:'Field + Offline', status:'planned', description:'Mitra-led door-to-door and centre operations synchronized with YCM.', capabilities:['Mitra','Door-to-door','Field Visit','Geo/Time','Centre','Documents','Online Sync'], nextBuild:['Mitra app','Visit capture','Camp registration','Offline sync queue'] },
-  { id:'hr-erp', number:9, name:'Employee / HR / ERP', status:'planned', description:'Internal workforce, assets and operational workflows.', capabilities:['Employee','Attendance','Leave','Targets','Performance','Payroll','Assets','Inventory','Internal Workflows'], nextBuild:['Employee master','Attendance/leave','Targets','Asset/inventory registers'] },
-  { id:'finance', number:10, name:'Finance', status:'partial', description:'Money movement, accounting and management finance layer.', capabilities:['Billing','Collection','Expense','Commission','Wallet','Ledger','Reconciliation','P&L'], nextBuild:['Ledger API','Invoice/receipt model','Reconciliation','P&L reporting'] },
-  { id:'cri', number:11, name:'CRI', status:'planned', description:'Case Resolution Intelligence and outcome-quality measurement.', capabilities:['Resolution','Time','Documents','Visits','Routing','Satisfaction','Outcome quality'], nextBuild:['CRI score','SLA/TAT metrics','CSAT','Resolution analytics'] },
-  { id:'management', number:12, name:'Management / CEO Command Center', status:'partial', description:'One control layer for Admin, Compliance, Finance, HR, Operations, AI and field/camp activity.', capabilities:['Admin','Compliance','Finance','HR','Operations','CEO Command Center','AI','Door-to-door','Camps'], nextBuild:['Role dashboards','Live KPIs','AI operational assistant','Camp/field command board'] }
+export const YCM_MODULES:YCMModule[] = [
+{id:'platform-overview',number:1,name:'Platform Overview',section:'Platform Overview',status:'live',progress:75,description:'Unified YCM One operating layer across citizen, family, Mitra and management workflows.',metrics:['Module health','Active workflows','Open risks'],nextBuild:['Live health aggregation','SLA alerts']},
+{id:'operations',number:2,name:'Operations',section:'Operations',status:'partial',progress:65,description:'Assignment, case execution and operational queues connected to the shared case universe.',metrics:['Assigned','In progress','Blocked'],nextBuild:['SLA/TAT board','Escalation rules']},
+{id:'family-360',number:3,name:'Family 360',section:'Family 360',status:'partial',progress:70,description:'Master family/member context shared across needs, services, documents, cases and outcomes.',metrics:['Families','Members','Verified facts'],nextBuild:['Consent ledger','Document vault']},
+{id:'services',number:4,name:'Services',section:'Services',status:'live',progress:80,description:'Canonical service master and governance contract for scalable service discovery and execution.',metrics:['Services','Published','Paused'],nextBuild:['10k–50k registry scaling','Eligibility engine']},
+{id:'documents',number:5,name:'Documents',section:'Documents',status:'partial',progress:65,description:'Document collection and validation layer linked to cases and service requirements.',metrics:['Documents','Validated','Rejected'],nextBuild:['Vault hardening','OCR provider connections']},
+{id:'education',number:6,name:'Education',section:'Education',status:'partial',progress:55,description:'Education journey plus measurable baseline/intervention/follow-up outcome tracking.',metrics:['Students','Enrollments','Verified improvements'],nextBuild:['Block assessment capture','Institution verification']},
+{id:'agriculture',number:7,name:'Agriculture',section:'Agriculture',status:'partial',progress:45,description:'Agri Desk workflows and outcome capture for farmer services and interventions.',metrics:['Farmers','Cases','Verified outcomes'],nextBuild:['Crop outcome schema','FPO integrations']},
+{id:'finance',number:8,name:'Finance / Commission',section:'Finance/Commission',status:'partial',progress:60,description:'Transaction, commission, ledger and settlement architecture with reversal-safe calculations.',metrics:['Transactions','Commission','Settlement queue'],nextBuild:['Provider payout connection','Reconciliation']},
+{id:'aeps',number:9,name:'AEPS',section:'AEPS',status:'partial',progress:45,description:'Provider-neutral AEPS contract and integration registry.',metrics:['Providers','Transactions','Provider status'],nextBuild:['Live provider','Reconciliation']},
+{id:'crm',number:10,name:'CRM / Leads',section:'CRM/Leads',status:'partial',progress:60,description:'Lead, opportunity, referral and assignment workflows sharing the same case universe.',metrics:['Leads','Open opportunities','Conversions'],nextBuild:['WhatsApp lead intake','Pipeline automation']},
+{id:'impact-proof',number:11,name:'Impact & Proof',section:'Impact & Proof',status:'partial',progress:45,description:'Evidence-first outcome measurement from State → District → Block → Village.',metrics:['Families','Verified outcomes','Evidence packets'],nextBuild:['Production DB/API','Evidence packet export']},
+{id:'integrations',number:12,name:'Integrations',section:'Integrations',status:'partial',progress:50,description:'Central integration registry for government, payment, AEPS and partner providers.',metrics:['Registered','Connected','Pending'],nextBuild:['Health checks','Secrets rotation']},
+{id:'security-audit',number:13,name:'Security / Audit',section:'Security/Audit',status:'partial',progress:60,description:'Session, authorization, audit and security policy foundations.',metrics:['Audit events','Privileged actions','Security alerts'],nextBuild:['MFA','Session revocation hardening']},
+{id:'reports',number:14,name:'Reports',section:'Reports',status:'partial',progress:50,description:'Management reporting layer for operations, finance and verified impact.',metrics:['Reports','Scheduled','Evidence packets'],nextBuild:['Export service','Report permissions']},
 ];
-
-export const YCM_LIFECYCLE = ['Customer/Family','Need','Case','35 Domain','Sub-service','Eligibility','Documents','Consent','Payment','Execution','Application','Tracking','Outcome','CRI/CSAT','Management'];
+export const YCM_LIFECYCLE=['Family','Need','Service','Documents','Case','Assignment','Provider','Result','Outcome','Evidence','Audit'];
