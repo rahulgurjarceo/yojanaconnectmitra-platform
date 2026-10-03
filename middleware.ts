@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isProtectedPath, roleCanAccessPath, sessionCookieName, verifySession } from './app/lib/ycm-access-control';
 import { getPostgresYcmSessionRevocationStore } from './app/lib/ycm-postgres-session-revocation';
 import { getUserAuthVersion } from './app/lib/ycm-auth-db';
+import { enforceApiRequestPolicy } from './app/lib/ycm-api-request-policy';
 
 export const runtime = 'nodejs';
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const requestPolicy = enforceApiRequestPolicy(request);
+  if (requestPolicy) return requestPolicy;
   if (!isProtectedPath(pathname)) return NextResponse.next();
 
   const session = verifySession(request.cookies.get(sessionCookieName())?.value);
