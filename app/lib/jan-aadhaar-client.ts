@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { buildSignedJanAadhaarPayload, decryptJanAadhaarPayload, encryptSignedJanAadhaarPayload, janAadhaarCertificateFingerprint, verifyJanAadhaarSignature } from './jan-aadhaar-crypto';
 
 function env(name: string): string { const value = process.env[name]; if (!value) throw new Error(name + '_NOT_CONFIGURED'); return value; }
-function baseUrl(): string { return (process.env.JAN_AADHAAR_API_BASE_URL || 'https://apitest.sewadwaar.rajasthan.gov.in/app/live/apiservice/janAadhaar/v1').replace(/\\/$/, ''); }
+function baseUrl(): string { return (process.env.JAN_AADHAAR_API_BASE_URL || 'https://apitest.sewadwaar.rajasthan.gov.in/app/live/apiservice/janAadhaar/v1').replace(/\/$/, ''); }
 function appCode() { return env('JAN_AADHAAR_APP_CODE'); }
 function schemeCode() { return env('JAN_AADHAAR_SCHEME_CODE'); }
 function transactionId() { return randomUUID(); }
