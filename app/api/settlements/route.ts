@@ -54,23 +54,24 @@ export async function POST(r:NextRequest){
 export async function PATCH(r:NextRequest){
  const s=verifySession(r.cookies.get(sessionCookieName())?.value);if(!s||!privileged.includes(s.role))return NextResponse.json({success:false,code:'FORBIDDEN'},{status:403});
  const b=await r.json().catch(()=>null) as {settlementId?:string;status?:'approved'|'processing'|'paid'|'failed'|'reversed';reference?:string}|null;
- if(!b?.settlementId||!b.status)return NextResponse.json({success:false,code:'SETTLEMENT_UPDATE_FIELDS_REQUIRED'},{status:400});
+ const status=b?.status;
+ if(!b?.settlementId||!status)return NextResponse.json({success:false,code:'SETTLEMENT_UPDATE_FIELDS_REQUIRED'},{status:400});
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{return await sql.begin(async tx=>{
   const settlement=(await tx`SELECT s.*,w.available_paise,w.withdrawable_paise FROM ycm_settlements s JOIN ycm_wallet_accounts w ON w.wallet_id=s.wallet_id WHERE s.settlement_id=\${b.settlementId} FOR UPDATE`)[0];
   if(!settlement)throw new Error('SETTLEMENT_NOT_FOUND');
   if(['paid','failed','reversed'].includes(settlement.status))return NextResponse.json({success:true,status:settlement.status,idempotent:true});
   const allowed:Record<string,string[]>={requested:['approved','failed','reversed'],approved:['processing','failed','reversed'],processing:['paid','failed','reversed']};
-  if(!allowed[String(settlement.status)]?.includes(b.status))throw new Error('SETTLEMENT_STATUS_TRANSITION_INVALID');
-  if(b.status==='failed'||b.status==='reversed'){
+  if(!allowed[String(settlement.status)]?.includes(status))throw new Error('SETTLEMENT_STATUS_TRANSITION_INVALID');
+  if(status==='failed'||status==='reversed'){
    const next=Number(settlement.available_paise)+Number(settlement.amount_paise);
    const nextWithdrawable=Number(settlement.withdrawable_paise)+Number(settlement.amount_paise);
    await tx`UPDATE ycm_wallet_accounts SET available_paise=\${next},withdrawable_paise=\${nextWithdrawable},lifetime_debited_paise=GREATEST(0,lifetime_debited_paise-\${settlement.amount_paise}),updated_at=NOW() WHERE wallet_id=\${settlement.wallet_id}`;
    await tx`INSERT INTO ycm_wallet_entries(entry_id,wallet_id,entry_type,amount_paise,balance_after_paise,idempotency_key) VALUES(\${randomUUID()},\${settlement.wallet_id},'adjustment_credit',\${settlement.amount_paise},\${next},\${'settlement-failed:'+settlement.settlement_id}) ON CONFLICT(idempotency_key) DO NOTHING`;
   }
-  await tx`UPDATE ycm_settlements SET status=\${b.status},reference=\${b.reference??null},processed_at=CASE WHEN \${b.status} IN ('paid','failed','reversed') THEN NOW() ELSE processed_at END WHERE settlement_id=\${settlement.settlement_id}`;
+  await tx`UPDATE ycm_settlements SET status=\${b.status},reference=\${b.reference??null},processed_at=CASE WHEN \${status} IN ('paid','failed','reversed') THEN NOW() ELSE processed_at END WHERE settlement_id=\${settlement.settlement_id}`;
   await tx`INSERT INTO ycm_settlement_events(event_id,settlement_id,event_type,reference) VALUES(\${randomUUID()},\${settlement.settlement_id},\${b.status},\${b.reference??null})`;
   const audit=getPostgresYcmAuditStore(); if(audit) await audit.append(buildAuditRecord({event:'FINANCIAL_SETTLEMENT_STATUS_CHANGED',subject:s.sub,role:s.role,sessionId:s.sessionId,resourceType:'settlement',resourceId:settlement.settlement_id,success:true})).catch(()=>{});
-  return NextResponse.json({success:true,settlementId:settlement.settlement_id,status:b.status});
+  return NextResponse.json({success:true,settlementId:settlement.settlement_id,status});
  });}catch(e){return NextResponse.json({success:false,code:e instanceof Error?e.message:'SETTLEMENT_UPDATE_FAILED'},{status:400});}finally{await sql.end({timeout:3});}
 }
