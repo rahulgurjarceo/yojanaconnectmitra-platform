@@ -39,7 +39,8 @@
     "test:digilocker": "node scripts/test-digilocker-integration.mjs",
     "test:service-geography-scope": "node scripts/test-service-geography-scope.mjs",
     "test:employee-kpi-security": "node scripts/test-employee-kpi-security.mjs",
-    "test:financial-webhook-security": "node scripts/test-financial-webhook-security.mjs"
+    "test:financial-webhook-security": "node scripts/test-financial-webhook-security.mjs",
+    "test:aeps-webhook-security": "node scripts/test-aeps-webhook-security.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
