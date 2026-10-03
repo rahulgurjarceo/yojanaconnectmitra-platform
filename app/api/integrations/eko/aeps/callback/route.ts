@@ -1,4 +1,5 @@
 import postgres from 'postgres';
+import {timingSafeEqual} from 'node:crypto';
 import {NextRequest,NextResponse} from 'next/server';
 import {ekoRequestHash,ekoSecurityHeaders} from '../../../../../lib/eko-aeps';
 import {recordSuccessfulFinancialTransaction,reverseFinancialTransaction} from '../../../../../lib/ycm-financial-ledger';
@@ -7,7 +8,9 @@ const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return 
 type Detail={client_ref_id?:string;request_hash_params?:string[];data?:Record<string,unknown>;response?:{data?:Record<string,unknown>;message?:string}};
 const finalStatus=(v:string)=>v==='0'?'success':v==='1'?'failed':v==='3'||v==='4'?'reversed':'inquiry_required';
 export async function OPTIONS(){return new NextResponse(null,{status:204,headers:{'Access-Control-Allow-Origin':'https://stagegateway.eko.in','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'}});}
+const callbackAuthorized=(r:NextRequest)=>{const configured=process.env.EKO_CALLBACK_SHARED_SECRET||'';const supplied=r.headers.get('x-eko-callback-secret')||'';return !!configured&&supplied.length===configured.length&&timingSafeEqual(Buffer.from(supplied),Buffer.from(configured));};
 export async function POST(r:NextRequest){
+ if(!callbackAuthorized(r))return NextResponse.json({success:false,code:'EKO_CALLBACK_AUTHENTICATION_FAILED'},{status:401});
  const body=await r.json().catch(()=>null) as {action?:string;detail?:Detail}|null;
  const detail=body?.detail;
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
