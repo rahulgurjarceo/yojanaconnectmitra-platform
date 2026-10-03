@@ -6,6 +6,11 @@ export const runtime='nodejs';
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:5,prepare:false,connect_timeout:10,idle_timeout:20}):null};
 const actor=(r:NextRequest)=>verifySession(r.cookies.get(sessionCookieName())?.value);
 const manage=(role:string)=>['ceo','management','admin','employee','team_lead'].includes(role);
+const textMax=(v:unknown,max:number)=>v===undefined||v===null||typeof v==='string'&&v.trim().length<=max;
+const jsonObject=(v:unknown)=>v===undefined||v===null||(typeof v==='object'&&!Array.isArray(v));
+const jsonSizeOk=(v:unknown)=>{try{return JSON.stringify(v??{}).length<=32768}catch{return false}};
+const validDateTime=(v:unknown)=>v===undefined||v===null||v===''||(typeof v==='string'&&!Number.isNaN(Date.parse(v)));
+const validId=(v:unknown,max=120)=>v===undefined||v===null||typeof v==='string'&&v.trim().length>0&&v.trim().length<=max;
 function secretAllowed(r:NextRequest){
  const configured=process.env.YCM_LEAD_WEBHOOK_SECRET||'';
  const supplied=r.headers.get('x-ycm-lead-secret')||'';
@@ -34,6 +39,10 @@ export async function POST(r:NextRequest){
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
   const b=await r.json();const name=String(b.name||'').trim(),need=String(b.needText||'').trim();
+  if(!textMax(name,120)||!textMax(need,2000)||!textMax(b.mobile,30)||!textMax(b.email,254)||!textMax(b.source,40)||
+     !textMax(b.stateCode,20)||!textMax(b.districtCode,40)||!textMax(b.blockCode,40)||!textMax(b.villageCode,60)||
+     !validId(b.familyId)||!validId(b.memberId)||!validDateTime(b.nextFollowUpAt)||!jsonObject(b.metadata)||!jsonSizeOk(b.metadata))
+    return NextResponse.json({success:false,code:'LEAD_INPUT_INVALID'},{status:400});
   if(!name)return NextResponse.json({success:false,code:'NAME_REQUIRED'},{status:400});
   const serviceCode=String(b.serviceCode||'').trim().toUpperCase()||null;
   if(serviceCode){const ok=(await sql`SELECT 1 FROM ycm_service_master WHERE service_code=${serviceCode} AND status='active' LIMIT 1`)[0];if(!ok)return NextResponse.json({success:false,code:'SERVICE_NOT_FOUND'},{status:400});}
@@ -56,6 +65,9 @@ export async function PATCH(r:NextRequest){
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
   const b=await r.json().catch(()=>null) as {leadId?:string;status?:string;assignedTo?:string|null;nextFollowUpAt?:string|null;serviceCode?:string|null;convertToCase?:boolean;familyId?:string|null;memberId?:string|null}|null;
+  if(!b?.leadId||!validId(b.leadId,120)||!validId(b.assignedTo,120)||!validId(b.familyId,120)||!validId(b.memberId,120)||
+     !validId(b.serviceCode,100)||!validDateTime(b.nextFollowUpAt))
+    return NextResponse.json({success:false,code:'LEAD_INPUT_INVALID'},{status:400});
   if(!b?.leadId)return NextResponse.json({success:false,code:'LEAD_ID_REQUIRED'},{status:400});
   const lead=(await sql`SELECT * FROM ycm_leads WHERE lead_id=${b.leadId} LIMIT 1`)[0];
   if(!lead)return NextResponse.json({success:false,code:'LEAD_NOT_FOUND'},{status:404});
