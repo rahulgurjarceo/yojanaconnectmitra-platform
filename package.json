@@ -50,7 +50,7 @@
     "test:service-application": "node scripts/test-service-application.mjs"
   },
   "dependencies": {
-    "next": "16.2.10",
+    "next": "16.3.8",
     "postgres": "^3.4.7",
     "react": "19.2.4",
     "react-dom": "19.2.4"
@@ -61,7 +61,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "16.3.8",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
