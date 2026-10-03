@@ -1,5 +1,5 @@
 import {NextRequest,NextResponse} from 'next/server';
-import {recordSuccessfulFinancialTransaction} from '../../../../lib/ycm-financial-ledger';
+import {recordSuccessfulFinancialTransaction} from '../../../lib/ycm-financial-ledger';
 export const runtime='nodejs';
 function secretOk(r:NextRequest){return !!process.env.YCM_SERVICE_FINANCIAL_WEBHOOK_SECRET&&r.headers.get('x-ycm-service-financial-secret')===process.env.YCM_SERVICE_FINANCIAL_WEBHOOK_SECRET;}
 export async function POST(r:NextRequest){
