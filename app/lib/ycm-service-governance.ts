@@ -7,9 +7,9 @@ export type YcmServiceActorRole =
   | 'employee';
 
 export const YCM_SERVICE_PERMISSIONS = {
-  ceo: ['service:create', 'service:edit', 'service:submit', 'service:approve', 'service:publish', 'service:pause', 'commission:configure'],
-  admin: ['service:create', 'service:edit', 'service:submit', 'service:approve', 'service:publish', 'service:pause', 'commission:configure'],
-  management: ['service:create', 'service:edit', 'service:submit', 'service:approve', 'service:publish', 'service:pause', 'commission:configure'],
+  ceo: ['service:create', 'service:edit', 'service:submit', 'service:approve', 'service:publish', 'service:pause', 'service:archive', 'commission:configure'],
+  admin: ['service:create', 'service:edit', 'service:submit', 'service:approve', 'service:publish', 'service:pause', 'service:archive', 'commission:configure'],
+  management: ['service:create', 'service:edit', 'service:submit', 'service:pause', 'commission:configure'],
   employee: ['service:create', 'service:edit', 'service:submit'],
 } as const;
 
@@ -24,6 +24,6 @@ export function canTransitionServiceStatus(role: string, from: YcmServiceStatus,
   if (to === 'pending_approval') return hasServicePermission(role, 'service:submit') && (from === 'draft' || from === 'paused');
   if (to === 'published') return hasServicePermission(role, 'service:publish') && (from === 'pending_approval' || from === 'paused');
   if (to === 'paused') return hasServicePermission(role, 'service:pause') && from === 'published';
-  if (to === 'archived') return hasServicePermission(role, 'service:edit') && from !== 'archived';
+  if (to === 'archived') return hasServicePermission(role, 'service:archive') && from !== 'archived';
   return false;
 }
