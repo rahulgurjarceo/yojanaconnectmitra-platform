@@ -6,6 +6,8 @@ import {recordSuccessfulFinancialTransaction,reverseFinancialTransaction} from '
 export const runtime='nodejs';
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:6,prepare:false,connect_timeout:10,idle_timeout:20}):null};
 const privileged=['ceo','management','admin'];
+const jsonObject=(v:unknown)=>v===undefined||v===null||(typeof v==='object'&&!Array.isArray(v));
+const jsonSizeOk=(v:unknown)=>{try{return JSON.stringify(v??{}).length<=32768}catch{return false}};
 function actor(r:NextRequest){return verifySession(r.cookies.get(sessionCookieName())?.value);}
 export async function GET(r:NextRequest){
  const s=actor(r);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
@@ -19,6 +21,10 @@ export async function POST(r:NextRequest){
  const s=actor(r);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
  const b=await r.json().catch(()=>null) as {externalReference?:string;transactionType?:string;grossAmountPaise?:number;serviceCode?:string;customerUserId?:string;agentUserId?:string;referralUserId?:string;providerCode?:string;providerTransactionId?:string;providerFeePaise?:number;currency?:string;metadata?:Record<string,unknown>}|null;
  if(!b?.externalReference||!b?.transactionType||!Number.isInteger(b.grossAmountPaise)||b.grossAmountPaise<=0||b.grossAmountPaise>100000000000)return NextResponse.json({success:false,code:'TRANSACTION_FIELDS_REQUIRED'},{status:400});
+if(String(b.externalReference).length>200||String(b.transactionType).length>80)return NextResponse.json({success:false,code:'TRANSACTION_REFERENCE_INVALID'},{status:400});
+if(b.serviceCode!==undefined&&b.serviceCode!==null&&String(b.serviceCode).length>100)return NextResponse.json({success:false,code:'SERVICE_CODE_INVALID'},{status:400});
+if(b.currency!==undefined&&String(b.currency).length>3)return NextResponse.json({success:false,code:'CURRENCY_INVALID'},{status:400});
+if(!jsonObject(b.metadata)||!jsonSizeOk(b.metadata))return NextResponse.json({success:false,code:'TRANSACTION_METADATA_INVALID'},{status:400});
  if(b.providerFeePaise!==undefined&&(!Number.isInteger(b.providerFeePaise)||b.providerFeePaise<0||b.providerFeePaise>b.grossAmountPaise))return NextResponse.json({success:false,code:'PROVIDER_FEE_INVALID'},{status:400});
  const webhookSecret=process.env.YCM_FINANCIAL_WEBHOOK_SECRET||'';
  const providedWebhookSecret=r.headers.get('x-ycm-financial-secret')||'';
