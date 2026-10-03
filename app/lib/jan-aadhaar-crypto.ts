@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createPrivateKey, createPublicKey, createSign, privateDecrypt, publicEncrypt, randomBytes } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createPrivateKey, createPublicKey, createSign, createVerify, privateDecrypt, publicEncrypt, randomBytes } from 'node:crypto';
 
 const AES_ALGORITHM = 'aes-256-cbc';
 const RSA_PADDING = { padding: 1 } as const;
@@ -39,7 +39,7 @@ export function decryptJanAadhaarPayload(encryptedData: string, privateKeyPem = 
 }
 
 export function verifyJanAadhaarSignature(data: string, signatureBase64: string, publicKeyPem = requireEnv('JAN_AADHAAR_RESPONSE_PUBLIC_KEY')): boolean {
-  const verifier = createSign('RSA-SHA256');
+  const verifier = createVerify('RSA-SHA256');
   verifier.update(data, 'utf8');
   verifier.end();
   return verifier.verify(createPublicKey(decodeKey(publicKeyPem)), Buffer.from(signatureBase64, 'base64'));
