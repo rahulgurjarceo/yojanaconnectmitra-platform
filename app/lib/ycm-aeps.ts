@@ -10,7 +10,8 @@ export type YcmAepsTransactionState =
   | 'provider_processing'
   | 'success'
   | 'failed'
-  | 'reversed';
+  | 'reversed'
+  | 'reconciled';
 
 export type YcmAepsRequest = {
   transactionId: string;
@@ -41,7 +42,7 @@ export function assertAepsAmount(amountPaise: number | undefined) {
 }
 
 export function canCreditCommission(state: YcmAepsTransactionState) {
-  return state === 'success';
+  return state === 'success' || state === 'reconciled';
 }
 
 export function shouldReverseCommission(state: YcmAepsTransactionState) {
