@@ -87,9 +87,9 @@ export async function POST(request: NextRequest) {
     const family = (await sql`SELECT family_id,full_name,mobile,email,country FROM ycm_families WHERE family_id=${familyId} LIMIT 1`)[0] as unknown as FamilyRecord;
     if (!family) return NextResponse.json({ success: false, code: 'FAMILY_NOT_FOUND' }, { status: 404 });
 
-    const member = body?.memberId
+    const member = (body?.memberId
       ? (await sql`SELECT member_id,full_name,relation,mobile,email,date_of_birth,verified FROM ycm_family_members WHERE family_id=${familyId} AND member_id=${body.memberId} LIMIT 1`)[0]
-      : (await sql`SELECT member_id,full_name,relation,mobile,email,date_of_birth,verified FROM ycm_family_members WHERE family_id=${familyId} ORDER BY verified DESC,created_at LIMIT 1`)[0] || null;
+      : (await sql`SELECT member_id,full_name,relation,mobile,email,date_of_birth,verified FROM ycm_family_members WHERE family_id=${familyId} ORDER BY verified DESC,created_at LIMIT 1`)[0] || null) as unknown as MemberRecord | null;
     if (body?.memberId && !member) return NextResponse.json({ success: false, code: 'MEMBER_NOT_FOUND' }, { status: 404 });
 
     const rules = await sql`SELECT document_code,document_name,required,required_for_application,validation_mode,validity_days,expiry_warning_days,reuse_if_valid,reupload_on_expiry,prefill_fields
