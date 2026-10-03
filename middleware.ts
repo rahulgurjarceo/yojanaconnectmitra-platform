@@ -10,7 +10,21 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const requestPolicy = enforceApiRequestPolicy(request);
   if (requestPolicy) return requestPolicy;
-  if (!isProtectedPath(pathname)) return NextResponse.next();
+  const applySecurityHeaders = (response: NextResponse) => {
+    response.headers.set('Cache-Control', 'private, no-store');
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.headers.set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(self), payment=()');
+    response.headers.set('Content-Security-Policy', "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'");
+    response.headers.set('X-DNS-Prefetch-Control', 'off');
+    response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+    response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
+    response.headers.set('X-Permitted-Cross-Domain-Policies', 'none');
+    return response;
+  };
+
+  if (!isProtectedPath(pathname)) return applySecurityHeaders(NextResponse.next());
 
   const session = verifySession(request.cookies.get(sessionCookieName())?.value);
   if (!session) {
@@ -60,17 +74,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/access-denied', request.url));
   }
 
-  const response = NextResponse.next();
-  response.headers.set('Cache-Control', 'private, no-store');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(self), payment=()');
-  response.headers.set('Content-Security-Policy', "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'");
-  response.headers.set('X-DNS-Prefetch-Control', 'off');
-  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-  response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
-  response.headers.set('X-Permitted-Cross-Domain-Policies', 'none');
+  const response = applySecurityHeaders(NextResponse.next());
   response.headers.set('X-YCM-Auth', 'verified-session');
   return response;
 }
