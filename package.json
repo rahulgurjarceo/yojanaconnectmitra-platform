@@ -45,7 +45,9 @@
     "test:crm-telemetry-security": "node scripts/test-crm-telemetry-security.mjs",
     "test:payout-destination-security": "node scripts/test-payout-destination-security.mjs",
     "test:government-grievance": "node scripts/test-government-grievance.mjs",
-    "test:government-rbac": "node scripts/test-government-rbac.mjs"
+    "test:government-rbac": "node scripts/test-government-rbac.mjs",
+    "test:service-lifecycle": "node scripts/test-service-lifecycle.mjs",
+    "test:service-application": "node scripts/test-service-application.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
