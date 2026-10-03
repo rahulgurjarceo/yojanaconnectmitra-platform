@@ -31,6 +31,7 @@ export async function POST(r:NextRequest){
   const user=(await tx`SELECT id FROM ycm_users WHERE user_id=\${s.sub} LIMIT 1`)[0];if(!user)throw new Error('USER_NOT_FOUND');
   if(b.isDefault)await tx`UPDATE ycm_payout_destinations SET is_default=false,updated_at=NOW() WHERE user_id=\${user.id}`;
   const id=randomUUID();
+  const initialStatus=['ceo','management','admin'].includes(s.role)?'active':'pending_verification';
   const row=(await tx`INSERT INTO ycm_payout_destinations(destination_id,user_id,method,label,account_holder_name,bank_account_last4,bank_ifsc,upi_id,provider,provider_beneficiary_id,is_default)
     VALUES(\${id},\${user.id},\${b.method},\${b.label},\${b.accountHolderName??null},\${b.bankAccountLast4??null},\${b.bankIfsc?.toUpperCase()??null},\${b.upiId??null},\${b.provider??null},\${b.providerBeneficiaryId??null},\${b.isDefault??false})
     RETURNING destination_id,method,label,account_holder_name,bank_account_last4,bank_ifsc,upi_id,provider,status,is_default`)[0];
