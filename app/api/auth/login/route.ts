@@ -6,7 +6,7 @@ import { issueVerifiedSession } from '../../../lib/ycm-auth-issuance';
 import { YCM_ROLES, type YcmRole } from '../../../lib/ycm-access-control';
 import { loginRateLimited } from '../../../lib/ycm-login-rate-limit';
 import { buildAuditRecord } from '../../../lib/ycm-audit-events';
-import { getPostgresAuditStore } from '../../../lib/ycm-postgres-audit-store';
+import { getPostgresYcmAuditStore } from '../../../lib/ycm-postgres-audit-store';
 
 export const runtime='nodejs';
 
@@ -21,7 +21,7 @@ async function auditLogin(input: {
   success: boolean;
 }) {
   try {
-    const store = getPostgresAuditStore();
+    const store = getPostgresYcmAuditStore();
     if (!store) return;
     await store.append(buildAuditRecord({
       event: input.success ? 'AUTH_LOGIN_SUCCESS' : 'AUTH_LOGIN_FAILED',
