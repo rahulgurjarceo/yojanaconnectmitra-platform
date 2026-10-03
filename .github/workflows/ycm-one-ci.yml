@@ -87,6 +87,8 @@ jobs:
         run: npm run test:financial-webhook-security
       - name: AEPS webhook security contract test
         run: npm run test:aeps-webhook-security
+      - name: Aggregate security contract suite
+        run: npm run test:security-contracts
       - name: Production build
         run: npm run build
 
