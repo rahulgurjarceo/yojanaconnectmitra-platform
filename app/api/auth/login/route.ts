@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { findUser, getUserPrimaryMembership } from '../../../lib/ycm-auth-db';
+import { findUser, getUserPrimaryMembership, YCM_LOGIN_IDENTIFIER_TYPES, type YcmLoginIdentifierType } from '../../../lib/ycm-auth-db';
 import { verifyPassword } from '../../../lib/ycm-password';
 import { issueVerifiedSession } from '../../../lib/ycm-auth-issuance';
 import { YCM_ROLES, type YcmRole } from '../../../lib/ycm-access-control';
@@ -35,7 +35,7 @@ async function auditLogin(input: {
 }
 
 export async function POST(request:NextRequest){
-  const body=await request.json().catch(()=>null) as {identifier?:string;password?:string}|null;
+  const body=await request.json().catch(()=>null) as {identifier?:string;password?:string;identifierType?:YcmLoginIdentifierType}|null;
   const identifier=body?.identifier?.trim()||'', password=body?.password||'';
   if(!identifier||!password) return NextResponse.json({success:false,code:'INVALID_CREDENTIALS',message:'User ID / mobile / email और password दर्ज करें.'},{status:400});
 
@@ -47,7 +47,7 @@ export async function POST(request:NextRequest){
       );
     }
 
-    const user=await findUser(identifier);
+    const user=await findUser(identifier, body?.identifierType);
     const valid=user ? await verifyPassword(password,user.password_hash) : false;
     if(!valid || user.status!=='active' || !YCM_ROLES.includes(user.role as YcmRole)){
       await auditLogin({
