@@ -1,6 +1,7 @@
 import {NextRequest,NextResponse} from 'next/server';
 import postgres from 'postgres';
 import {sessionCookieName,verifySession} from '../../lib/ycm-access-control';
+import {canTransitionServiceStatus,hasServicePermission,YcmServiceStatus} from '../../lib/ycm-service-governance';
 
 export const runtime='nodejs';
 
@@ -39,7 +40,7 @@ export async function GET(r:NextRequest){
 
 export async function POST(r:NextRequest){
  const s=actor(r); if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
- if(!canManage(s.role))return NextResponse.json({success:false,code:'FORBIDDEN'},{status:403});
+ if(!canManage(s.role)||!hasServicePermission(s.role,'service:create'))return NextResponse.json({success:false,code:'FORBIDDEN'},{status:403});
  const sql=db(); if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
   const b=await r.json();
@@ -48,7 +49,7 @@ export async function POST(r:NextRequest){
   const rows=await sql`INSERT INTO ycm_service_master
    (service_code,service_name,service_type,business_domain_code,parent_service_code,channel,requires_case,requires_documents,requires_provider,status,metadata)
    VALUES (${code},${name},${type},${b.businessDomainCode||null},${b.parentServiceCode||null},${b.channel||'assisted'},
-           ${b.requiresCase!==false},${b.requiresDocuments===true},${b.requiresProvider===true},${b.status||'draft'},${b.metadata||{}})
+           ${b.requiresCase!==false},${b.requiresDocuments===true},${b.requiresProvider===true},'draft',${b.metadata||{}})
    RETURNING service_id,service_code,service_name,service_type,business_domain_code,parent_service_code,channel,requires_case,requires_documents,requires_provider,status,metadata`;
   return NextResponse.json({success:true,service:rows[0]},{status:201});
  }catch(e){
@@ -58,11 +59,17 @@ export async function POST(r:NextRequest){
 
 export async function PATCH(r:NextRequest){
  const s=actor(r); if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
- if(!canManage(s.role))return NextResponse.json({success:false,code:'FORBIDDEN'},{status:403});
+ if(!canManage(s.role)||!hasServicePermission(s.role,'service:edit'))return NextResponse.json({success:false,code:'FORBIDDEN'},{status:403});
  const sql=db(); if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
   const b=await r.json(),code=String(b.serviceCode||'').trim().toUpperCase();
   if(!code)return NextResponse.json({success:false,code:'SERVICE_CODE_REQUIRED'},{status:400});
+  if(b.status!==undefined){
+   const next=String(b.status) as YcmServiceStatus;
+   const current=(await sql`SELECT status FROM ycm_service_master WHERE service_code=${code} LIMIT 1`)[0];
+   if(!current)return NextResponse.json({success:false,code:'SERVICE_NOT_FOUND'},{status:404});
+   if(!canTransitionServiceStatus(s.role,String(current.status) as YcmServiceStatus,next))return NextResponse.json({success:false,code:'SERVICE_STATUS_TRANSITION_FORBIDDEN'},{status:403});
+  }
   const rows=await sql`UPDATE ycm_service_master SET
     service_name=COALESCE(${b.serviceName??null},service_name),
     service_type=COALESCE(${b.serviceType??null},service_type),
