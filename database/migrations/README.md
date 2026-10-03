@@ -33,6 +33,7 @@ Run in numeric order:
 29. 029_wallet_settlement_and_payout_destinations.sql
 30. 030_settlement_destination_binding.sql
 31. 031_auth_login_rate_limit.sql
+32. 032_company_financial_control.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
 
