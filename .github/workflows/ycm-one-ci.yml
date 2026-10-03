@@ -77,5 +77,15 @@ jobs:
         run: npm run test:company-finance-reports
       - name: Finance reconciliation contract test
         run: npm run test:finance-reconciliation
+      - name: DigiLocker integration contract test
+        run: npm run test:digilocker
+      - name: Service geography scope contract test
+        run: npm run test:service-geography-scope
+      - name: Employee KPI security contract test
+        run: npm run test:employee-kpi-security
+      - name: Financial webhook security contract test
+        run: npm run test:financial-webhook-security
+      - name: AEPS webhook security contract test
+        run: npm run test:aeps-webhook-security
       - name: Production build
         run: npm run build
