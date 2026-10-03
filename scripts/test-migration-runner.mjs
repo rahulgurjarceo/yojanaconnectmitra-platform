@@ -6,6 +6,11 @@ const root = process.cwd();
 const script = await fs.readFile(path.join(root, "scripts/migrate-production.mjs"), "utf8");
 const pkg = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
 const readme = await fs.readFile(path.join(root, "database/migrations/README.md"), "utf8");
+const migrationFiles = (await fs.readdir(path.join(root, "database/migrations"))).filter((file) => /^\d+_.*\.sql$/.test(file));
+const prefixes = migrationFiles.map((file) => file.match(/^(\d+)_/)?.[1]).filter(Boolean);
+assert.equal(new Set(prefixes).size, prefixes.length, "Migration sequence numbers must be unique");
+assert.ok(migrationFiles.includes("035_eko_aeps_retailer_transactions.sql"));
+assert.ok(migrationFiles.includes("036_ycm_packages_entitlements_kyc.sql"));
 
 assert.match(script, /DATABASE_URL \|\| process\.env\.POSTGRES_URL/);
 assert.match(script, /ycm_schema_migrations/);
