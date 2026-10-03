@@ -16,9 +16,9 @@ type DocumentRecord = {
   verified_at?:string|null; valid_from?:string|null; valid_until?:string|null;
   uploaded_at?:string|null; created_at:string;
 };
-type FamilyRecord = {family_id:string;full_name:string;mobile:string;country:string};
+type FamilyRecord = {family_id:string;full_name:string;mobile:string;email?:string|null;country:string};
 type MemberRecord = {member_id:string;full_name:string;relation:string;mobile:string|null;email:string|null;date_of_birth:string|null;verified:boolean};
-type SnapshotEntry = {documentCode:string;documentName:string;required:boolean;source:string;reusable:boolean;documentId:string;storageRef:string|null;validUntil:Date|null;action:string};
+type SnapshotEntry = {documentCode:string;documentName:string;required:boolean;source:string;reusable:boolean;documentId:string;storageRef:string|null;validUntil:string|Date|null;action:string};
 type ServiceDocumentRule = {
   document_code: string;
   document_name: string;
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     if (!service) return NextResponse.json({ success: false, code: 'SERVICE_NOT_FOUND' }, { status: 404 });
     if (service.status !== 'active') return NextResponse.json({ success: false, code: 'SERVICE_NOT_ACTIVE' }, { status: 409 });
 
-    const family = (await sql`SELECT family_id,full_name,mobile,country FROM ycm_families WHERE family_id=${familyId} LIMIT 1`)[0];
+    const family = (await sql`SELECT family_id,full_name,mobile,email,country FROM ycm_families WHERE family_id=${familyId} LIMIT 1`)[0] as unknown as FamilyRecord;
     if (!family) return NextResponse.json({ success: false, code: 'FAMILY_NOT_FOUND' }, { status: 404 });
 
     const member = body?.memberId
