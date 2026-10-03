@@ -1,8 +1,8 @@
 import postgres from 'postgres';
 import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { sessionCookieName, verifySession } from '../../../lib/ycm-access-control';
-import { GOVERNMENT_GRIEVANCE_CATEGORIES, GOVERNMENT_GRIEVANCE_SAFETY_RULES, normalizeGrievanceText } from '../../../lib/ycm-government-grievance';
+import { sessionCookieName, verifySession } from '../../lib/ycm-access-control';
+import { GOVERNMENT_GRIEVANCE_CATEGORIES, GOVERNMENT_GRIEVANCE_SAFETY_RULES, normalizeGrievanceText } from '../../lib/ycm-government-grievance';
 
 export const runtime = 'nodejs';
 const db = () => {
