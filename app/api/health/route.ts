@@ -1,4 +1,3 @@
-import { NextResponse } from 'next';
 import postgres from 'postgres';
 import { getPostgresYcmSessionRevocationStore } from '../../lib/ycm-postgres-session-revocation';
 import { getPostgresYcmAuditStore } from '../../lib/ycm-postgres-audit-store';
@@ -16,11 +15,11 @@ export async function GET() {
   let databaseReachable = false;
   if (database) {
     const sql = postgres(process.env.DATABASE_URL || process.env.POSTGRES_URL!, { max: 1, prepare: false, connect_timeout: 3, idle_timeout: 5 });
-    try { await sql('SELECT 1'); databaseReachable = true; }
+    try { await sql.unsafe('SELECT 1'); databaseReachable = true; }
     catch {}
     finally { await sql.end({ timeout: 2 }); }
   }
-  return NextResponse.json({
+  return Response.json({
     status: databaseReachable || !database ? 'ok' : 'degraded',
     service: 'Yojana Connect Mitra Platform',
     version: '0.1.0',
