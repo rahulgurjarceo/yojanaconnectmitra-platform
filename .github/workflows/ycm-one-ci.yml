@@ -59,5 +59,25 @@ jobs:
         run: npm run test:aeps-provider-modes
       - name: Auth login security contract test
         run: npm run test:auth-login-security
+      - name: Jan Aadhaar crypto contract test
+        run: npm run test:jan-aadhaar-crypto
+      - name: Jan Aadhaar integration contract test
+        run: npm run test:jan-aadhaar-integration
+      - name: Company financial control contract test
+        run: npm run test:company-financial-control
+      - name: Security primitives contract test
+        run: npm run test:security-primitives
+      - name: API request policy contract test
+        run: npm run test:api-request-policy
+      - name: Company asset control contract test
+        run: npm run test:company-asset-control
+      - name: Company expense approval contract test
+        run: npm run test:company-expense-approval
+      - name: Company finance reports contract test
+        run: npm run test:company-finance-reports
+      - name: Finance reconciliation contract test
+        run: npm run test:finance-reconciliation
+      - name: Employee performance report contract test
+        run: npm run test:employee-performance
       - name: Production build
         run: npm run build
