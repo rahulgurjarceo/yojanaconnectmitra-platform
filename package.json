@@ -64,6 +64,8 @@
     "eslint": "^9",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "@typescript-eslint/parser": "8.71.0"
+    "@typescript-eslint/parser": "8.71.0",
+    "@typescript-eslint/eslint-plugin": "8.71.0",
+    "eslint-plugin-react-hooks": "7.1.1"
   }
 }
