@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 const files=[
- 'database/migrations/031_eko_aeps_retailer_transactions.sql',
+ 'database/migrations/035_eko_aeps_retailer_transactions.sql',
  'app/lib/eko-transaction-inquiry.ts',
  'app/lib/eko-user-services.ts',
  'app/api/management/eko/retailers/route.ts',
