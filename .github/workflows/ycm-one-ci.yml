@@ -35,6 +35,10 @@ jobs:
         run: npm run test:business-domains
       - name: Unified service master contract test
         run: npm run test:service-master
+      - name: Service lifecycle contract test
+        run: npm run test:service-lifecycle
+      - name: Service application reuse/prefill contract test
+        run: npm run test:service-application
       - name: Dynamic service operating layer contract test
         run: npm run test:dynamic-service-layer
       - name: Provider workflow contract test
@@ -95,6 +99,10 @@ jobs:
         run: npm run test:crm-telemetry-security
       - name: Payout destination security contract test
         run: npm run test:payout-destination-security
+      - name: Government grievance contract test
+        run: npm run test:government-grievance
+      - name: Government RBAC contract test
+        run: npm run test:government-rbac
       - name: Production build
         run: npm run build
 
