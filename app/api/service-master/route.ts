@@ -15,6 +15,12 @@ export async function GET(r:NextRequest){
  const sql=db(); if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
   const u=new URL(r.url),type=u.searchParams.get('type'),domain=u.searchParams.get('domain'),vertical=u.searchParams.get('vertical'),q=u.searchParams.get('q'),includeAll=u.searchParams.get('includeAll')==='true'&&canManage(s.role);
+  const stateCode=u.searchParams.get('stateCode'),districtCode=u.searchParams.get('districtCode'),blockCode=u.searchParams.get('blockCode'),gramPanchayatCode=u.searchParams.get('gramPanchayatCode'),villageCode=u.searchParams.get('villageCode');
+  if(districtCode&&!stateCode)return NextResponse.json({success:false,code:'GEOGRAPHY_STATE_REQUIRED'},{status:400});
+  if(blockCode&&(!stateCode||!districtCode))return NextResponse.json({success:false,code:'GEOGRAPHY_DISTRICT_REQUIRED'},{status:400});
+  if(gramPanchayatCode&&(!stateCode||!districtCode||!blockCode))return NextResponse.json({success:false,code:'GEOGRAPHY_BLOCK_REQUIRED'},{status:400});
+  if(villageCode&&(!stateCode||!districtCode||!blockCode))return NextResponse.json({success:false,code:'GEOGRAPHY_BLOCK_REQUIRED_FOR_VILLAGE'},{status:400});
+  const hasGeo=Boolean(stateCode||districtCode||blockCode||gramPanchayatCode||villageCode);
   const rows=await sql`
    SELECT sm.service_id,sm.service_code,sm.service_name,sm.service_type,sm.business_domain_code,
           sm.parent_service_code,sm.channel,sm.requires_case,sm.requires_documents,sm.requires_provider,
@@ -31,6 +37,30 @@ export async function GET(r:NextRequest){
        WHERE vx.service_code=sm.service_code AND vx.vertical_code=${vertical} AND vx.status='active'
      ))
      AND (${q} IS NULL OR sm.service_name ILIKE '%'||${q}||'%' OR sm.service_code ILIKE '%'||${q}||'%')
+     AND (
+       (${hasGeo}=false AND NOT EXISTS (
+         SELECT 1 FROM ycm_service_geography_scope sg0
+         WHERE sg0.service_code=sm.service_code AND sg0.enabled=true
+       ))
+       OR
+       (${hasGeo}=true AND (
+         NOT EXISTS (
+           SELECT 1 FROM ycm_service_geography_scope sg0
+           WHERE sg0.service_code=sm.service_code AND sg0.enabled=true
+         )
+         OR EXISTS (
+           SELECT 1 FROM ycm_service_geography_scope sg
+           WHERE sg.service_code=sm.service_code AND sg.enabled=true
+             AND (
+               (sg.geography_level='state' AND sg.state_code=${stateCode})
+               OR (sg.geography_level='district' AND sg.state_code=${stateCode} AND sg.district_code=${districtCode})
+               OR (sg.geography_level='block' AND sg.state_code=${stateCode} AND sg.district_code=${districtCode} AND sg.block_code=${blockCode})
+               OR (sg.geography_level='gram_panchayat' AND sg.state_code=${stateCode} AND sg.district_code=${districtCode} AND sg.block_code=${blockCode} AND sg.gram_panchayat_code=${gramPanchayatCode})
+               OR (sg.geography_level='village' AND sg.state_code=${stateCode} AND sg.district_code=${districtCode} AND sg.block_code=${blockCode} AND sg.village_code=${villageCode})
+             )
+         )
+       ))
+     )
    GROUP BY sm.service_id
    ORDER BY sm.service_name
   `;
