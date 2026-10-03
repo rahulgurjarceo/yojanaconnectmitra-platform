@@ -13,3 +13,9 @@ assert.match(telemetry,/32768/);
 assert.match(telemetry,/jsonObject/);
 
 console.log("CRM_TELEMETRY_SECURITY_CONTRACT_TEST: PASS");
+
+assert.match(crm,/LEAD_INPUT_INVALID/);
+assert.match(crm,/jsonSizeOk/);
+assert.match(crm,/32768/);
+assert.match(crm,/LEAD_CREATE_FAILED/);
+assert.doesNotMatch(crm,/message:e instanceof Error/);
