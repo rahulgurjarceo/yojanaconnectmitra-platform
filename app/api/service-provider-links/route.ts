@@ -9,8 +9,10 @@ export async function POST(r:NextRequest){
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{const b=await r.json(),serviceCode=String(b.serviceCode||'').trim().toUpperCase(),providerCode=String(b.providerCode||'').trim().toUpperCase();
  if(!serviceCode||!providerCode)return NextResponse.json({success:false,code:'SERVICE_AND_PROVIDER_REQUIRED'},{status:400});
+ if(!Number.isInteger(b.priority)||b.priority<0||b.priority>100000)return NextResponse.json({success:false,code:'PROVIDER_LINK_PRIORITY_INVALID'},{status:400});
+ if(b.commissionRate!==undefined&&(!Number.isFinite(Number(b.commissionRate))||Number(b.commissionRate)<0||Number(b.commissionRate)>100))return NextResponse.json({success:false,code:'PROVIDER_LINK_COMMISSION_INVALID'},{status:400});
  const row=(await sql`INSERT INTO ycm_service_provider_links(service_code,provider_id,priority,enabled,commission_rate,metadata)
- SELECT ${serviceCode},provider_id,${Number.isInteger(b.priority)?b.priority:100},${b.enabled!==false},${b.commissionRate??null},${b.metadata||{}} FROM ycm_service_providers WHERE provider_code=${providerCode}
+ SELECT ${serviceCode},provider_id,${b.priority},${b.enabled!==false},${b.commissionRate??null},${b.metadata||{}} FROM ycm_service_providers WHERE provider_code=${providerCode}
  ON CONFLICT(service_code,provider_id) DO UPDATE SET priority=EXCLUDED.priority,enabled=EXCLUDED.enabled,commission_rate=EXCLUDED.commission_rate,metadata=EXCLUDED.metadata
  RETURNING *`)[0];
  if(!row)return NextResponse.json({success:false,code:'PROVIDER_NOT_FOUND'},{status:404});
