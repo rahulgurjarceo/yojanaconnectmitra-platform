@@ -3,6 +3,8 @@ import path from "node:path";
 import assert from "node:assert/strict";
 
 const migration=await fs.readFile(path.join(process.cwd(),"database/migrations/021_dynamic_service_operating_layer.sql"),"utf8");
+const providers=await fs.readFile(path.join(process.cwd(),"app/api/service-providers/route.ts"),"utf8");
+const workflows=await fs.readFile(path.join(process.cwd(),"app/api/service-workflows/route.ts"),"utf8");
 for (const token of [
   "ycm_business_verticals",
   "ycm_service_verticals",
@@ -17,4 +19,7 @@ assert.match(migration,/CREATE UNIQUE INDEX IF NOT EXISTS idx_ycm_service_workfl
 assert.match(migration,/government/);
 assert.match(migration,/agriculture/);
 assert.match(migration,/travel/);
+assert.match(providers,/PROVIDER_STATUS_INVALID/);
+assert.match(workflows,/WORKFLOW_STATUS_INVALID/);
+assert.match(workflows,/WORKFLOW_STEPS_LIMIT_EXCEEDED/);
 console.log("DYNAMIC_SERVICE_OPERATING_LAYER_CONTRACT_TEST: PASS");
