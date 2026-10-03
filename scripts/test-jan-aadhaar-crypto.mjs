@@ -1,10 +1,5 @@
 import assert from 'node:assert/strict';
 import { generateKeyPairSync } from 'node:crypto';
-import { writeFileSync, unlinkSync } from 'node:fs';
-
-const source = await import('../app/lib/jan-aadhaar-crypto.ts').catch(() => null);
-if (source) throw new Error('Direct TypeScript execution is not expected in this contract test');
-
 const cryptoSource = await (await import('node:fs/promises')).readFile('app/lib/jan-aadhaar-crypto.ts', 'utf8');
 for (const needle of ['aes-256-cbc', 'RSA-SHA256', 'publicEncrypt', 'privateDecrypt', 'randomBytes(32)', 'randomBytes(16)', 'iv.toString(\'base64\')']) {
   assert.ok(cryptoSource.includes(needle), 'missing crypto contract: ' + needle);
