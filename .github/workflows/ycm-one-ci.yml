@@ -101,6 +101,8 @@ jobs:
         run: npm run test:payout-destination-security
       - name: Government grievance contract test
         run: npm run test:government-grievance
+      - name: Identity login contract test
+        run: npm run test:identity-login
       - name: Government RBAC contract test
         run: npm run test:government-rbac
       - name: Release audit contract test
