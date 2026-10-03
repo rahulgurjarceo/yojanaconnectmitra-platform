@@ -2,6 +2,8 @@ import postgres from 'postgres';
 import {randomUUID} from 'node:crypto';
 import {NextRequest,NextResponse} from 'next/server';
 import {sessionCookieName,verifySession} from '../../../lib/ycm-access-control';
+import {buildAuditRecord} from '../../../lib/ycm-audit-events';
+import {getPostgresYcmAuditStore} from '../../../lib/ycm-postgres-audit-store';
 
 export const runtime='nodejs';
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:8,prepare:false,connect_timeout:10,idle_timeout:20}):null};
@@ -43,6 +45,7 @@ export async function POST(r:NextRequest){
   await tx`UPDATE ycm_wallet_accounts SET available_paise=\${nextAvailable},withdrawable_paise=\${nextWithdrawable},lifetime_debited_paise=lifetime_debited_paise+\${b.amountPaise},updated_at=NOW() WHERE wallet_id=\${wallet.wallet_id}`;
   await tx`INSERT INTO ycm_wallet_entries(entry_id,wallet_id,entry_type,amount_paise,balance_after_paise,idempotency_key) VALUES(\${randomUUID()},\${wallet.wallet_id},'settlement_debit',\${b.amountPaise},\${nextAvailable},\${'settlement:'+settlementId})`;
   await tx`INSERT INTO ycm_settlement_events(event_id,settlement_id,event_type,reference) VALUES(\${randomUUID()},\${settlementId},'requested',\${destination.destination_id})`;
+  const audit=getPostgresYcmAuditStore(); if(audit) await audit.append(buildAuditRecord({event:'FINANCIAL_SETTLEMENT_REQUESTED',subject:s.sub,role:s.role,sessionId:s.sessionId,resourceType:'settlement',resourceId:settlementId,success:true})).catch(()=>{});
   return NextResponse.json({success:true,settlementId,status:'requested',method:destination.method,amountPaise:b.amountPaise},{status:201});
  });}catch(e){return NextResponse.json({success:false,code:e instanceof Error?e.message:'SETTLEMENT_REQUEST_FAILED'},{status:400});}finally{await sql.end({timeout:3});}
 }
@@ -64,6 +67,7 @@ export async function PATCH(r:NextRequest){
   }
   await tx`UPDATE ycm_settlements SET status=\${b.status},reference=\${b.reference??null},processed_at=CASE WHEN \${b.status} IN ('paid','failed','reversed') THEN NOW() ELSE processed_at END WHERE settlement_id=\${settlement.settlement_id}`;
   await tx`INSERT INTO ycm_settlement_events(event_id,settlement_id,event_type,reference) VALUES(\${randomUUID()},\${settlement.settlement_id},\${b.status},\${b.reference??null})`;
+  const audit=getPostgresYcmAuditStore(); if(audit) await audit.append(buildAuditRecord({event:'FINANCIAL_SETTLEMENT_STATUS_CHANGED',subject:s.sub,role:s.role,sessionId:s.sessionId,resourceType:'settlement',resourceId:settlement.settlement_id,success:true})).catch(()=>{});
   return NextResponse.json({success:true,settlementId:settlement.settlement_id,status:b.status});
  });}catch(e){return NextResponse.json({success:false,code:e instanceof Error?e.message:'SETTLEMENT_UPDATE_FAILED'},{status:400});}finally{await sql.end({timeout:3});}
 }
