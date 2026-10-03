@@ -43,6 +43,7 @@ export async function PATCH(r:NextRequest){
  const s=verifySession(r.cookies.get(sessionCookieName())?.value);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
  const b=await r.json().catch(()=>null) as {destinationId?:string;status?:'active'|'disabled'|'pending_verification';isDefault?:boolean}|null;
  if(!b?.destinationId)return NextResponse.json({success:false,code:'DESTINATION_ID_REQUIRED'},{status:400});
+ if(b.status==='active'&&!['ceo','management','admin'].includes(s.role))return NextResponse.json({success:false,code:'PAYOUT_DESTINATION_VERIFICATION_REQUIRED'},{status:403});
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
   const user=(await sql`SELECT id FROM ycm_users WHERE user_id=\${s.sub} LIMIT 1`)[0];if(!user)return NextResponse.json({success:false,code:'USER_NOT_FOUND'},{status:404});
