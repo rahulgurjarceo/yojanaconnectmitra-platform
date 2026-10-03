@@ -26,7 +26,8 @@ export async function POST(r:NextRequest){
  const s=sess(r);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
  if(!['ceo','admin','management','team_lead'].includes(s.role))return NextResponse.json({success:false,code:'FORBIDDEN_ROLE_SCOPE'},{status:403});
  const b=await r.json().catch(()=>null) as {targetType?:'company'|'state'|'district'|'block'|'franchise'|'team'|'employee';ownerUserId?:string;teamId?:string;parentTargetId?:string;stateCode?:string;districtCode?:string;blockCode?:string;franchiseEntityId?:string;teamType?:string;businessDomainCode?:string;metricCode?:string;targetValue?:number;unit?:string;periodStart?:string;periodEnd?:string;notes?:string}|null;
- if(!b?.targetType||!b.metricCode||b.targetValue==null||!b.periodStart||!b.periodEnd)return NextResponse.json({success:false,code:'TARGET_FIELDS_REQUIRED'},{status:400});
+ if(!b?.targetType||!b.metricCode||b.targetValue==null||!Number.isFinite(b.targetValue)||b.targetValue<0||!b.periodStart||!b.periodEnd)return NextResponse.json({success:false,code:'TARGET_FIELDS_REQUIRED'},{status:400});
+ if(b.periodStart>b.periodEnd)return NextResponse.json({success:false,code:'TARGET_DATE_RANGE_INVALID'},{status:400});
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
   const actor=(await sql`SELECT id FROM ycm_users WHERE user_id=${s.sub} LIMIT 1`)[0]?.id;if(!actor)return NextResponse.json({success:false,code:'ACTOR_NOT_FOUND'},{status:403});
