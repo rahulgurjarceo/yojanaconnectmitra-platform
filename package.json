@@ -28,7 +28,8 @@
     "test:aeps-provider-modes": "node scripts/test-aeps-provider-modes.mjs",
     "test:auth-login-security": "node scripts/test-auth-login-security.mjs",
     "test:jan-aadhaar-crypto": "node scripts/test-jan-aadhaar-crypto.mjs",
-    "test:jan-aadhaar-integration": "node scripts/test-jan-aadhaar-integration.mjs"
+    "test:jan-aadhaar-integration": "node scripts/test-jan-aadhaar-integration.mjs",
+    "test:company-financial-control": "node scripts/test-company-financial-control.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
