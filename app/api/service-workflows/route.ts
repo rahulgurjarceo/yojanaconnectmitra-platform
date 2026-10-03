@@ -18,6 +18,8 @@ export async function POST(r:NextRequest){
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{const b=await r.json(),serviceCode=String(b.serviceCode||'').trim().toUpperCase(),steps=Array.isArray(b.steps)?b.steps:[];
  if(!serviceCode)return NextResponse.json({success:false,code:'SERVICE_CODE_REQUIRED'},{status:400});
+ if(!['draft','active','inactive'].includes(String(b.status||'draft')))return NextResponse.json({success:false,code:'WORKFLOW_STATUS_INVALID'},{status:400});
+ if(steps.length>100)return NextResponse.json({success:false,code:'WORKFLOW_STEPS_LIMIT_EXCEEDED'},{status:400});
  if(!steps.length)return NextResponse.json({success:false,code:'WORKFLOW_STEPS_REQUIRED'},{status:400});
  const max=(await sql`SELECT COALESCE(MAX(version),0)::int version FROM ycm_service_workflows WHERE service_code=${serviceCode}`)[0]?.version||0;
  const row=(await sql`INSERT INTO ycm_service_workflows(service_code,version,steps,status,metadata) VALUES(${serviceCode},${max+1},${JSON.stringify(steps)}::jsonb,${b.status||'draft'},${b.metadata||{}}) RETURNING *`)[0];
