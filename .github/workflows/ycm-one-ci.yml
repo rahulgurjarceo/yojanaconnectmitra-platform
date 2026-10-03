@@ -120,6 +120,8 @@ jobs:
         run: npm run test:government-grievance
       - name: Government RBAC contract test
         run: npm run test:government-rbac
+      - name: Release audit contract test
+        run: npm run test:release-audit
       - name: Production build
         run: npm run build
 
