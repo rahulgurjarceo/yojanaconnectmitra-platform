@@ -18,6 +18,7 @@ export const YCM_AUDIT_EVENTS = [
   'SECURITY_POLICY_DENIED',
   'COMPANY_EXPENSE_CREATED',
   'COMPANY_ASSET_CREATED',
+  'COMPANY_EXPENSE_APPROVAL_CHANGED',
 ] as const;
 
 export type YcmAuditEvent = (typeof YCM_AUDIT_EVENTS)[number];
