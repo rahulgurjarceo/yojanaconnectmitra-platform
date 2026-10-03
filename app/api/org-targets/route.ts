@@ -9,7 +9,16 @@ export async function GET(r:NextRequest){
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
   const u=new URL(r.url),status=u.searchParams.get('status')||'active',employeeId=u.searchParams.get('employeeId'),teamId=u.searchParams.get('teamId');
-  const rows=await sql`SELECT t.*,u.user_id owner_user_ref,tu.name team_name FROM ycm_org_targets t LEFT JOIN ycm_users u ON u.id=t.owner_user_id LEFT JOIN ycm_teams tu ON tu.team_id=t.team_id WHERE t.status=${status} AND (${employeeId} IS NULL OR u.user_id=${employeeId}) AND (${teamId} IS NULL OR t.team_id=${teamId}) ORDER BY t.period_start DESC,t.created_at DESC LIMIT 500`;
+  const actor=(await sql`SELECT id FROM ycm_users WHERE user_id=${s.sub} LIMIT 1`)[0]?.id;
+  if(!actor)return NextResponse.json({success:false,code:'ACTOR_NOT_FOUND'},{status:403});
+  let rows;
+  if(['ceo','admin','management'].includes(s.role)){
+   rows=await sql`SELECT t.*,u.user_id owner_user_ref,tu.name team_name FROM ycm_org_targets t LEFT JOIN ycm_users u ON u.id=t.owner_user_id LEFT JOIN ycm_teams tu ON tu.team_id=t.team_id WHERE t.status=${status} AND (${employeeId} IS NULL OR u.user_id=${employeeId}) AND (${teamId} IS NULL OR t.team_id=${teamId}) ORDER BY t.period_start DESC,t.created_at DESC LIMIT 500`;
+  }else if(s.role==='team_lead'){
+   rows=await sql`SELECT t.*,u.user_id owner_user_ref,tu.name team_name FROM ycm_org_targets t LEFT JOIN ycm_users u ON u.id=t.owner_user_id LEFT JOIN ycm_teams tu ON tu.team_id=t.team_id WHERE t.status=${status} AND t.team_id IN (SELECT team_id FROM ycm_teams WHERE manager_user_id=${actor} AND status='active') AND (${employeeId} IS NULL OR u.user_id=${employeeId}) AND (${teamId} IS NULL OR t.team_id=${teamId}) ORDER BY t.period_start DESC,t.created_at DESC LIMIT 500`;
+  }else{
+   rows=await sql`SELECT t.*,u.user_id owner_user_ref,tu.name team_name FROM ycm_org_targets t LEFT JOIN ycm_users u ON u.id=t.owner_user_id LEFT JOIN ycm_teams tu ON tu.team_id=t.team_id WHERE t.status=${status} AND t.owner_user_id=${actor} ORDER BY t.period_start DESC,t.created_at DESC LIMIT 500`;
+  }
   return NextResponse.json({success:true,targets:rows},{headers:{'Cache-Control':'private,no-store'}});
  }finally{await sql.end({timeout:3});}
 }
