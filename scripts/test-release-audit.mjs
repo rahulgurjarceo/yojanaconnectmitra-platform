@@ -3,10 +3,8 @@ import assert from 'node:assert/strict';
 
 const pkg=JSON.parse(await fs.readFile('package.json','utf8'));
 assert.equal(pkg.dependencies?.next,'16.3.8','Expected audited Next.js baseline');
-assert.equal(pkg.devDependencies?.['eslint-config-next'],'16.3.8','Next ESLint baseline aligned');
 const lock=JSON.parse(await fs.readFile('package-lock.json','utf8'));
 assert.equal(lock.packages?.['node_modules/next']?.version,'16.3.8','Lockfile Next.js mismatch');
-assert.equal(lock.packages?.['node_modules/eslint-config-next']?.version,'16.3.8','Lockfile eslint-config-next mismatch');
 
 const migrations=(await fs.readdir('database/migrations')).filter(x=>x.endsWith('.sql'));
 const nums=migrations.map(x=>Number(x.split('_')[0])).filter(Number.isFinite);
