@@ -2,6 +2,8 @@ import postgres from 'postgres';
 import {randomUUID} from 'node:crypto';
 import {NextRequest,NextResponse} from 'next/server';
 import {sessionCookieName,verifySession} from '../../../lib/ycm-access-control';
+import {buildAuditRecord} from '../../../lib/ycm-audit-events';
+import {getPostgresYcmAuditStore} from '../../../lib/ycm-postgres-audit-store';
 
 export const runtime='nodejs';
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:6,prepare:false,connect_timeout:10,idle_timeout:20}):null};
@@ -32,6 +34,7 @@ export async function POST(r:NextRequest){
   const row=(await tx`INSERT INTO ycm_payout_destinations(destination_id,user_id,method,label,account_holder_name,bank_account_last4,bank_ifsc,upi_id,provider,provider_beneficiary_id,is_default)
     VALUES(\${id},\${user.id},\${b.method},\${b.label},\${b.accountHolderName??null},\${b.bankAccountLast4??null},\${b.bankIfsc?.toUpperCase()??null},\${b.upiId??null},\${b.provider??null},\${b.providerBeneficiaryId??null},\${b.isDefault??false})
     RETURNING destination_id,method,label,account_holder_name,bank_account_last4,bank_ifsc,upi_id,provider,status,is_default`)[0];
+  const audit=getPostgresYcmAuditStore(); if(audit) await audit.append(buildAuditRecord({event:'PAYOUT_DESTINATION_CHANGED',subject:s.sub,role:s.role,sessionId:s.sessionId,resourceType:'payout_destination',resourceId:id,success:true})).catch(()=>{});
   return NextResponse.json({success:true,destination:row},{status:201});
  });}catch(e){return NextResponse.json({success:false,code:e instanceof Error?e.message:'PAYOUT_DESTINATION_CREATE_FAILED'},{status:400});}finally{await sql.end({timeout:3});}
 }
@@ -46,6 +49,7 @@ export async function PATCH(r:NextRequest){
   if(b.isDefault)await sql`UPDATE ycm_payout_destinations SET is_default=false,updated_at=NOW() WHERE user_id=\${user.id}`;
   const rows=await sql`UPDATE ycm_payout_destinations SET status=COALESCE(\${b.status??null},status),is_default=COALESCE(\${b.isDefault??null},is_default),updated_at=NOW() WHERE destination_id=\${b.destinationId} AND user_id=\${user.id} RETURNING destination_id,method,label,status,is_default`;
   if(!rows[0])return NextResponse.json({success:false,code:'PAYOUT_DESTINATION_NOT_FOUND'},{status:404});
+  const audit=getPostgresYcmAuditStore(); if(audit) await audit.append(buildAuditRecord({event:'PAYOUT_DESTINATION_CHANGED',subject:s.sub,role:s.role,sessionId:s.sessionId,resourceType:'payout_destination',resourceId:b.destinationId,success:true})).catch(()=>{});
   return NextResponse.json({success:true,destination:rows[0]});
  }finally{await sql.end({timeout:3});}
 }
