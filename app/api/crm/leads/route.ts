@@ -1,11 +1,18 @@
 import {NextRequest,NextResponse} from 'next/server';
 import postgres from 'postgres';
+import {timingSafeEqual} from 'node:crypto';
 import {sessionCookieName,verifySession} from '../../../lib/ycm-access-control';
 export const runtime='nodejs';
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:5,prepare:false,connect_timeout:10,idle_timeout:20}):null};
 const actor=(r:NextRequest)=>verifySession(r.cookies.get(sessionCookieName())?.value);
 const manage=(role:string)=>['ceo','management','admin','employee','team_lead'].includes(role);
-function secretAllowed(r:NextRequest){const configured=process.env.YCM_LEAD_WEBHOOK_SECRET;return !!configured&&r.headers.get('x-ycm-lead-secret')===configured;}
+function secretAllowed(r:NextRequest){
+ const configured=process.env.YCM_LEAD_WEBHOOK_SECRET||'';
+ const supplied=r.headers.get('x-ycm-lead-secret')||'';
+ if(!configured||!supplied)return false;
+ const a=Buffer.from(configured),b=Buffer.from(supplied);
+ return a.length===b.length&&timingSafeEqual(a,b);
+}
 async function actorId(sql:ReturnType<typeof postgres>,userId:string){return (await sql`SELECT id FROM ycm_users WHERE user_id=${userId} LIMIT 1`)[0]?.id||null;}
 
 export async function GET(r:NextRequest){
