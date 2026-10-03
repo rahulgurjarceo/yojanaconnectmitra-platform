@@ -20,6 +20,14 @@ export type YcmAepsRequest = {
   amountPaise?: number;
   providerCode: string;
   metadata?: Record<string, unknown>;
+  /** Provider-specific AEPS payload fields; required by EKO when used. */
+  aadhaarEncrypted?: string;
+  pidData?: string;
+  bankCode?: string;
+  customerMobile?: string;
+  latLong?: string;
+  sourceIp?: string;
+  notifyCustomer?: 0 | 1;
 };
 
 export type YcmAepsResult = {
