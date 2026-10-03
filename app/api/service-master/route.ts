@@ -24,7 +24,7 @@ export async function GET(r:NextRequest){
   const rows=await sql`
    SELECT sm.service_id,sm.service_code,sm.service_name,sm.service_type,sm.business_domain_code,
           sm.parent_service_code,sm.channel,sm.requires_case,sm.requires_documents,sm.requires_provider,
-          sm.status,sm.metadata,
+          sm.status,sm.metadata,sm.validity_days,sm.expiry_warning_days,sm.renewal_allowed,sm.renewal_window_days,sm.prefill_fields,
           COALESCE(jsonb_agg(DISTINCT jsonb_build_object('vertical_code',sv.vertical_code,'is_primary',sv.is_primary))
             FILTER (WHERE sv.vertical_code IS NOT NULL),'[]'::jsonb) AS verticals
    FROM ycm_service_master sm
@@ -64,6 +64,17 @@ export async function GET(r:NextRequest){
    GROUP BY sm.service_id
    ORDER BY sm.service_name
   `;
+  const serviceCode=u.searchParams.get('serviceCode');
+  if(serviceCode){
+   const details=(await sql`SELECT service_code,service_name,validity_days,expiry_warning_days,renewal_allowed,renewal_window_days,prefill_fields
+     FROM ycm_service_master WHERE service_code=${serviceCode} LIMIT 1`)[0];
+   if(!details)return NextResponse.json({success:false,code:'SERVICE_NOT_FOUND'},{status:404});
+   const documents=await sql`SELECT document_code,document_name,required,required_for_application,validation_mode,validity_days,expiry_warning_days,reuse_if_valid,reupload_on_expiry,prefill_fields,source_name,source_url,valid_from,valid_until,metadata
+     FROM ycm_service_documents WHERE service_code=${serviceCode} ORDER BY document_name`;
+   const workflow=(await sql`SELECT version,steps,status,metadata FROM ycm_service_workflows WHERE service_code=${serviceCode} AND status='active' ORDER BY version DESC LIMIT 1`)[0]||null;
+   const pricing=await sql`SELECT channel,customer_price,provider_cost,commission_rate,currency,effective_from FROM ycm_service_pricing WHERE service_code=${serviceCode} AND status='active' ORDER BY effective_from DESC`;
+   return NextResponse.json({success:true,service:details,documents,workflow,pricing},{headers:{'Cache-Control':'private,no-store'}});
+  }
   return NextResponse.json({success:true,services:rows},{headers:{'Cache-Control':'private,no-store'}});
  }finally{await sql.end({timeout:3});}
 }
@@ -76,11 +87,22 @@ export async function POST(r:NextRequest){
   const b=await r.json();
   const code=String(b.serviceCode||'').trim().toUpperCase(),name=String(b.serviceName||'').trim(),type=String(b.serviceType||'other').trim();
   if(!code||!name)return NextResponse.json({success:false,code:'SERVICE_CODE_AND_NAME_REQUIRED'},{status:400});
+  const validityDays=b.validityDays==null||b.validityDays===''?null:Number(b.validityDays);
+  const expiryWarningDays=b.expiryWarningDays==null?30:Number(b.expiryWarningDays);
+  const renewalWindowDays=b.renewalWindowDays==null?60:Number(b.renewalWindowDays);
+  if((validityDays!==null&&(!Number.isInteger(validityDays)||validityDays<0))||expiryWarningDays<0||renewalWindowDays<0)return NextResponse.json({success:false,code:'SERVICE_LIFECYCLE_INVALID'},{status:400});
+  const prefillFields=Array.isArray(b.prefillFields)?b.prefillFields:[];
+  const documents=Array.isArray(b.documentRequirements)?b.documentRequirements:[];
   const rows=await sql`INSERT INTO ycm_service_master
-   (service_code,service_name,service_type,business_domain_code,parent_service_code,channel,requires_case,requires_documents,requires_provider,status,metadata)
+   (service_code,service_name,service_type,business_domain_code,parent_service_code,channel,requires_case,requires_documents,requires_provider,status,metadata,validity_days,expiry_warning_days,renewal_allowed,renewal_window_days,prefill_fields)
    VALUES (${code},${name},${type},${b.businessDomainCode||null},${b.parentServiceCode||null},${b.channel||'assisted'},
-           ${b.requiresCase!==false},${b.requiresDocuments===true},${b.requiresProvider===true},'draft',${b.metadata||{}})
-   RETURNING service_id,service_code,service_name,service_type,business_domain_code,parent_service_code,channel,requires_case,requires_documents,requires_provider,status,metadata`;
+           ${b.requiresCase!==false},${b.requiresDocuments===true||documents.length>0},${b.requiresProvider===true},'draft',${b.metadata||{}},${validityDays},${expiryWarningDays},${b.renewalAllowed!==false},${renewalWindowDays},${JSON.stringify(prefillFields)}::jsonb)
+   RETURNING service_id,service_code,service_name,service_type,business_domain_code,parent_service_code,channel,requires_case,requires_documents,requires_provider,status,metadata,validity_days,expiry_warning_days,renewal_allowed,renewal_window_days,prefill_fields`;
+  for(const d of documents){
+   if(!d?.documentCode||!d?.documentName)continue;
+   await sql`INSERT INTO ycm_service_documents(service_code,document_code,document_name,required,required_for_application,validation_mode,validity_days,expiry_warning_days,reuse_if_valid,reupload_on_expiry,prefill_fields,source_name,source_url,valid_from,valid_until,metadata)
+    VALUES(${code},${String(d.documentCode).trim().toUpperCase()},${String(d.documentName).trim()},${d.required!==false},${d.requiredForApplication!==false},${d.validationMode||'manual'},${d.validityDays==null||d.validityDays===''?null:Number(d.validityDays)},${d.expiryWarningDays==null?30:Number(d.expiryWarningDays)},${d.reuseIfValid!==false},${d.reuploadOnExpiry!==false},${JSON.stringify(Array.isArray(d.prefillFields)?d.prefillFields:[])}::jsonb,${d.sourceName||null},${d.sourceUrl||null},${d.validFrom||null},${d.validUntil||null},${d.metadata||{}}::jsonb)`;
+  }
   return NextResponse.json({success:true,service:rows[0]},{status:201});
  }catch(e){
   return NextResponse.json({success:false,code:'SERVICE_CREATE_FAILED',message:e instanceof Error?e.message:'unknown_error'},{status:400});
@@ -94,6 +116,10 @@ export async function PATCH(r:NextRequest){
  try{
   const b=await r.json(),code=String(b.serviceCode||'').trim().toUpperCase();
   if(!code)return NextResponse.json({success:false,code:'SERVICE_CODE_REQUIRED'},{status:400});
+  const validityDays=b.validityDays==null||b.validityDays===''?null:Number(b.validityDays);
+  const expiryWarningDays=b.expiryWarningDays==null?30:Number(b.expiryWarningDays);
+  const renewalWindowDays=b.renewalWindowDays==null?60:Number(b.renewalWindowDays);
+  if((validityDays!==null&&(!Number.isInteger(validityDays)||validityDays<0))||expiryWarningDays<0||renewalWindowDays<0)return NextResponse.json({success:false,code:'SERVICE_LIFECYCLE_INVALID'},{status:400});
   if(b.status!==undefined){
    const next=String(b.status) as YcmServiceStatus;
    const current=(await sql`SELECT status FROM ycm_service_master WHERE service_code=${code} LIMIT 1`)[0];
@@ -111,10 +137,23 @@ export async function PATCH(r:NextRequest){
     requires_provider=COALESCE(${b.requiresProvider??null},requires_provider),
     status=COALESCE(${b.status??null},status),
     metadata=COALESCE(${b.metadata??null},metadata),
+    validity_days=${validityDays},
+    expiry_warning_days=COALESCE(${b.expiryWarningDays??null},expiry_warning_days),
+    renewal_allowed=COALESCE(${b.renewalAllowed??null},renewal_allowed),
+    renewal_window_days=COALESCE(${b.renewalWindowDays??null},renewal_window_days),
+    prefill_fields=COALESCE(${b.prefillFields?JSON.stringify(b.prefillFields):null}::jsonb,prefill_fields),
     updated_at=now()
     WHERE service_code=${code}
-    RETURNING service_id,service_code,service_name,service_type,business_domain_code,parent_service_code,channel,requires_case,requires_documents,requires_provider,status,metadata`;
+    RETURNING service_id,service_code,service_name,service_type,business_domain_code,parent_service_code,channel,requires_case,requires_documents,requires_provider,status,metadata,validity_days,expiry_warning_days,renewal_allowed,renewal_window_days,prefill_fields`;
   if(!rows.length)return NextResponse.json({success:false,code:'SERVICE_NOT_FOUND'},{status:404});
+  if(Array.isArray(b.documentRequirements)){
+   await sql`DELETE FROM ycm_service_documents WHERE service_code=${code}`;
+   for(const d of b.documentRequirements){
+    if(!d?.documentCode||!d?.documentName)continue;
+    await sql`INSERT INTO ycm_service_documents(service_code,document_code,document_name,required,required_for_application,validation_mode,validity_days,expiry_warning_days,reuse_if_valid,reupload_on_expiry,prefill_fields,source_name,source_url,valid_from,valid_until,metadata)
+      VALUES(${code},${String(d.documentCode).trim().toUpperCase()},${String(d.documentName).trim()},${d.required!==false},${d.requiredForApplication!==false},${d.validationMode||'manual'},${d.validityDays==null||d.validityDays===''?null:Number(d.validityDays)},${d.expiryWarningDays==null?30:Number(d.expiryWarningDays)},${d.reuseIfValid!==false},${d.reuploadOnExpiry!==false},${JSON.stringify(Array.isArray(d.prefillFields)?d.prefillFields:[])}::jsonb,${d.sourceName||null},${d.sourceUrl||null},${d.validFrom||null},${d.validUntil||null},${d.metadata||{}}::jsonb)`;
+   }
+  }
   return NextResponse.json({success:true,service:rows[0]});
  }catch(e){
   return NextResponse.json({success:false,code:'SERVICE_UPDATE_FAILED',message:e instanceof Error?e.message:'unknown_error'},{status:400});
