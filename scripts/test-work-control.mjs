@@ -42,3 +42,8 @@ console.log("WORK_CONTROL_CONTRACT_TEST: PASS");
 assert.match(work,/ASSIGNMENT_STATUS_TRANSITION_INVALID/);
 assert.match(work,/allowedTransitions/);
 assert.match(work,/completed:\[\]/);
+assert.match(work,/ASSIGNMENT_INPUT_INVALID/);
+assert.match(work,/TEAM_SCOPE_FORBIDDEN/);
+assert.match(work,/validDateTime/);
+assert.match(work,/sourceTypes/);
+assert.match(work,/priorities/);
