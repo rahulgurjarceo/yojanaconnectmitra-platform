@@ -2,11 +2,12 @@
 'use client';
 import {useEffect,useState} from 'react';
 
+type ServiceForm={serviceCode:string;serviceName:string;serviceType:string;businessDomainCode:string;parentServiceCode:string;channel:string;requiresCase:boolean;requiresDocuments:boolean;requiresProvider:boolean;status:string;validityDays:string|number;expiryWarningDays:string|number;renewalAllowed:boolean;renewalWindowDays:string|number;prefillFields:string;documentRequirements:string};
 type Service={service_code:string;service_name:string;service_type:string;business_domain_code?:string|null;parent_service_code?:string|null;channel?:string;requires_case:boolean;requires_documents:boolean;requires_provider:boolean;status:string;validity_days?:number|null;expiry_warning_days?:number;renewal_allowed?:boolean;renewal_window_days?:number;prefill_fields?:unknown[];metadata?:Record<string,unknown>};
 const blank={serviceCode:'',serviceName:'',serviceType:'other',businessDomainCode:'',parentServiceCode:'',channel:'assisted',requiresCase:true,requiresDocuments:false,requiresProvider:false,status:'draft',validityDays:'',expiryWarningDays:'30',renewalAllowed:true,renewalWindowDays:'60',prefillFields:'full_name,mobile,email,date_of_birth,relation',documentRequirements:'[]'};
 
 export default function ServiceMasterPage(){
- const [rows,setRows]=useState<Service[]>([]),[q,setQ]=useState(''),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState(''),[editing,setEditing]=useState<Service|null>(null),[form,setForm]=useState({...blank});
+ const [rows,setRows]=useState<Service[]>([]),[q,setQ]=useState(''),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState(''),[editing,setEditing]=useState<Service|null>(null),[form,setForm]=useState<ServiceForm>({...blank});
  const load=async()=>{setLoading(true);setError('');try{const r=await fetch('/api/service-master?includeAll=true&q='+encodeURIComponent(q),{cache:'no-store'});const j=await r.json();if(!r.ok)throw Error(j.message||j.code||'SERVICE_CATALOG_UNAVAILABLE');setRows(j.services||[]);}catch(e){setError(e instanceof Error?e.message:'SERVICE_CATALOG_UNAVAILABLE');}finally{setLoading(false);}};
  useEffect(()=>{const id=window.setTimeout(()=>void load(),250);return()=>window.clearTimeout(id);},[q]);
  const reset=()=>{setEditing(null);setForm({...blank});setMessage('');};
