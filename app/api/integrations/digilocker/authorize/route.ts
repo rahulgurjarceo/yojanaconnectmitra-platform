@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 
 function config() {
   return {
-    authorizationUrl: process.env.DIGILOCKER_AUTHORIZATION_URL || "https://digilocker.gov.in",
+    authorizationUrl: process.env.DIGILOCKER_AUTHORIZATION_URL,
     clientId: process.env.DIGILOCKER_CLIENT_ID,
     redirectUri: process.env.DIGILOCKER_REDIRECT_URI,
   };
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   }
 
   const c = config();
-  if (!c.clientId || !c.redirectUri) {
+  if (!c.authorizationUrl || !c.clientId || !c.redirectUri) {
     return NextResponse.json({
       success: false,
       code: "DIGILOCKER_NOT_CONFIGURED",
