@@ -49,10 +49,11 @@ export async function POST(r:NextRequest){
   const source=String(b.source||'manual').trim().slice(0,40);
   const row=(await sql`INSERT INTO ycm_leads(family_id,member_id,source,name,mobile,email,state_code,district_code,block_code,village_code,need_text,service_code,status,next_follow_up_at,metadata)
    VALUES(${b.familyId||null},${b.memberId||null},${source},${name},${b.mobile||null},${b.email||null},${b.stateCode||null},${b.districtCode||null},${b.blockCode||null},${b.villageCode||null},${need||null},${serviceCode},${serviceCode?'qualified':'new'},${b.nextFollowUpAt||null},${b.metadata||{}}) RETURNING *`)[0];
-  let matches:unknown[]=[];
+  let matches:{service_code:string;match_score:number}[]=[];
   if(!serviceCode&&need){
-   matches=await sql`SELECT service_code,service_name,business_domain_code,CASE WHEN lower(service_name) LIKE '%'||lower(${need})||'%' THEN 100 ELSE 50 END AS match_score FROM ycm_service_master WHERE status='active' AND (service_name ILIKE '%'||${need}||'%' OR service_code ILIKE '%'||${need}||'%') ORDER BY match_score DESC,service_name LIMIT 10`;
-   for(const m of matches)await sql`INSERT INTO ycm_lead_service_matches(lead_id,service_code,match_score,reason) VALUES(${row.lead_id},${(m as {service_code:string}).service_code},${(m as {match_score:number}).match_score},'text_match') ON CONFLICT DO NOTHING`;
+   const found=await sql`SELECT service_code,service_name,business_domain_code,CASE WHEN lower(service_name) LIKE '%'||lower(${need})||'%' THEN 100 ELSE 50 END AS match_score FROM ycm_service_master WHERE status='active' AND (service_name ILIKE '%'||${need}||'%' OR service_code ILIKE '%'||${need}||'%') ORDER BY match_score DESC,service_name LIMIT 10`;
+   matches=Array.from(found) as {service_code:string;match_score:number}[];
+   for(const m of matches)await sql`INSERT INTO ycm_lead_service_matches(lead_id,service_code,match_score,reason) VALUES(${row.lead_id},${m.service_code},${m.match_score},'text_match') ON CONFLICT DO NOTHING`;
   }
   if(s){const uid=await actorId(sql,s.sub);await sql`INSERT INTO ycm_lead_events(lead_id,actor_user_id,event_type,details) VALUES(${row.lead_id},${uid},'created',${JSON.stringify({source})}::jsonb)`;}else await sql`INSERT INTO ycm_lead_events(lead_id,event_type,details) VALUES(${row.lead_id},'created_external',${JSON.stringify({source})}::jsonb)`;
   return NextResponse.json({success:true,lead:row,serviceMatches:matches},{status:201});
