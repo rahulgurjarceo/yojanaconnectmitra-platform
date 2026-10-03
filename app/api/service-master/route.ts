@@ -137,11 +137,11 @@ export async function PATCH(r:NextRequest){
     requires_provider=COALESCE(${b.requiresProvider??null},requires_provider),
     status=COALESCE(${b.status??null},status),
     metadata=COALESCE(${b.metadata??null},metadata),
-    validity_days=${validityDays},
+    validity_days=${b.validityDays===undefined?null:validityDays},
     expiry_warning_days=COALESCE(${b.expiryWarningDays??null},expiry_warning_days),
     renewal_allowed=COALESCE(${b.renewalAllowed??null},renewal_allowed),
     renewal_window_days=COALESCE(${b.renewalWindowDays??null},renewal_window_days),
-    prefill_fields=COALESCE(${b.prefillFields?JSON.stringify(b.prefillFields):null}::jsonb,prefill_fields),
+    prefill_fields=COALESCE(${b.prefillFields===undefined?null:JSON.stringify(b.prefillFields)}::jsonb,prefill_fields),
     updated_at=now()
     WHERE service_code=${code}
     RETURNING service_id,service_code,service_name,service_type,business_domain_code,parent_service_code,channel,requires_case,requires_documents,requires_provider,status,metadata,validity_days,expiry_warning_days,renewal_allowed,renewal_window_days,prefill_fields`;
