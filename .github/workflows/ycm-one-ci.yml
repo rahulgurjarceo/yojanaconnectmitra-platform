@@ -89,6 +89,8 @@ jobs:
         run: npm run test:aeps-webhook-security
       - name: Aggregate security contract suite
         run: npm run test:security-contracts
+      - name: CRM and telemetry security contract test
+        run: npm run test:crm-telemetry-security
       - name: Production build
         run: npm run build
 
