@@ -9,7 +9,7 @@ export async function GET(r:NextRequest){
  const s=actor(r);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{const code=new URL(r.url).searchParams.get('serviceCode');
- const rows=code?await sql`SELECT workflow_id,service_code,version,steps,status,metadata,created_at,updated_at FROM ycm_service_workflows WHERE service_code=${code} ORDER BY version DESC`:await sql`SELECT workflow_id,service_code,version,steps,status,metadata,created_at,updated_at FROM ycm_service_workflows ORDER BY service_code,version DESC`;
+ const rows=code?await sql`SELECT workflow_id,service_code,version,steps,status,created_at,updated_at FROM ycm_service_workflows WHERE service_code=${code} ORDER BY version DESC`:await sql`SELECT workflow_id,service_code,version,steps,status,created_at,updated_at FROM ycm_service_workflows ORDER BY service_code,version DESC`;
  return NextResponse.json({success:true,workflows:rows});}finally{await sql.end({timeout:3});}
 }
 export async function POST(r:NextRequest){
