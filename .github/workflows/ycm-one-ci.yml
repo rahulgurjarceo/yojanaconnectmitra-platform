@@ -89,3 +89,5 @@ jobs:
         run: npm run test:aeps-webhook-security
       - name: Production build
         run: npm run build
+
+# CI verification trigger: keep this workflow intentionally explicit and auditable.
