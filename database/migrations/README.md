@@ -16,24 +16,27 @@ Run in numeric order:
 11. 012_ceo_growth_insights.sql
 12. 013_employee_productivity_telemetry.sql
 13. 014_employee_compensation_targets.sql
-15. 015_organization_hierarchy_team_lead.sql
-16. 016_work_approval_and_org_targets.sql
-17. 017_geographic_franchise_targets.sql
-18. 018_business_domains_and_team_mapping.sql
-19. 019_unified_service_master.sql
-20. 020_unified_franchise_models.sql
-21. 021_dynamic_service_operating_layer.sql
-22. 022_unified_lead_intake.sql
-23. 023_individual_family_memberships.sql
-24. 024_membership_review_and_special_activation.sql
-25. 025_membership_payment_ledger.sql
-26. 026_unified_transaction_commission_ledger.sql
-27. 027_default_commission_rule.sql
-28. 028_aeps_financial_service.sql
-29. 029_wallet_settlement_and_payout_destinations.sql
-30. 030_settlement_destination_binding.sql
-31. 031_auth_login_rate_limit.sql
-32. 032_company_financial_control.sql
+14. 015_organization_hierarchy_team_lead.sql
+15. 016_work_approval_and_org_targets.sql
+16. 017_geographic_franchise_targets.sql
+17. 018_business_domains_and_team_mapping.sql
+18. 019_unified_service_master.sql
+19. 020_unified_franchise_models.sql
+20. 021_dynamic_service_operating_layer.sql
+21. 022_unified_lead_intake.sql
+22. 023_individual_family_memberships.sql
+23. 024_membership_review_and_special_activation.sql
+24. 025_membership_payment_ledger.sql
+25. 026_unified_transaction_commission_ledger.sql
+26. 027_default_commission_rule.sql
+27. 028_aeps_financial_service.sql
+28. 029_wallet_settlement_and_payout_destinations.sql
+29. 030_settlement_destination_binding.sql
+30. 031_auth_login_rate_limit.sql
+31. 032_company_financial_control.sql
+32. 032_ycm_packages_entitlements_kyc.sql
+33. 033_aeps_provider_modes.sql
+34. 034_service_geography_scope.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
 
@@ -51,6 +54,5 @@ Production prerequisites:
 - Provider API credentials must be stored in deployment secrets/secret manager, never in PostgreSQL service configuration.
 
 Never store database credentials or provider secrets in source control.
-
 
 Membership pricing rule: ₹99 standard Individual/Household = 1 year. Special Family review starts at ₹99 / 1-year base state; after High Management approval, Widow Household or Defense Family becomes ₹99 / 2 years. No defense/government source credentials or raw sensitive government documents are stored in the membership record.
