@@ -1,0 +1,6 @@
+import fs from 'node:fs';
+const p=fs.readFileSync('app/lib/ycm-api-request-policy.ts','utf8');
+const m=fs.readFileSync('middleware.ts','utf8');
+for(const n of ['MAX_BODY_BYTES','ORIGIN_POLICY_DENIED','REQUEST_BODY_TOO_LARGE','CONTENT_TYPE_NOT_ALLOWED'])if(!p.includes(n))throw new Error('policy missing '+n);
+if(!m.includes('enforceApiRequestPolicy'))throw new Error('middleware policy not wired');
+console.log('API request security policy contract OK');
