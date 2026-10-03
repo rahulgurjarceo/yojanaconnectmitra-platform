@@ -27,15 +27,22 @@ export async function GET(req: NextRequest) {
   }
 
   const state = crypto.randomUUID();
+  const codeVerifier = crypto.randomUUID() + crypto.randomUUID();
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(codeVerifier));
+  const codeChallenge = Buffer.from(digest).toString("base64url");
   const url = new URL(c.authorizationUrl);
   url.searchParams.set("client_id", c.clientId);
   url.searchParams.set("redirect_uri", c.redirectUri);
+  url.searchParams.set("response_type", "code");
   url.searchParams.set("state", state);
+  url.searchParams.set("code_challenge", codeChallenge);
+  url.searchParams.set("code_challenge_method", "S256");
 
   return NextResponse.json({
     success: true,
     authorizationUrl: url.toString(),
     state,
+    codeChallenge,
     mode: "oauth-foundation",
   }, { headers: { "Cache-Control": "no-store" } });
 }
