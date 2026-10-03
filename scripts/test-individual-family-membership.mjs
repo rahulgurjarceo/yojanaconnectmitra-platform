@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 const migration=await fs.readFile("database/migrations/023_individual_family_memberships.sql","utf8");
 const register=await fs.readFile("app/api/auth/register/route.ts","utf8");
 const login=await fs.readFile("app/api/auth/login/route.ts","utf8");
+const paymentVerify=await fs.readFile("app/api/membership/payment/verify/route.ts","utf8");
+const paymentService=await fs.readFile("app/lib/ycm-membership-payment.ts","utf8");
 
 assert.match(migration,/membership_type TEXT NOT NULL CHECK/);
 assert.match(migration,/9900/);
@@ -22,5 +24,8 @@ assert.match(register,/widow_household/);
 assert.match(register,/validityYears:Number\(membership\.validity_years\)/);
 assert.match(login,/getUserPrimaryMembership/);
 assert.doesNotMatch(login,/familyId:user\.user_id/);
+assert.match(paymentVerify,/u\.user_id=\$\{s\.sub\}/);
+assert.match(paymentVerify,/activateVerifiedMembership\(b\.membershipId,b\.orderId,b\.paymentId,b\.signature\)/);
+assert.match(paymentService,/provider_order_id=\$\{providerOrderId\}/);
 
 console.log("INDIVIDUAL_FAMILY_MEMBERSHIP_CONTRACT_TEST: PASS");
