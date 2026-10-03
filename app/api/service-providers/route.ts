@@ -9,7 +9,7 @@ export async function GET(r:NextRequest){
  const s=actor(r);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{const code=new URL(r.url).searchParams.get('serviceCode');
- const rows=code?await sql`SELECT p.provider_id,p.provider_code,p.provider_name,p.provider_type,p.capabilities,p.status,sp.priority,sp.enabled,sp.commission_rate,sp.metadata AS link_metadata FROM ycm_service_providers p JOIN ycm_service_provider_links sp ON sp.provider_id=p.provider_id WHERE sp.service_code=${code} ORDER BY sp.priority,p.provider_name`:await sql`SELECT provider_id,provider_code,provider_name,provider_type,capabilities,status,metadata FROM ycm_service_providers ORDER BY provider_name`;
+ const rows=code?await sql`SELECT p.provider_id,p.provider_code,p.provider_name,p.provider_type,p.capabilities,p.status,sp.priority,sp.enabled,sp.commission_rate FROM ycm_service_providers p JOIN ycm_service_provider_links sp ON sp.provider_id=p.provider_id WHERE sp.service_code=${code} ORDER BY sp.priority,p.provider_name`:await sql`SELECT provider_id,provider_code,provider_name,provider_type,capabilities,status FROM ycm_service_providers ORDER BY provider_name`;
  return NextResponse.json({success:true,providers:rows});}finally{await sql.end({timeout:3});}
 }
 export async function POST(r:NextRequest){
