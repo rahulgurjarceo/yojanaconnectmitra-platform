@@ -23,6 +23,6 @@ console.log("DigiLocker authorization contract checks passed.");
 
 const callback = fs.readFileSync("app/api/integrations/digilocker/callback/route.ts", "utf8");
 for (const token of ["timingSafeEqual", "DIGILOCKER_OAUTH_STATE_INVALID", "DIGILOCKER_TOKEN_EXCHANGE_NOT_CONFIGURED", "maxAge: 0"]) {
-  if (!callback.includes(token)) throw new Error(\`Missing DigiLocker callback security contract: \${token}\`);
+  if (!callback.includes(token)) throw new Error(`Missing DigiLocker callback security contract: ${token}`);
 }
 console.log("DigiLocker callback contract checks passed.");
