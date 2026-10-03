@@ -1,4 +1,4 @@
-import { NextResponse } from 'next';
+import { NextResponse } from 'next/server';
 import { getPostgresYcmSessionRevocationStore } from '../../lib/ycm-postgres-session-revocation';
 import { getPostgresYcmAuditStore } from '../../lib/ycm-postgres-audit-store';
 import { getCustomerFamilyOtpProvider } from '../../lib/customer-family-otp';
