@@ -47,7 +47,8 @@
     "test:government-grievance": "node scripts/test-government-grievance.mjs",
     "test:government-rbac": "node scripts/test-government-rbac.mjs",
     "test:service-lifecycle": "node scripts/test-service-lifecycle.mjs",
-    "test:service-application": "node scripts/test-service-application.mjs"
+    "test:service-application": "node scripts/test-service-application.mjs",
+    "test:release-audit": "node scripts/test-release-audit.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
