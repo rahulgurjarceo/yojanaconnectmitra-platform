@@ -137,7 +137,7 @@ export async function PATCH(r:NextRequest){
     requires_provider=COALESCE(${b.requiresProvider??null},requires_provider),
     status=COALESCE(${b.status??null},status),
     metadata=COALESCE(${b.metadata??null},metadata),
-    validity_days=${b.validityDays===undefined?null:validityDays},
+    validity_days=${b.validityDays===undefined?sql`validity_days`:validityDays},
     expiry_warning_days=COALESCE(${b.expiryWarningDays??null},expiry_warning_days),
     renewal_allowed=COALESCE(${b.renewalAllowed??null},renewal_allowed),
     renewal_window_days=COALESCE(${b.renewalWindowDays??null},renewal_window_days),
