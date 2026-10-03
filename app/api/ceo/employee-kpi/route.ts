@@ -10,6 +10,11 @@ export async function GET(r:NextRequest){
  if(!['ceo','admin','management'].includes(s.role))return NextResponse.json({success:false,code:'FORBIDDEN_ROLE_SCOPE'},{status:403});
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  const u=new URL(r.url),employee=u.searchParams.get('employeeId'),from=u.searchParams.get('from'),to=u.searchParams.get('to');
+ const validDate=(v:string|null)=>!v||/^\\d{4}-\\d{2}-\\d{2}$/.test(v);
+ const validUuid=(v:string|null)=>!v||/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+ if(!validUuid(employee))return NextResponse.json({success:false,code:'EMPLOYEE_ID_INVALID'},{status:400});
+ if(!validDate(from)||!validDate(to))return NextResponse.json({success:false,code:'KPI_DATE_INVALID'},{status:400});
+ if(from&&to&&from>to)return NextResponse.json({success:false,code:'KPI_DATE_RANGE_INVALID'},{status:400});
  try{
   const [people,presence,calls,messages,leaves,kpis,activity]=await Promise.all([
    sql`SELECT id,user_id,full_name,email,mobile,status,role FROM ycm_users WHERE role='employee' AND status<>'disabled' AND (${employee} IS NULL OR id=${employee}::uuid) ORDER BY full_name`,
