@@ -14,7 +14,7 @@ function config() {
 export async function GET(req: NextRequest) {
   const session = verifySession(req.cookies.get(sessionCookieName())?.value);
   if (!session) {
-    return NextResponse.json({ success: false, code: "AUTHENTICATION_REQUIRED" }, { status: 401 });
+    const response = NextResponse.json({ success: false, code: "AUTHENTICATION_REQUIRED" }, { status: 401 });
   }
 
   const c = config();
