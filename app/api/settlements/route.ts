@@ -59,6 +59,8 @@ export async function PATCH(r:NextRequest){
   const settlement=(await tx`SELECT s.*,w.available_paise,w.withdrawable_paise FROM ycm_settlements s JOIN ycm_wallet_accounts w ON w.wallet_id=s.wallet_id WHERE s.settlement_id=\${b.settlementId} FOR UPDATE`)[0];
   if(!settlement)throw new Error('SETTLEMENT_NOT_FOUND');
   if(['paid','failed','reversed'].includes(settlement.status))return NextResponse.json({success:true,status:settlement.status,idempotent:true});
+  const allowed:Record<string,string[]>={requested:['approved','failed','reversed'],approved:['processing','failed','reversed'],processing:['paid','failed','reversed']};
+  if(!allowed[String(settlement.status)]?.includes(b.status))throw new Error('SETTLEMENT_STATUS_TRANSITION_INVALID');
   if(b.status==='failed'||b.status==='reversed'){
    const next=Number(settlement.available_paise)+Number(settlement.amount_paise);
    const nextWithdrawable=Number(settlement.withdrawable_paise)+Number(settlement.amount_paise);
