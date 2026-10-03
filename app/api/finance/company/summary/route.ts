@@ -1,6 +1,6 @@
 import {NextRequest,NextResponse} from 'next/server';
 import {sessionCookieName,verifySession} from '../../../../../lib/ycm-access-control';
-import {assertCompanyFinanceRole,getCompanyFinancialControlSummary} from '../../../../../lib/ycm-company-financial-control';
+import {assertCompanyFinanceRole,getCompanyFinancialControlSummary} from '../../../../lib/ycm-company-financial-control';
 export const runtime='nodejs';
 export async function GET(r:NextRequest){
  const s=verifySession(r.cookies.get(sessionCookieName())?.value);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
