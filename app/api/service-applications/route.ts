@@ -10,6 +10,15 @@ const db = () => {
 };
 
 type PrefillField = string | { field?: string; source?: string };
+type DocumentRecord = {
+  document_id:string; member_id:string|null; document_type:string; status?:string|null;
+  storage_ref:string|null; sha256?:string|null; validation_status?:string|null;
+  verified_at?:string|null; valid_from?:string|null; valid_until?:string|null;
+  uploaded_at?:string|null; created_at:string;
+};
+type FamilyRecord = {family_id:string;full_name:string;mobile:string;country:string};
+type MemberRecord = {member_id:string;full_name:string;relation:string;mobile:string|null;email:string|null;date_of_birth:string|null;verified:boolean};
+type SnapshotEntry = {documentCode:string;documentName:string;required:boolean;source:string;reusable:boolean;documentId:string;storageRef:string|null;validUntil:Date|null;action:string};
 type ServiceDocumentRule = {
   document_code: string;
   document_name: string;
@@ -35,7 +44,7 @@ function addDays(value: Date, days: number | null) {
   return out;
 }
 
-function isUsableDocument(doc: any, rule: ServiceDocumentRule) {
+function isUsableDocument(doc: DocumentRecord, rule: ServiceDocumentRule) {
   if (!rule.reuse_if_valid) return false;
   if (doc.validation_status && doc.validation_status !== 'verified') return false;
   if (doc.status && !['verified', 'active', 'approved', 'uploaded'].includes(doc.status)) return false;
@@ -43,7 +52,7 @@ function isUsableDocument(doc: any, rule: ServiceDocumentRule) {
   return Boolean(doc.storage_ref);
 }
 
-function getPrefillValue(field: string, family: any, member: any) {
+function getPrefillValue(field: string, family: FamilyRecord, member: MemberRecord|null) {
   const map: Record<string, unknown> = {
     family_id: family.family_id, familyId: family.family_id,
     full_name: member?.full_name || family.full_name, name: member?.full_name || family.full_name,
@@ -93,8 +102,8 @@ export async function POST(request: NextRequest) {
       FROM ycm_document_intelligence WHERE family_id=${familyId} AND validation_status='verified'
       ORDER BY updated_at DESC`;
 
-    const allDocs = [...docs, ...intel].filter(d => !member?.member_id || !d.member_id || d.member_id === member.member_id);
-    const snapshot: any[] = [];
+    const allDocs = ([...docs, ...intel] as DocumentRecord[]).filter(d => !member?.member_id || !d.member_id || d.member_id === member.member_id);
+    const snapshot: SnapshotEntry[] = [];
     const missing: any[] = [];
 
     for (const rule of rules) {
