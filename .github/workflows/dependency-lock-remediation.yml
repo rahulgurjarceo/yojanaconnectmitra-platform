@@ -1,0 +1,31 @@
+name: Dependency Lockfile Remediation
+on:
+  push:
+    branches: [feat/ycm-one-service-master-foundation]
+permissions:
+  contents: write
+jobs:
+  remediate:
+    if: contains(github.event.head_commit.message, 'Upgrade Next.js security baseline')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/ycm-one-service-master-foundation
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Regenerate lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit
+      - name: Commit lockfile
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "Lockfile already current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "Regenerate lockfile for security upgrade"
+          git push origin HEAD:feat/ycm-one-service-master-foundation
