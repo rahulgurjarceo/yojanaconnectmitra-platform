@@ -38,11 +38,20 @@ export async function GET(req: NextRequest) {
   url.searchParams.set("code_challenge", codeChallenge);
   url.searchParams.set("code_challenge_method", "S256");
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     success: true,
     authorizationUrl: url.toString(),
     state,
     codeChallenge,
     mode: "oauth-foundation",
   }, { headers: { "Cache-Control": "no-store" } });
+
+  response.cookies.set("ycm_digilocker_pkce", `${state}.${codeVerifier}`, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/api/integrations/digilocker",
+    maxAge: 600,
+  });
+  return response;
 }
