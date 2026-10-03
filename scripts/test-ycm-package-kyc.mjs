@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 const required=[
- 'database/migrations/032_ycm_packages_entitlements_kyc.sql',
+ 'database/migrations/036_ycm_packages_entitlements_kyc.sql',
  'app/lib/eko-kyc.ts'
 ];
 for(const f of required)if(!fs.existsSync(f))throw new Error('MISSING_'+f);
