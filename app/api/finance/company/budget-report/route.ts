@@ -1,7 +1,7 @@
 import {NextRequest,NextResponse} from 'next/server';
 import postgres from 'postgres';
 import {sessionCookieName,verifySession} from '../../../../../lib/ycm-access-control';
-import {assertCompanyFinanceRole} from '../../../../../lib/ycm-company-financial-control';
+import {assertCompanyFinanceRole} from '../../../../lib/ycm-company-financial-control';
 export const runtime='nodejs';
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:4,prepare:false,connect_timeout:10,idle_timeout:20}):null};
 export async function GET(r:NextRequest){
