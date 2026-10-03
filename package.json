@@ -36,7 +36,8 @@
     "test:company-expense-approval": "node scripts/test-company-expense-approval.mjs",
     "test:company-finance-reports": "node scripts/test-company-finance-reports.mjs",
     "test:finance-reconciliation": "node scripts/test-finance-reconciliation.mjs",
-    "test:digilocker": "node scripts/test-digilocker-integration.mjs"
+    "test:digilocker": "node scripts/test-digilocker-integration.mjs",
+    "test:service-geography-scope": "node scripts/test-service-geography-scope.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
