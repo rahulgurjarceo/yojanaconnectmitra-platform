@@ -6,6 +6,7 @@ import {buildAuditRecord} from '../../../lib/ycm-audit-events';
 import {getPostgresYcmAuditStore} from '../../../lib/ycm-postgres-audit-store';
 
 export const runtime='nodejs';
+const textMax=(v:unknown,max:number)=>v===undefined||v===null||typeof v==='string'&&v.trim().length<=max;
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:6,prepare:false,connect_timeout:10,idle_timeout:20}):null};
 
 export async function GET(r:NextRequest){
@@ -23,9 +24,12 @@ export async function POST(r:NextRequest){
  const s=verifySession(r.cookies.get(sessionCookieName())?.value);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
  const b=await r.json().catch(()=>null) as {method?:'bank'|'upi'|'manual';label?:string;accountHolderName?:string;bankAccountLast4?:string;bankIfsc?:string;upiId?:string;provider?:string;providerBeneficiaryId?:string;isDefault?:boolean}|null;
  if(!b?.method||!b.label)return NextResponse.json({success:false,code:'PAYOUT_DESTINATION_FIELDS_REQUIRED'},{status:400});
+ if(!textMax(b.label,100)||!textMax(b.accountHolderName,120)||!textMax(b.bankIfsc,20)||!textMax(b.upiId,120)||!textMax(b.provider,80)||!textMax(b.providerBeneficiaryId,160))return NextResponse.json({success:false,code:'PAYOUT_DESTINATION_TEXT_TOO_LONG'},{status:400});
  if(b.method==='bank'&&(!b.bankAccountLast4||!b.bankIfsc))return NextResponse.json({success:false,code:'BANK_DESTINATION_FIELDS_REQUIRED'},{status:400});
  if(b.method==='upi'&&!b.upiId)return NextResponse.json({success:false,code:'UPI_DESTINATION_FIELDS_REQUIRED'},{status:400});
  if(b.bankAccountLast4&&!/^\\d{4}$/.test(b.bankAccountLast4))return NextResponse.json({success:false,code:'BANK_LAST4_INVALID'},{status:400});
+ if(b.method==='bank'&&b.bankIfsc&&!/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(b.bankIfsc.trim()))return NextResponse.json({success:false,code:'BANK_IFSC_INVALID'},{status:400});
+ if(b.method==='upi'&&b.upiId&&!/^[^\\s@]+@[^\\s@]+$/.test(b.upiId.trim()))return NextResponse.json({success:false,code:'UPI_ID_INVALID'},{status:400});
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{return await sql.begin(async tx=>{
   const user=(await tx`SELECT id FROM ycm_users WHERE user_id=\${s.sub} LIMIT 1`)[0];if(!user)throw new Error('USER_NOT_FOUND');
