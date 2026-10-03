@@ -48,7 +48,11 @@ export async function POST(request:NextRequest){
     }
 
     const user=await findUser(identifier, body?.identifierType);
-    const valid=user ? await verifyPassword(password,user.password_hash) : false;
+    if (!user) {
+      await auditLogin({subject:'anonymous',role:'unknown',success:false});
+      return NextResponse.json({success:false,code:'INVALID_CREDENTIALS',message:'User ID, mobile, email या verified identity identifier सही नहीं है.'},{status:401});
+    }
+    const valid=await verifyPassword(password,user.password_hash);
     if(!valid || user.status!=='active' || !YCM_ROLES.includes(user.role as YcmRole)){
       await auditLogin({
         subject:user?.user_id || 'anonymous',
