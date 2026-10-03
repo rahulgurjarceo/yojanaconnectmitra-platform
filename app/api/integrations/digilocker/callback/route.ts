@@ -17,9 +17,14 @@ export async function GET(req: NextRequest) {
   }
 
   const state = req.nextUrl.searchParams.get("state") || "";
-  const expected = req.cookies.get("ycm_digilocker_oauth_state")?.value || "";
-  if (!state || !expected || !safeEqual(state, expected)) {
+  const raw = req.cookies.get("ycm_digilocker_pkce")?.value || "";
+  const [expectedState, codeVerifier] = raw.split(".");
+  if (!state || !expectedState || !codeVerifier || !safeEqual(state, expectedState)) {
     return NextResponse.json({ success: false, code: "DIGILOCKER_OAUTH_STATE_INVALID" }, { status: 400 });
+  }
+  const code = req.nextUrl.searchParams.get("code");
+  if (!code) {
+    return NextResponse.json({ success: false, code: "DIGILOCKER_AUTH_CODE_MISSING" }, { status: 400 });
   }
 
   const response = NextResponse.json({
@@ -28,7 +33,7 @@ export async function GET(req: NextRequest) {
     message: "Validate the approved DigiLocker requester token endpoint and credentials before enabling code exchange.",
   }, { status: 503, headers: { "Cache-Control": "no-store" } });
 
-  response.cookies.set("ycm_digilocker_oauth_state", "", {
+  response.cookies.set("ycm_digilocker_pkce", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
