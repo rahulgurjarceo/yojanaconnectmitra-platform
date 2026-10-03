@@ -35,13 +35,14 @@ export function maskLoginIdentifier(type:YcmLoginIdentifierType, value:string) {
   return normalized.slice(0,2)+'*'.repeat(Math.max(2,normalized.length-4))+normalized.slice(-2);
 }
 
-export async function findUser(identifier:string) {
+export async function findUser(identifier:string, identifierType?:YcmLoginIdentifierType) {
   const value=identifier.trim().toLowerCase();
   const rows=await authDb()`SELECT id,user_id,full_name,email,mobile,password_hash,role,status,auth_version FROM ycm_users WHERE LOWER(user_id)=${value} OR LOWER(email)=${value} OR mobile=${identifier.trim()} LIMIT 1`;
   if (rows[0]) return rows[0];
   const compact=identifier.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
   if (!compact) return null;
-  const hashes=YCM_LOGIN_IDENTIFIER_TYPES.map(type=>createHash('sha256').update(type+':'+compact).digest('hex'));
+  const types=identifierType ? [identifierType] : YCM_LOGIN_IDENTIFIER_TYPES;
+  const hashes=types.map(type=>createHash('sha256').update(type+':'+compact).digest('hex'));
   const identityRows=await authDb()`SELECT u.id,u.user_id,u.full_name,u.email,u.mobile,u.password_hash,u.role,u.status,u.auth_version
     FROM ycm_login_identifiers i JOIN ycm_users u ON u.id=i.user_id
     WHERE i.identifier_hash=ANY(${hashes}) AND i.verification_status='verified'
