@@ -3,11 +3,14 @@ import postgres from 'postgres';
 import {timingSafeEqual} from 'node:crypto';
 export const runtime='nodejs';
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:3,prepare:false,connect_timeout:10,idle_timeout:20}):null};
+const jsonObject=(v:unknown)=>v===undefined||v===null||(typeof v==='object'&&!Array.isArray(v));
+const jsonSizeOk=(v:unknown)=>{try{return JSON.stringify(v??{}).length<=32768}catch{return false}};
 function authorized(r:NextRequest){const configured=process.env.YCM_TELEMETRY_WEBHOOK_SECRET||'';const supplied=r.headers.get('x-ycm-webhook-secret')||'';if(!configured||!supplied)return false;const a=Buffer.from(configured),b=Buffer.from(supplied);return a.length===b.length&&timingSafeEqual(a,b)}
 export async function POST(r:NextRequest){
  if(!authorized(r))return NextResponse.json({success:false,code:'WEBHOOK_UNAUTHORIZED'},{status:401});
  const b=await r.json().catch(()=>null);
  if(!b?.event||!b?.provider||!b?.employeeUserId)return NextResponse.json({success:false,code:'WEBHOOK_REQUIRED_FIELDS'},{status:400});
+ if(!jsonObject(b.metadata)||!jsonSizeOk(b.metadata))return NextResponse.json({success:false,code:'TELEMETRY_METADATA_INVALID'},{status:400});
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
   if(b.event==='call'){
