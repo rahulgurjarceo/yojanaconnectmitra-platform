@@ -56,7 +56,7 @@ export async function POST(r:NextRequest){
   }
   if(s){const uid=await actorId(sql,s.sub);await sql`INSERT INTO ycm_lead_events(lead_id,actor_user_id,event_type,details) VALUES(${row.lead_id},${uid},'created',${JSON.stringify({source})}::jsonb)`;}else await sql`INSERT INTO ycm_lead_events(lead_id,event_type,details) VALUES(${row.lead_id},'created_external',${JSON.stringify({source})}::jsonb)`;
   return NextResponse.json({success:true,lead:row,serviceMatches:matches},{status:201});
- }catch(e){return NextResponse.json({success:false,code:'LEAD_CREATE_FAILED',message:e instanceof Error?e.message:'unknown_error'},{status:400});}finally{await sql.end({timeout:3});}
+ }catch(e){return NextResponse.json({success:false,code:'LEAD_CREATE_FAILED',message:'lead_create_failed'},{status:400});}finally{await sql.end({timeout:3});}
 }
 
 export async function PATCH(r:NextRequest){
@@ -109,5 +109,5 @@ export async function PATCH(r:NextRequest){
   const updated=(await sql`UPDATE ycm_leads SET status=${status},assigned_to=${assignedTo},next_follow_up_at=${b.nextFollowUpAt===undefined?lead.next_follow_up_at:b.nextFollowUpAt},service_code=${serviceCode},updated_at=NOW() WHERE lead_id=${lead.lead_id} RETURNING *`)[0];
   await sql`INSERT INTO ycm_lead_events(lead_id,actor_user_id,event_type,details) VALUES(${lead.lead_id},${uid},'updated',${JSON.stringify({status,assignedTo,serviceCode})}::jsonb)`;
   return NextResponse.json({success:true,lead:updated});
- }catch(e){return NextResponse.json({success:false,code:'LEAD_UPDATE_FAILED',message:e instanceof Error?e.message:'unknown_error'},{status:400});}finally{await sql.end({timeout:3});}
+ }catch(e){return NextResponse.json({success:false,code:'LEAD_UPDATE_FAILED',message:'lead_update_failed'},{status:400});}finally{await sql.end({timeout:3});}
 }
