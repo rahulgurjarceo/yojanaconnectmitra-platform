@@ -43,7 +43,8 @@
     "test:aeps-webhook-security": "node scripts/test-aeps-webhook-security.mjs",
     "test:security-contracts": "npm run test:security-primitives && npm run test:api-request-policy && npm run test:auth-login-security && npm run test:employee-kpi-security && npm run test:financial-webhook-security && npm run test:aeps-webhook-security && npm run test:eko-retailer-flow && npm run test:digilocker && npm run test:crm-telemetry-security && npm run test:payout-destination-security",
     "test:crm-telemetry-security": "node scripts/test-crm-telemetry-security.mjs",
-    "test:payout-destination-security": "node scripts/test-payout-destination-security.mjs"
+    "test:payout-destination-security": "node scripts/test-payout-destination-security.mjs",
+    "test:government-grievance": "node scripts/test-government-grievance.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
