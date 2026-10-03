@@ -33,7 +33,8 @@
     "test:security-primitives": "node scripts/test-security-primitives.mjs",
     "test:api-request-policy": "node scripts/test-api-request-policy.mjs",
     "test:company-asset-control": "node scripts/test-company-asset-control.mjs",
-    "test:company-expense-approval": "node scripts/test-company-expense-approval.mjs"
+    "test:company-expense-approval": "node scripts/test-company-expense-approval.mjs",
+    "test:company-finance-reports": "node scripts/test-company-finance-reports.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
