@@ -24,4 +24,5 @@ assert.match(workflows,/WORKFLOW_STATUS_INVALID/);
 assert.match(workflows,/WORKFLOW_STEPS_LIMIT_EXCEEDED/);
 assert.doesNotMatch(providers,/sp\.metadata AS link_metadata/);
 assert.doesNotMatch(providers,/provider_type,capabilities,status,metadata FROM ycm_service_providers/);
+assert.doesNotMatch(workflows,/steps,status,metadata,created_at/);
 console.log("DYNAMIC_SERVICE_OPERATING_LAYER_CONTRACT_TEST: PASS");
