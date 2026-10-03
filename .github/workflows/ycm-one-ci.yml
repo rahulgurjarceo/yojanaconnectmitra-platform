@@ -24,6 +24,7 @@ jobs:
         if: github.event_name == 'push'
         run: |
           npm install --package-lock-only --ignore-scripts --no-audit
+          npm audit fix --package-lock-only --ignore-scripts --no-audit || true
           if git diff --quiet -- package-lock.json; then
             echo "Lockfile already synchronized"
           else
