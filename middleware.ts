@@ -21,6 +21,9 @@ export async function middleware(request: NextRequest) {
     response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
     response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
     response.headers.set('X-Permitted-Cross-Domain-Policies', 'none');
+    if (process.env.NODE_ENV === 'production') {
+      response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
     return response;
   };
 
