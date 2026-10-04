@@ -34,7 +34,10 @@ type ServiceDocumentRule = {
 
 function familyAllowed(session: ReturnType<typeof verifySession>, familyId: string) {
   if (!session) return false;
-  return ['ceo', 'admin', 'management', 'employee', 'partner', 'referral'].includes(session.role) || session.familyId === familyId;
+  // Only platform administrators may operate on arbitrary families. All other
+  // sessions must be explicitly bound to the target family to prevent IDOR.
+  if (['ceo', 'admin', 'management'].includes(session.role)) return true;
+  return session.familyId === familyId;
 }
 
 function addDays(value: Date, days: number | null) {
