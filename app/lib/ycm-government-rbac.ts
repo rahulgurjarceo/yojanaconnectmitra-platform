@@ -11,6 +11,16 @@ export type GovernmentManagerScope = {
   wardCode?: string|null;
 };
 
+type GovernmentManagerScopeRow = {
+  geography_level: GovernmentManagerScope['geographyLevel'];
+  state_code: string|null;
+  district_code: string|null;
+  block_code: string|null;
+  gram_panchayat_code: string|null;
+  village_code: string|null;
+  ward_code: string|null;
+};
+
 export function canManageGovernmentContacts(session: YcmSession) {
   return ['ceo','management','admin','branch_manager'].includes(session.role);
 }
@@ -34,19 +44,31 @@ function getDb() {
   return url ? postgres(url, { max: 3, prepare: false, connect_timeout: 10, idle_timeout: 20 }) : null;
 }
 
+function normalizeScopeRow(row: GovernmentManagerScopeRow): GovernmentManagerScope {
+  return {
+    geographyLevel: row.geography_level,
+    stateCode: row.state_code,
+    districtCode: row.district_code,
+    blockCode: row.block_code,
+    gramPanchayatCode: row.gram_panchayat_code,
+    villageCode: row.village_code,
+    wardCode: row.ward_code,
+  };
+}
+
 export async function governmentScopeAllows(session: YcmSession, target: GovernmentManagerScope) {
   if (isGlobalGovernmentExecutive(session)) return true;
   if (session.role !== 'branch_manager') return false;
   const sql = getDb();
   if (!sql) throw new Error('DATABASE_NOT_CONFIGURED');
   try {
-    const rows = await sql.unsafe(
+    const rows = await sql.unsafe<GovernmentManagerScopeRow[]>(
       `SELECT geography_level,state_code,district_code,block_code,gram_panchayat_code,village_code,ward_code
        FROM ycm_government_manager_scopes
        WHERE user_id=(SELECT id FROM ycm_users WHERE user_id=$1 LIMIT 1) AND active=TRUE`,
       [session.sub]
     );
-    return rows.some((row: GovernmentManagerScope) => scopeMatches(row, target));
+    return rows.some((row) => scopeMatches(normalizeScopeRow(row), target));
   } finally {
     await sql.end({ timeout: 3 });
   }
