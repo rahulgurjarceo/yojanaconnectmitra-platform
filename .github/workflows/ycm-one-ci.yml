@@ -109,6 +109,10 @@ jobs:
         run: npm run test:identity-login-ui
       - name: Session cookie security contract test
         run: npm run test:session-cookie-security
+      - name: Service application authorization contract test
+        run: npm run test:service-application-authz
+      - name: AEPS callback replay contract test
+        run: npm run test:aeps-callback-replay
       - name: Government RBAC contract test
         run: npm run test:government-rbac
       - name: Government RBAC scope contract test
