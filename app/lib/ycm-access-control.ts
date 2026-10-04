@@ -16,12 +16,13 @@ export type YcmSession = {
 };
 
 const COOKIE = 'ycm_session';
+const PRODUCTION_COOKIE = '__Host-ycm_session';
 const secret = () => process.env.YCM_SESSION_SECRET || '';
 
 function encode(value: string) { return Buffer.from(value).toString('base64url'); }
 function decode(value: string) { return Buffer.from(value, 'base64url').toString('utf8'); }
 
-export function sessionCookieName() { return COOKIE; }
+export function sessionCookieName() { return process.env.NODE_ENV === 'production' ? PRODUCTION_COOKIE : COOKIE; }
 
 export function signSession(session: YcmSession): string {
   if (!secret()) throw new Error('YCM_SESSION_SECRET_NOT_CONFIGURED');
