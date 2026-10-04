@@ -49,7 +49,8 @@
     "test:service-lifecycle": "node scripts/test-service-lifecycle.mjs",
     "test:service-application": "node scripts/test-service-application.mjs",
     "test:release-audit": "node scripts/test-release-audit.mjs",
-    "test:identity-login": "node scripts/test-identity-login.mjs"
+    "test:identity-login": "node scripts/test-identity-login.mjs",
+    "test:identity-login-ui": "node scripts/test-identity-login-ui.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
