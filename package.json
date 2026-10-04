@@ -53,7 +53,8 @@
     "test:identity-login-ui": "node scripts/test-identity-login-ui.mjs",
     "test:government-rbac-scope": "node scripts/test-government-rbac-scope.mjs",
     "test:session-cookie-security": "node scripts/test-session-cookie-security.mjs",
-    "test:family-requirements-authz": "node scripts/test-family-requirements-authz.mjs"
+    "test:family-requirements-authz": "node scripts/test-family-requirements-authz.mjs",
+    "test:service-application-authz": "node scripts/test-service-application-authz.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
