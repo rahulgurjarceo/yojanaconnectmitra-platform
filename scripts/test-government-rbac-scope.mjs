@@ -7,7 +7,8 @@ const requiredRbac = [
   'governmentScopeAllows',
   "session.role !== 'branch_manager'",
   'ycm_government_manager_scopes',
-  'scopeMatches(row, target)',
+  'normalizeScopeRow(row)',
+  'scopeMatches(normalizeScopeRow(row), target)',
 ];
 for (const marker of requiredRbac) {
   if (!rbac.includes(marker)) throw new Error(`missing government scope enforcement marker: ${marker}`);
