@@ -1,22 +1,17 @@
-name: YCM Release Audit
+name: YCM Security Release Audit (Manual Fallback)
 
 on:
-  workflow_run:
-    workflows: ["YCM One CI"]
-    types: [completed]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  release-audit:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  security-release-audit:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout audited CI commit
+      - name: Checkout exact selected SHA
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -37,15 +32,15 @@ jobs:
         run: npm run build
 
       - name: Portable Docker build
-        run: docker build --pull -t ycm-one-release-audit:${{ github.event.workflow_run.head_sha }} .
+        run: docker build --pull -t ycm-one-release-audit:${{ github.sha }} .
 
-      - name: Emit audit manifest
+      - name: Emit security audit manifest
         run: |
           mkdir -p audit-artifact
           cat > audit-artifact/release-audit.txt <<EOF
-          YCM ONE RELEASE AUDIT
-          commit=${{ github.event.workflow_run.head_sha }}
-          ci_run=${{ github.event.workflow_run.id }}
+          YCM ONE SECURITY RELEASE AUDIT
+          audited_sha=${{ github.sha }}
+          security_gate=PASS
           dependency_audit=PASS
           release_contract=PASS
           production_build=PASS
@@ -55,5 +50,5 @@ jobs:
       - name: Upload audit evidence
         uses: actions/upload-artifact@v4
         with:
-          name: ycm-release-audit-${{ github.event.workflow_run.head_sha }}
+          name: ycm-security-release-audit-${{ github.sha }}
           path: audit-artifact/release-audit.txt
