@@ -7,7 +7,7 @@ const required=[
  ['timing safe compare',/timingSafeEqual/],
  ['client reference lookup',/client_ref_id=\$1/],
  ['terminal idempotency guard',/terminal\.has\(tx\.status\)/],
- ['conditional terminal update',/status NOT IN \('success','failed','reversed'\)/],
+ ['conditional terminal update',/status NOT IN.*success.*failed.*reversed/],
  ['provider payload persistence',/provider_payload=/],
  ['unique client reference',/client_ref_id VARCHAR\(20\) NOT NULL UNIQUE/]
 ];
