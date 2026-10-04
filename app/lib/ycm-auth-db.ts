@@ -1,5 +1,5 @@
 import postgres from 'postgres';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomBytes } from 'node:crypto';
 import { hashPassword, hashResetToken } from './ycm-password';
 import type { YcmRole } from './ycm-access-control';
 
@@ -25,8 +25,21 @@ function normalizeIdentityIdentifier(type:YcmLoginIdentifierType, value:string) 
   return compact;
 }
 
-export function hashLoginIdentifier(type:YcmLoginIdentifierType, value:string) {
+function identityHashSecret() {
+  const secret = process.env.YCM_IDENTITY_HASH_SECRET?.trim();
+  if (!secret && process.env.NODE_ENV === 'production') throw new Error('IDENTITY_HASH_SECRET_NOT_CONFIGURED');
+  return secret;
+}
+
+function legacyHashLoginIdentifier(type:YcmLoginIdentifierType, value:string) {
   return createHash('sha256').update(type+':'+normalizeIdentityIdentifier(type,value)).digest('hex');
+}
+
+export function hashLoginIdentifier(type:YcmLoginIdentifierType, value:string) {
+  const normalized = normalizeIdentityIdentifier(type,value);
+  const secret = identityHashSecret();
+  if (!secret) return legacyHashLoginIdentifier(type, normalized);
+  return createHmac('sha256', secret).update(type+':'+normalized).digest('hex');
 }
 
 export function maskLoginIdentifier(type:YcmLoginIdentifierType, value:string) {
@@ -42,11 +55,14 @@ export async function findUser(identifier:string, identifierType?:YcmLoginIdenti
   const compact=identifier.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
   if (!compact) return null;
   const types=identifierType ? [identifierType] : YCM_LOGIN_IDENTIFIER_TYPES;
-  const hashes=types.map(type=>createHash('sha256').update(type+':'+compact).digest('hex'));
+  const secret = identityHashSecret();
+  const hashes=types.map(type=>legacyHashLoginIdentifier(type, compact));
+  const secureHashes=secret ? types.map(type=>createHmac('sha256', secret).update(type+':'+compact).digest('hex')) : [];
+  const allHashes=[...new Set([...secureHashes,...hashes])];
   const identityRows=await authDb()`SELECT u.id,u.user_id,u.full_name,u.email,u.mobile,u.password_hash,u.role,u.status,u.auth_version
     FROM ycm_login_identifiers i JOIN ycm_users u ON u.id=i.user_id
-    WHERE i.identifier_hash=ANY(${hashes}) AND i.verification_status='verified'
-    ORDER BY i.verified_at DESC NULLS LAST LIMIT 1`;
+    WHERE i.identifier_hash=ANY(${allHashes}) AND i.verification_status='verified'
+    ORDER BY CASE WHEN i.identifier_hash=ANY(${secureHashes}) THEN 0 ELSE 1 END, i.verified_at DESC NULLS LAST LIMIT 1`;
   return identityRows[0] ?? null;
 }
 
@@ -57,9 +73,9 @@ export async function linkVerifiedLoginIdentifier(input:{userId:string;identifie
   const user=await db`SELECT id FROM ycm_users WHERE user_id=${input.userId} LIMIT 1`;
   if(!user[0]) throw new Error('USER_NOT_FOUND');
   const rows=await db`INSERT INTO ycm_login_identifiers
-    (user_id,identifier_type,identifier_hash,masked_value,verification_status,verification_source,verified_at)
-    VALUES (${user[0].id},${input.identifierType},${hash},${masked},'verified',${input.verificationSource},NOW())
-    ON CONFLICT(identifier_type,identifier_hash) DO UPDATE SET user_id=EXCLUDED.user_id,masked_value=EXCLUDED.masked_value,verification_status='verified',verification_source=EXCLUDED.verification_source,verified_at=NOW(),updated_at=NOW()
+    (user_id,identifier_type,identifier_hash,masked_value,verification_status,verification_source,verified_at,hash_algorithm)
+    VALUES (${user[0].id},${input.identifierType},${hash},${masked},'verified',${input.verificationSource},NOW(),${identityHashSecret() ? 'hmac_sha256' : 'sha256'})
+    ON CONFLICT(identifier_type,identifier_hash) DO UPDATE SET user_id=EXCLUDED.user_id,masked_value=EXCLUDED.masked_value,verification_status='verified',verification_source=EXCLUDED.verification_source,verified_at=NOW(),hash_algorithm=EXCLUDED.hash_algorithm,updated_at=NOW()
     RETURNING identifier_id,identifier_type,masked_value,verification_status,verified_at`;
   return rows[0];
 }
