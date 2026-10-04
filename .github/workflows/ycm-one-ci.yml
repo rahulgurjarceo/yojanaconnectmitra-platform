@@ -105,6 +105,8 @@ jobs:
         run: npm run test:identity-login
       - name: Identity login UI contract test
         run: npm run test:identity-login-ui
+      - name: Session cookie security contract test
+        run: npm run test:session-cookie-security
       - name: Government RBAC contract test
         run: npm run test:government-rbac
       - name: Government RBAC scope contract test
