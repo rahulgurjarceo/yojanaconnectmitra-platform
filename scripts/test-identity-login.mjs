@@ -6,7 +6,7 @@ const service=fs.readFileSync('database/migrations/041_ration_passport_service_m
 const login=fs.readFileSync('app/api/auth/login/route.ts','utf8');
 for(const [name,src,needles] of [
  ['migration',migration,['ycm_login_identifiers','ration_card','passport','identifier_hash','verification_status']],
- ['auth db',auth,['YCM_LOGIN_IDENTIFIER_TYPES','hashLoginIdentifier','findUser','linkVerifiedLoginIdentifier',"verification_status='verified'"]],
+ ['auth db',auth,['YCM_LOGIN_IDENTIFIER_TYPES','hashLoginIdentifier','findUser','linkVerifiedLoginIdentifier','YCM_IDENTITY_HASH_SECRET','hmac_sha256',"verification_status='verified'"]],
  ['identity route',route,['ceo','admin','management','verificationSource']],
  ['service master',service,['DOC_RATION_CARD','AUTH_RATION_CARD_LOGIN','AUTH_PASSPORT_LOGIN','TRAVEL_PASSPORT']],
  ['login',login,['findUser(identifier','loginRateLimited']]
