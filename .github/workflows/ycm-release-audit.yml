@@ -1,0 +1,59 @@
+name: YCM Release Audit
+
+on:
+  workflow_run:
+    workflows: ["YCM One CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  release-audit:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audited CI commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install exact lockfile
+        run: npm ci
+
+      - name: Dependency security audit
+        run: npm audit --audit-level=high
+
+      - name: Release audit contract
+        run: npm run test:release-audit
+
+      - name: Production build
+        run: npm run build
+
+      - name: Portable Docker build
+        run: docker build --pull -t ycm-one-release-audit:${{ github.event.workflow_run.head_sha }} .
+
+      - name: Emit audit manifest
+        run: |
+          mkdir -p audit-artifact
+          cat > audit-artifact/release-audit.txt <<EOF
+          YCM ONE RELEASE AUDIT
+          commit=${{ github.event.workflow_run.head_sha }}
+          ci_run=${{ github.event.workflow_run.id }}
+          dependency_audit=PASS
+          release_contract=PASS
+          production_build=PASS
+          portable_docker_build=PASS
+          EOF
+
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ycm-release-audit-${{ github.event.workflow_run.head_sha }}
+          path: audit-artifact/release-audit.txt
