@@ -6,8 +6,10 @@ const SAFE_CONTENT_TYPES = new Set(['application/json','application/x-www-form-u
 
 function sameOrigin(request:NextRequest):boolean{
  const origin=request.headers.get('origin');
- if(!origin)return true;
- return origin===request.nextUrl.origin;
+ if(origin && origin!==request.nextUrl.origin)return false;
+ const fetchSite=request.headers.get('sec-fetch-site')?.toLowerCase();
+ if(fetchSite && !new Set(['same-origin','same-site','none']).has(fetchSite))return false;
+ return true;
 }
 
 export function enforceApiRequestPolicy(request:NextRequest):NextResponse|null{
