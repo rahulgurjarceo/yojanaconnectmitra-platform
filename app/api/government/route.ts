@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { sessionCookieName, verifySession } from '../../lib/ycm-access-control';
 import { GOVERNMENT_GRIEVANCE_CATEGORIES, GOVERNMENT_GRIEVANCE_SAFETY_RULES, normalizeGrievanceText } from '../../lib/ycm-government-grievance';
+import { governmentScopeAllows } from '../../lib/ycm-government-rbac';
 
 export const runtime = 'nodejs';
 const db = () => {
@@ -18,6 +19,14 @@ export async function GET(request: NextRequest) {
   const p=request.nextUrl.searchParams;
   const stateCode=p.get('stateCode'), districtCode=p.get('districtCode'), blockCode=p.get('blockCode');
   const gpCode=p.get('gramPanchayatCode'), villageCode=p.get('villageCode'), departmentCode=p.get('departmentCode');
+  if (session.role === 'branch_manager') {
+    if (!stateCode || !districtCode) return NextResponse.json({success:false,code:'GOVERNMENT_SCOPE_REQUIRED'},{status:403});
+    const allowed = await governmentScopeAllows(session, {
+      geographyLevel: blockCode ? 'block' : 'district', stateCode, districtCode, blockCode,
+      gramPanchayatCode: gpCode, villageCode, wardCode: null,
+    });
+    if (!allowed) return NextResponse.json({success:false,code:'GOVERNMENT_SCOPE_DENIED'},{status:403});
+  }
   try {
     const contacts=await sql.unsafe(
       `SELECT contact_id,jurisdiction_level,department_code,department_name,designation,officer_name,
@@ -54,6 +63,18 @@ export async function POST(request: NextRequest) {
   if(!title||!description||!category) return NextResponse.json({success:false,code:'GRIEVANCE_FIELDS_REQUIRED'},{status:400});
   if(!(GOVERNMENT_GRIEVANCE_CATEGORIES as readonly string[]).includes(category)) return NextResponse.json({success:false,code:'GRIEVANCE_CATEGORY_INVALID'},{status:400});
   if(!['service_issue','delay','refusal','document_issue','misconduct','bribery_report','other'].includes(allegationType)) return NextResponse.json({success:false,code:'GRIEVANCE_ALLEGATION_TYPE_INVALID'},{status:400});
+  if (session.role === 'branch_manager') {
+    const stateCode = normalizeGrievanceText(body?.stateCode,20);
+    const districtCode = normalizeGrievanceText(body?.districtCode,40);
+    const blockCode = normalizeGrievanceText(body?.blockCode,40);
+    if (!stateCode || !districtCode) return NextResponse.json({success:false,code:'GOVERNMENT_SCOPE_REQUIRED'},{status:403});
+    try {
+      const allowed = await governmentScopeAllows(session, { geographyLevel: blockCode ? 'block' : 'district', stateCode, districtCode, blockCode });
+      if (!allowed) return NextResponse.json({success:false,code:'GOVERNMENT_SCOPE_DENIED'},{status:403});
+    } catch (error) {
+      return NextResponse.json({success:false,code:error instanceof Error ? error.message : 'GOVERNMENT_SCOPE_CHECK_FAILED'},{status:503});
+    }
+  }
   const sql=db(); if(!sql) return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
   try {
     const result=await sql.begin(async tx=>{
