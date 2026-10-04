@@ -103,6 +103,8 @@ jobs:
         run: npm run test:government-grievance
       - name: Identity login contract test
         run: npm run test:identity-login
+      - name: Identity login UI contract test
+        run: npm run test:identity-login-ui
       - name: Government RBAC contract test
         run: npm run test:government-rbac
       - name: Release audit contract test
