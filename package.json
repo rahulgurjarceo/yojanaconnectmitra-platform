@@ -54,7 +54,8 @@
     "test:government-rbac-scope": "node scripts/test-government-rbac-scope.mjs",
     "test:session-cookie-security": "node scripts/test-session-cookie-security.mjs",
     "test:family-requirements-authz": "node scripts/test-family-requirements-authz.mjs",
-    "test:service-application-authz": "node scripts/test-service-application-authz.mjs"
+    "test:service-application-authz": "node scripts/test-service-application-authz.mjs",
+    "test:aeps-callback-replay": "node scripts/test-aeps-callback-replay.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
