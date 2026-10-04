@@ -50,7 +50,8 @@
     "test:service-application": "node scripts/test-service-application.mjs",
     "test:release-audit": "node scripts/test-release-audit.mjs",
     "test:identity-login": "node scripts/test-identity-login.mjs",
-    "test:identity-login-ui": "node scripts/test-identity-login-ui.mjs"
+    "test:identity-login-ui": "node scripts/test-identity-login-ui.mjs",
+    "test:government-rbac-scope": "node scripts/test-government-rbac-scope.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
