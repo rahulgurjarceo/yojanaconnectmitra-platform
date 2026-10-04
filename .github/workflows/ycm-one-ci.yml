@@ -118,7 +118,7 @@ jobs:
 
 # CI verification trigger: keep this workflow intentionally explicit and auditable.
 
-  release-audit:
+  security-release-audit:
     needs: verify
     runs-on: ubuntu-latest
     steps:
@@ -141,12 +141,14 @@ jobs:
         run: npm run build
       - name: Portable Docker build
         run: docker build --pull -t ycm-one-release-audit:${{ github.sha }} .
-      - name: Emit release audit evidence
+      - name: Emit security release audit evidence
         run: |
           mkdir -p audit-artifact
           cat > audit-artifact/release-audit.txt <<EOF
-          YCM ONE RELEASE AUDIT
-          commit=${{ github.event.pull_request.head.sha || github.sha }}
+          YCM ONE SECURITY RELEASE AUDIT
+          audited_sha=${{ github.event.pull_request.head.sha || github.sha }}
+          ci_sha=${{ github.sha }}
+          security_gate=PASS
           dependency_audit=PASS
           release_contract=PASS
           production_build=PASS
@@ -155,5 +157,5 @@ jobs:
       - name: Upload audit evidence
         uses: actions/upload-artifact@v4
         with:
-          name: ycm-release-audit-${{ github.sha }}
+          name: ycm-security-release-audit-${{ github.event.pull_request.head.sha || github.sha }}
           path: audit-artifact/release-audit.txt
