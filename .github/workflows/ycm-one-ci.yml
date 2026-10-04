@@ -101,6 +101,8 @@ jobs:
         run: npm run test:payout-destination-security
       - name: Government grievance contract test
         run: npm run test:government-grievance
+      - name: Family requirements authorization contract test
+        run: npm run test:family-requirements-authz
       - name: Identity login contract test
         run: npm run test:identity-login
       - name: Identity login UI contract test
