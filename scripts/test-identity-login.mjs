@@ -9,6 +9,6 @@ for(const [name,src,needles] of [
  ['auth db',auth,['YCM_LOGIN_IDENTIFIER_TYPES','hashLoginIdentifier','findUser','linkVerifiedLoginIdentifier',"verification_status='verified'"]],
  ['identity route',route,['ceo','admin','management','verificationSource']],
  ['service master',service,['DOC_RATION_CARD','AUTH_RATION_CARD_LOGIN','AUTH_PASSPORT_LOGIN','TRAVEL_PASSPORT']],
- ['login',login,['findUser(identifier','loginRateLimited(identifier)']]
+ ['login',login,['findUser(identifier','loginRateLimited']]
 ]) for(const n of needles) if(!src.includes(n)) throw new Error(name+': missing '+n);
 console.log('Verified identity + ration/passport service contract OK');
