@@ -19,6 +19,10 @@ const requiredRoute = [
   'GOVERNMENT_SCOPE_REQUIRED',
   'GOVERNMENT_SCOPE_DENIED',
   'governmentScopeAllows(session',
+  'scopeMatches(requestScope, targetScope)',
+  'GOVERNMENT_CONTACT_NOT_VERIFIED',
+  'GOVERNMENT_CONTACT_SCOPE_DENIED',
+  'ycm_government_contacts',
 ];
 for (const marker of requiredRoute) {
   if (!route.includes(marker)) throw new Error(`missing government route scope guard: ${marker}`);
