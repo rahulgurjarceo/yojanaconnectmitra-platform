@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { sessionCookieName, verifySession } from '../../lib/ycm-access-control';
 import { GOVERNMENT_GRIEVANCE_CATEGORIES, GOVERNMENT_GRIEVANCE_SAFETY_RULES, normalizeGrievanceText } from '../../lib/ycm-government-grievance';
-import { governmentScopeAllows } from '../../lib/ycm-government-rbac';
+import { governmentScopeAllows, scopeMatches } from '../../lib/ycm-government-rbac';
 
 export const runtime = 'nodejs';
 const db = () => {
@@ -77,6 +77,37 @@ export async function POST(request: NextRequest) {
   }
   const sql=db(); if(!sql) return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
   try {
+    // A branch manager must not be able to reference a verified government
+    // contact outside the manager's assigned geography, even if the request's
+    // own geography fields are in-scope.
+    if (session.role === 'branch_manager' && body?.targetContactId) {
+      const target = (await sql.unsafe(
+        `SELECT jurisdiction_level,state_code,district_code,block_code,gram_panchayat_code,village_code,ward_code,verification_status
+         FROM ycm_government_contacts WHERE contact_id=$1 LIMIT 1`,
+        [String(body.targetContactId)]
+      ))[0] as {
+        jurisdiction_level: 'india'|'state'|'district'|'block'|'gram_panchayat'|'village'|'ward';
+        state_code: string|null; district_code: string|null; block_code: string|null;
+        gram_panchayat_code: string|null; village_code: string|null; ward_code: string|null;
+        verification_status: string;
+      } | undefined;
+      if (!target || target.verification_status !== 'verified') {
+        return NextResponse.json({success:false,code:'GOVERNMENT_CONTACT_NOT_VERIFIED'},{status:403});
+      }
+      const requestScope = {
+        geographyLevel: blockCode ? 'block' as const : 'district' as const,
+        stateCode, districtCode, blockCode
+      };
+      const targetScope = {
+        geographyLevel: target.jurisdiction_level,
+        stateCode: target.state_code, districtCode: target.district_code,
+        blockCode: target.block_code, gramPanchayatCode: target.gram_panchayat_code,
+        villageCode: target.village_code, wardCode: target.ward_code
+      };
+      if (!scopeMatches(requestScope, targetScope)) {
+        return NextResponse.json({success:false,code:'GOVERNMENT_CONTACT_SCOPE_DENIED'},{status:403});
+      }
+    }
     const result=await sql.begin(async tx=>{
       const user=(await tx.unsafe('SELECT id FROM ycm_users WHERE user_id=$1 LIMIT 1',[session.sub]))[0];
       if(!user) throw new Error('USER_NOT_FOUND');
