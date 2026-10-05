@@ -115,6 +115,8 @@ jobs:
         run: npm run test:aeps-callback-replay
       - name: Government RBAC contract test
         run: npm run test:government-rbac
+      - name: Family payment and activation contract test
+        run: npm run test:family-payment-flow
       - name: Government RBAC scope contract test
         run: npm run test:government-rbac-scope
       - name: Release audit contract test
