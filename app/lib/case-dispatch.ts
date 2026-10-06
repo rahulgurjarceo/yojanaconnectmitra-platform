@@ -18,7 +18,7 @@ export async function dispatchCase(caseId: string, actorRef?: string): Promise<D
     return await sql.begin(async tx => {
       const c = (await tx`SELECT c.case_id,c.family_id,c.application_id,c.status,c.priority,c.due_at,
           f.state_code,f.district_code,f.block_code,f.gram_panchayat_code,f.village_code,
-          a.service_code
+          a.service_code AS application_service_code
         FROM ycm_family_cases c
         JOIN ycm_families f ON f.family_id=c.family_id
         LEFT JOIN ycm_service_applications a ON a.application_id=c.application_id
@@ -26,7 +26,7 @@ export async function dispatchCase(caseId: string, actorRef?: string): Promise<D
       if (!c) throw Object.assign(new Error('CASE_NOT_FOUND'), { code: 'CASE_NOT_FOUND' });
       if (['completed','closed','cancelled'].includes(String(c.status))) throw Object.assign(new Error('CASE_NOT_DISPATCHABLE'), { code: 'CASE_NOT_DISPATCHABLE' });
 
-      const serviceCode = c.service_code ? String(c.service_code) : null;
+      const serviceCode = c.application_service_code ? String(c.application_service_code) : null;
       const service = serviceCode
         ? (await tx`SELECT service_code,business_domain_code FROM ycm_service_master WHERE service_code=${serviceCode} LIMIT 1`)[0]
         : null;
