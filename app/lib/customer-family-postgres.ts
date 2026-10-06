@@ -25,12 +25,12 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
   }
   async findById(familyId: string): Promise<FamilyRecord | null> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
-    const rows = await this.sql`SELECT family_id, status, full_name, mobile, country, created_at, updated_at FROM ycm_families WHERE family_id = ${familyId} LIMIT 1`;
+    const rows = await this.sql`SELECT family_id, status, full_name, mobile, country, state_code, district_code, block_code, gram_panchayat_code, village_code, created_at, updated_at FROM ycm_families WHERE family_id = ${familyId} LIMIT 1`;
     return rows.length ? mapRow(rows[0] as unknown as Record<string, unknown>) : null;
   }
   async updateStatus(familyId: string, status: FamilyRecord['status']): Promise<FamilyRecord | null> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
-    const rows = await this.sql`UPDATE ycm_families SET status = ${status}, updated_at = NOW() WHERE family_id = ${familyId} RETURNING family_id, status, full_name, mobile, country, created_at, updated_at`;
+    const rows = await this.sql`UPDATE ycm_families SET status = ${status}, updated_at = NOW() WHERE family_id = ${familyId} RETURNING family_id, status, full_name, mobile, country, state_code, district_code, block_code, gram_panchayat_code, village_code, created_at, updated_at`;
     return rows.length ? mapRow(rows[0] as unknown as Record<string, unknown>) : null;
   }
   async getActivationState(familyId: string): Promise<FamilyActivationState> {
