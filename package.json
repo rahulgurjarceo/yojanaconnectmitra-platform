@@ -66,7 +66,8 @@
     "test:case-escalation-scheduler": "node scripts/test-case-escalation-scheduler.mjs",
     "test:case-escalation-rules": "node scripts/test-default-case-escalation-rules.mjs",
     "test:case-dispatch": "node scripts/test-case-dispatch.mjs",
-    "test:operations-contracts": "npm run test:case-dispatch && npm run test:case-operations && npm run test:case-cri"
+    "test:operations-contracts": "npm run test:case-dispatch && npm run test:case-operations && npm run test:case-cri",
+    "test:document-validity-kyc": "node scripts/test-document-validity-kyc-compliance.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
