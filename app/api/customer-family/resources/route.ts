@@ -10,7 +10,7 @@ const relations = new Set(['primary','spouse','child','parent','other']);
 export async function POST(request: NextRequest) {
   const repository = getPostgresCustomerFamilyRepository();
   if (!repository) return NextResponse.json({ success:false, code:'DATABASE_NOT_CONFIGURED' }, { status:503 });
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+  const body = (await request.json().catch(() => null) as Record<string, unknown> | null) ?? {};
   const familyId = typeof body?.familyId === 'string' ? body.familyId.trim() : '';
   const action = typeof body?.action === 'string' ? body.action : '';
   if (!familyId || !action) return NextResponse.json({ success:false, code:'FAMILY_ID_AND_ACTION_REQUIRED' }, { status:400 });
