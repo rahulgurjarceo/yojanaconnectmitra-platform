@@ -84,7 +84,7 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
   }
   async createCase(input: { caseId: string; familyId: string; memberId?: string; caseCategoryId: string; caseCategoryName: string; subService?: string }): Promise<void> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
-    await this.sql`INSERT INTO ycm_family_cases (case_id, family_id, member_id, case_category_id, case_category_name, sub_service, status) VALUES (${input.caseId}, ${input.familyId}, ${input.memberId || null}, ${input.caseCategoryId}, ${input.caseCategoryName}, ${input.subService || null}, 'new')`;
+    await this.sql`INSERT INTO ycm_family_cases (case_id, family_id, member_id, case_category_id, case_category_name, sub_service, status, application_id) VALUES (${input.caseId}, ${input.familyId}, ${input.memberId || null}, ${input.caseCategoryId}, ${input.caseCategoryName}, ${input.subService || null}, 'new', ${input.applicationId || null})`;
   }
   async close(): Promise<void> { if (this.sql) await this.sql.end({ timeout: 5 }); }
 }
