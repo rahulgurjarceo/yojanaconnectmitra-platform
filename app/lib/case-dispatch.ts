@@ -17,8 +17,10 @@ export async function dispatchCase(caseId: string, actorRef?: string): Promise<D
   try {
     return await sql.begin(async tx => {
       const c = (await tx`SELECT c.case_id,c.family_id,c.application_id,c.status,c.priority,c.due_at,
+          f.state_code,f.district_code,f.block_code,f.gram_panchayat_code,f.village_code,
           a.service_code
         FROM ycm_family_cases c
+        JOIN ycm_families f ON f.family_id=c.family_id
         LEFT JOIN ycm_service_applications a ON a.application_id=c.application_id
         WHERE c.case_id=${caseId} LIMIT 1`)[0] as Record<string, unknown> | undefined;
       if (!c) throw Object.assign(new Error('CASE_NOT_FOUND'), { code: 'CASE_NOT_FOUND' });
@@ -29,6 +31,9 @@ export async function dispatchCase(caseId: string, actorRef?: string): Promise<D
         ? (await tx`SELECT service_code,business_domain_code FROM ycm_service_master WHERE service_code=${serviceCode} LIMIT 1`)[0]
         : null;
       const domainCode = service?.business_domain_code || null;
+      const stateCode = c.state_code || null;
+      const districtCode = c.district_code || null;
+      const blockCode = c.block_code || null;
 
       const rules = await tx`SELECT r.rule_id,r.team_id,r.sla_minutes,r.priority,t.name AS team_name,t.manager_user_id
         FROM ycm_case_routing_rules r
@@ -36,7 +41,13 @@ export async function dispatchCase(caseId: string, actorRef?: string): Promise<D
         WHERE r.active=true
           AND ((r.service_code IS NOT NULL AND r.service_code=${serviceCode})
             OR (r.business_domain_code IS NOT NULL AND r.business_domain_code=${domainCode}))
-        ORDER BY CASE WHEN r.service_code IS NOT NULL AND r.service_code=${serviceCode} THEN 0 ELSE 1 END,r.priority DESC
+          AND (r.state_code IS NULL OR r.state_code=${stateCode})
+          AND (r.district_code IS NULL OR r.district_code=${districtCode})
+          AND (r.block_code IS NULL OR r.block_code=${blockCode})
+        ORDER BY CASE WHEN r.block_code IS NOT NULL AND r.block_code=${blockCode} THEN 0
+          WHEN r.district_code IS NOT NULL AND r.district_code=${districtCode} THEN 1
+          WHEN r.state_code IS NOT NULL AND r.state_code=${stateCode} THEN 2 ELSE 3 END,
+          CASE WHEN r.service_code IS NOT NULL AND r.service_code=${serviceCode} THEN 0 ELSE 1 END,r.priority DESC
         LIMIT 20`;
       const candidates = (rules as any[]).filter(r => r.manager_user_id);
 
@@ -75,7 +86,7 @@ export async function dispatchCase(caseId: string, actorRef?: string): Promise<D
       await tx`INSERT INTO ycm_case_timeline
         (case_id,family_id,event_type,actor_type,actor_id,note,metadata)
         VALUES(${caseId},${String(c.family_id)},'dispatched','system',${actorRef || 'system'},'Case automatically routed to the least-loaded eligible team lead',
-          ${JSON.stringify({ teamId: chosen.team_id, teamName: chosen.team_name, assignmentId: assignment.assignment_id, slaMinutes: Number(chosen.sla_minutes || 1440), serviceCode })}::jsonb)`;
+          ${JSON.stringify({ teamId: chosen.team_id, teamName: chosen.team_name, assignmentId: assignment.assignment_id, slaMinutes: Number(chosen.sla_minutes || 1440), serviceCode, stateCode, districtCode, blockCode })}::jsonb)`;
 
       return { caseId, teamId: chosen.team_id, teamName: chosen.team_name, assignedTo: assignment.assigned_to, assignmentId: assignment.assignment_id, dueAt: assignment.due_at, reused: false };
     });
