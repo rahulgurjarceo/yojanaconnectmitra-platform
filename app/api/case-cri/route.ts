@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import postgres from 'postgres';
-import { verifySession, sessionCookieName } from '../../../lib/ycm-access-control';
-import { calculateCri, CRI_DIMENSIONS, CRI_WEIGHTS, type CriInput } from '../../../lib/ycm-cri';
+import { verifySession, sessionCookieName } from '../../lib/ycm-access-control';
+import { calculateCri, CRI_DIMENSIONS, CRI_WEIGHTS, type CriInput } from '../../lib/ycm-cri';
 
 export const runtime = 'nodejs';
 const db = () => {
