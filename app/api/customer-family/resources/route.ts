@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { getPostgresCustomerFamilyRepository } from '../../../lib/customer-family-postgres';
+import { dispatchCase } from '../../../lib/case-dispatch';
 import { requireFamilyOwner } from '../../../lib/ycm-authorization';
 
 export const runtime = 'nodejs';
@@ -56,8 +57,17 @@ export async function POST(request: NextRequest) {
       const caseCategoryId = typeof body.caseCategoryId === 'string' ? body.caseCategoryId.trim() : '';
       const caseCategoryName = typeof body.caseCategoryName === 'string' ? body.caseCategoryName.trim() : '';
       if (!caseCategoryId || !caseCategoryName) return NextResponse.json({success:false,code:'CASE_VALIDATION_ERROR'},{status:400});
-      await repository.createCase({ caseId: randomUUID(), familyId, memberId: typeof body.memberId === 'string' ? body.memberId : undefined, caseCategoryId, caseCategoryName, subService: typeof body.subService === 'string' ? body.subService.trim() : undefined, applicationId: typeof body.applicationId === 'string' ? body.applicationId.trim() : undefined });
-      return NextResponse.json({success:true,status:'case_created',familyId},{status:201});
+      const caseId = randomUUID();
+      await repository.createCase({ caseId, familyId, memberId: typeof body.memberId === 'string' ? body.memberId : undefined, caseCategoryId, caseCategoryName, subService: typeof body.subService === 'string' ? body.subService.trim() : undefined, applicationId: typeof body.applicationId === 'string' ? body.applicationId.trim() : undefined });
+      let dispatch: unknown = null;
+      let dispatchPending = false;
+      try {
+        dispatch = await dispatchCase(caseId);
+      } catch (error) {
+        dispatchPending = true;
+        console.warn('case created but automatic dispatch is pending', error instanceof Error ? error.message : error);
+      }
+      return NextResponse.json({success:true,status:'case_created',familyId,caseId,dispatch,dispatchPending},{status:201});
     }
     return NextResponse.json({success:false,code:'UNSUPPORTED_FAMILY_ACTION'},{status:400});
   } catch (error) {
