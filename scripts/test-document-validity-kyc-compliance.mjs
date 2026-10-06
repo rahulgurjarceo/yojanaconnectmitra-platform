@@ -2,12 +2,26 @@ import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
 const migration=await fs.readFile('database/migrations/049_document_validity_kyc_compliance.sql','utf8');
+const intelligenceMigration=await fs.readFile('database/migrations/050_service_application_compliance_intelligence.sql','utf8');
+const validation=await fs.readFile('app/lib/ycm-document-validity.ts','utf8');
+const application=await fs.readFile('app/api/service-applications/route.ts','utf8');
 const route=await fs.readFile('app/api/compliance/requirements/route.ts','utf8');
 const leads=await fs.readFile('app/api/crm/leads/route.ts','utf8');
 const worker=await fs.readFile('scripts/run-compliance-reminders.mjs','utf8');
 const workflow=await fs.readFile('.github/workflows/ycm-compliance-reminder-worker.yml','utf8');
 
 assert.match(migration,/ycm_document_validity_rules/);
+assert.match(intelligenceMigration,/application_deadline TIMESTAMPTZ/);
+assert.match(intelligenceMigration,/compliance_analysis JSONB/);
+assert.match(validation,/selectDocumentValidityRule/);
+assert.match(validation,/DOCUMENT_EXPIRED/);
+assert.match(validation,/DOCUMENT_ISSUED_AFTER_APPLICATION_DEADLINE/);
+assert.match(validation,/DOCUMENT_EXPIRING_SOON/);
+assert.match(validation,/DOCUMENT_VALID/);
+assert.match(application,/compliance_analysis/);
+assert.match(application,/complianceScore/);
+assert.match(application,/riskLevel/);
+assert.match(application,/applicationDeadline/);
 assert.match(migration,/validity_days INTEGER/);
 assert.match(migration,/application_deadline/);
 assert.match(migration,/ycm_compliance_schedules/);
