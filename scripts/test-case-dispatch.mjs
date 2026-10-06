@@ -9,7 +9,8 @@ const resources = await fs.readFile('app/api/customer-family/resources/route.ts'
 assert.match(migration,/CREATE TABLE IF NOT EXISTS ycm_case_routing_rules/);
 assert.match(migration,/sla_minutes INTEGER NOT NULL DEFAULT 1440/);
 assert.match(migration,/team_id UUID NOT NULL REFERENCES ycm_teams/);
-assert.match(service,/Deterministic case dispatch/);
+assert.match(service,/LEFT JOIN ycm_service_applications a ON a.application_id=c.application_id/);
+assert.doesNotMatch(service,/c\.service_code/);
 assert.match(service,/ycm_case_routing_rules/);
 assert.match(service,/open_count/);
 assert.match(service,/NO_ROUTING_TEAM/);
