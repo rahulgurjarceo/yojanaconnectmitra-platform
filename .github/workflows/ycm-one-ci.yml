@@ -39,6 +39,8 @@ jobs:
         run: npm run test:service-lifecycle
       - name: Service application reuse/prefill contract test
         run: npm run test:service-application
+      - name: Service application compliance intelligence contract test
+        run: npm run test:document-validity-kyc
       - name: Dynamic service operating layer contract test
         run: npm run test:dynamic-service-layer
       - name: Provider workflow contract test
