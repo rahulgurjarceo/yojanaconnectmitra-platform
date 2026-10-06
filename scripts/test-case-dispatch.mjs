@@ -25,6 +25,7 @@ assert.match(service,/CASE WHEN r\.district_code IS NOT NULL AND r\.district_cod
 assert.match(service,/CASE WHEN r\.state_code IS NOT NULL AND r\.state_code=\$\{stateCode\} THEN 2/);
 assert.match(service,/CASE WHEN r\.service_code IS NOT NULL AND r\.service_code=\$\{serviceCode\} THEN 0 ELSE 1 END/);
 assert.match(service,/candidatesByTeam/);
+assert.doesNotMatch(service,/LIMIT 20`/);
 assert.match(service,/open_count/);
 assert.match(service,/NO_ROUTING_TEAM/);
 assert.match(service,/ycm_case_timeline/);
