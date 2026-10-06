@@ -69,7 +69,8 @@
     "test:operations-contracts": "npm run test:case-dispatch && npm run test:case-operations && npm run test:case-cri",
     "test:document-validity-kyc": "node scripts/test-document-validity-kyc-compliance.mjs",
     "compliance:reminders": "node scripts/run-compliance-reminders.mjs",
-    "test:customer-profile-security": "node scripts/test-customer-profile-security.mjs"
+    "test:customer-profile-security": "node scripts/test-customer-profile-security.mjs",
+    "test:employee-verification": "node scripts/test-employee-verification.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
