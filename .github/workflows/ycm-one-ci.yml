@@ -119,6 +119,8 @@ jobs:
         run: npm run test:family-payment-flow
       - name: Family resources contract test
         run: npm run test:family-resources
+      - name: Case CRI contract test
+        run: npm run test:case-cri
       - name: Government RBAC scope contract test
         run: npm run test:government-rbac-scope
       - name: Release audit contract test
