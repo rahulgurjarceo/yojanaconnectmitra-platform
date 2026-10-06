@@ -52,7 +52,6 @@ function isUsableDocument(doc: DocumentRecord, rule: ServiceDocumentRule) {
   if (!rule.reuse_if_valid) return false;
   if (doc.validation_status && doc.validation_status !== 'verified') return false;
   if (doc.status && !['verified', 'active', 'approved', 'uploaded'].includes(doc.status)) return false;
-  if (doc.valid_until && new Date(doc.valid_until).getTime() < Date.now()) return false;
   return Boolean(doc.storage_ref);
 }
 
