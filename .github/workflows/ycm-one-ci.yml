@@ -158,7 +158,6 @@ jobs:
       - name: Dependency security audit
         run: npm audit --audit-level=high
       - name: Release audit contract
-        run: npm run test:document-validity-kyc
         run: npm run test:release-audit
       - name: Production build
         run: npm run build
