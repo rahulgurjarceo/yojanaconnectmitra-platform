@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 const migration=await fs.readFile('database/migrations/049_document_validity_kyc_compliance.sql','utf8');
 const route=await fs.readFile('app/api/compliance/requirements/route.ts','utf8');
 const leads=await fs.readFile('app/api/crm/leads/route.ts','utf8');
+const worker=await fs.readFile('scripts/run-compliance-reminders.mjs','utf8');
+const workflow=await fs.readFile('.github/workflows/ycm-compliance-reminder-worker.yml','utf8');
 
 assert.match(migration,/ycm_document_validity_rules/);
 assert.match(migration,/validity_days INTEGER/);
@@ -25,4 +27,8 @@ assert.match(leads,/compliance_due_count/);
 assert.match(leads,/compliance_overdue_count/);
 assert.match(leads,/next_compliance_due_at/);
 assert.match(leads,/branch_manager/);
+assert.match(worker,/ON CONFLICT DO NOTHING/);
+assert.match(worker,/in_app/);
+assert.match(workflow,/schedule:/);
+assert.match(workflow,/npm run compliance:reminders/);
 console.log('DOCUMENT_VALIDITY_KYC_COMPLIANCE_CONTRACT: PASS');
