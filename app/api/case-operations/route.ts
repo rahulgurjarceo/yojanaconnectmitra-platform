@@ -18,7 +18,7 @@ export async function POST(request:NextRequest){
   if(!privileged(s.role)&&['assign','escalate','complete'].includes(action))return NextResponse.json({success:false,code:'MANAGEMENT_ACCESS_REQUIRED'},{status:403});
   if(action==='assign'){
    const assignedTo=typeof b.assignedTo==='string'?b.assignedTo.trim():''; if(!assignedTo)return NextResponse.json({success:false,code:'ASSIGNEE_REQUIRED'},{status:400});
-   await sql.begin(async tx=>{await tx`UPDATE ycm_family_cases SET assigned_to=${assignedTo},updated_at=NOW() WHERE case_id=${caseId}`;await tx`INSERT INTO ycm_work_assignments(family_id,case_id,source_type,source_id,assigned_by,assigned_to,priority,status,reason) VALUES(${c.family_id},${caseId},'case',${caseId},${s.userId||null},${assignedTo},${c.priority||'normal'},'assigned','Human Mitra assignment')`;await tx`INSERT INTO ycm_case_timeline(case_id,family_id,event_type,actor_type,actor_id,note,metadata) VALUES(${caseId},${c.family_id},'assigned','user',${s.userId||null},'Case assigned to Human Mitra',${JSON.stringify({assignedTo})}::jsonb)`});
+   await sql.begin(async tx=>{await tx`UPDATE ycm_family_cases SET assigned_to=${assignedTo},updated_at=NOW() WHERE case_id=${caseId}`;await tx`INSERT INTO ycm_work_assignments(family_id,case_id,source_type,source_id,assigned_by,assigned_to,priority,status,reason) VALUES(${c.family_id},${caseId},'case',${caseId},${s.sub||null},${assignedTo},${c.priority||'normal'},'assigned','Human Mitra assignment')`;await tx`INSERT INTO ycm_case_timeline(case_id,family_id,event_type,actor_type,actor_id,note,metadata) VALUES(${caseId},${c.family_id},'assigned','user',${s.sub||null},'Case assigned to Human Mitra',${JSON.stringify({assignedTo})}::jsonb)`});
    return NextResponse.json({success:true,status:'assigned',caseId,assignedTo});
   }
   if(action==='escalate'){
@@ -28,7 +28,7 @@ export async function POST(request:NextRequest){
   }
   if(action==='status'){
    const next=typeof b.status==='string'?b.status.trim():'';if(!next)return NextResponse.json({success:false,code:'STATUS_REQUIRED'},{status:400});
-   await sql.begin(async tx=>{await tx`UPDATE ycm_family_cases SET status=${next},updated_at=NOW() WHERE case_id=${caseId}`;await tx`INSERT INTO ycm_case_timeline(case_id,family_id,event_type,from_status,to_status,actor_type,actor_id,metadata) VALUES(${caseId},${c.family_id},'status_changed',${c.status},${next},'user',${s.userId||null},'{}'::jsonb)`});
+   await sql.begin(async tx=>{await tx`UPDATE ycm_family_cases SET status=${next},updated_at=NOW() WHERE case_id=${caseId}`;await tx`INSERT INTO ycm_case_timeline(case_id,family_id,event_type,from_status,to_status,actor_type,actor_id,metadata) VALUES(${caseId},${c.family_id},'status_changed',${c.status},${next},'user',${s.sub||null},'{}'::jsonb)`});
    return NextResponse.json({success:true,status:next,caseId});
   }
   return NextResponse.json({success:false,code:'UNSUPPORTED_CASE_OPERATION'},{status:400});
