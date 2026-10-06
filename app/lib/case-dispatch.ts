@@ -16,14 +16,18 @@ export async function dispatchCase(caseId: string, actorRef?: string): Promise<D
   const sql = postgres(url, { max: 4, prepare: false, connect_timeout: 10, idle_timeout: 20 });
   try {
     return await sql.begin(async tx => {
-      const c = (await tx`SELECT c.case_id,c.family_id,c.service_code,c.status,c.priority,c.due_at FROM ycm_family_cases c WHERE c.case_id=${caseId} LIMIT 1`)[0] as Record<string, unknown> | undefined;
+      const c = (await tx`SELECT c.case_id,c.family_id,c.application_id,c.status,c.priority,c.due_at,
+          a.service_code
+        FROM ycm_family_cases c
+        LEFT JOIN ycm_service_applications a ON a.application_id=c.application_id
+        WHERE c.case_id=${caseId} LIMIT 1`)[0] as Record<string, unknown> | undefined;
       if (!c) throw Object.assign(new Error('CASE_NOT_FOUND'), { code: 'CASE_NOT_FOUND' });
       if (['completed','closed','cancelled'].includes(String(c.status))) throw Object.assign(new Error('CASE_NOT_DISPATCHABLE'), { code: 'CASE_NOT_DISPATCHABLE' });
 
-      const service = c.service_code
-        ? (await tx`SELECT service_code,business_domain_code FROM ycm_service_master WHERE service_code=${String(c.service_code)} LIMIT 1`)[0]
+      const serviceCode = c.service_code ? String(c.service_code) : null;
+      const service = serviceCode
+        ? (await tx`SELECT service_code,business_domain_code FROM ycm_service_master WHERE service_code=${serviceCode} LIMIT 1`)[0]
         : null;
-      const serviceCode = service?.service_code || null;
       const domainCode = service?.business_domain_code || null;
 
       const rules = await tx`SELECT r.rule_id,r.team_id,r.sla_minutes,r.priority,t.name AS team_name,t.manager_user_id
@@ -71,7 +75,7 @@ export async function dispatchCase(caseId: string, actorRef?: string): Promise<D
       await tx`INSERT INTO ycm_case_timeline
         (case_id,family_id,event_type,actor_type,actor_id,note,metadata)
         VALUES(${caseId},${String(c.family_id)},'dispatched','system',${actorRef || 'system'},'Case automatically routed to the least-loaded eligible team lead',
-          ${JSON.stringify({ teamId: chosen.team_id, teamName: chosen.team_name, assignmentId: assignment.assignment_id, slaMinutes: Number(chosen.sla_minutes || 1440) })}::jsonb)`;
+          ${JSON.stringify({ teamId: chosen.team_id, teamName: chosen.team_name, assignmentId: assignment.assignment_id, slaMinutes: Number(chosen.sla_minutes || 1440), serviceCode })}::jsonb)`;
 
       return { caseId, teamId: chosen.team_id, teamName: chosen.team_name, assignedTo: assignment.assigned_to, assignmentId: assignment.assignment_id, dueAt: assignment.due_at, reused: false };
     });
