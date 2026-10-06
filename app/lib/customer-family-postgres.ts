@@ -82,7 +82,7 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
     await this.sql`INSERT INTO ycm_family_documents (document_id, family_id, member_id, document_type, storage_ref, status, uploaded_at) VALUES (${input.documentId}, ${input.familyId}, ${input.memberId || null}, ${input.documentType}, ${input.storageRef || null}, 'pending', CASE WHEN ${input.storageRef || null} IS NULL THEN NULL ELSE NOW() END)`;
   }
-  async createCase(input: { caseId: string; familyId: string; memberId?: string; caseCategoryId: string; caseCategoryName: string; subService?: string }): Promise<void> {
+  async createCase(input: { caseId: string; familyId: string; memberId?: string; caseCategoryId: string; caseCategoryName: string; subService?: string; applicationId?: string }): Promise<void> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
     await this.sql`INSERT INTO ycm_family_cases (case_id, family_id, member_id, case_category_id, case_category_name, sub_service, status, application_id) VALUES (${input.caseId}, ${input.familyId}, ${input.memberId || null}, ${input.caseCategoryId}, ${input.caseCategoryName}, ${input.subService || null}, 'new', ${input.applicationId || null})`;
   }
