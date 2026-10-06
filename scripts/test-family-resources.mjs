@@ -6,3 +6,7 @@ for(const marker of ["requireFamilyOwner","family.status !== 'active'","action =
 for(const marker of ["createMember","createConsent","createDocument","createCase"]) assert.ok(repo.includes(marker), marker);
 assert.ok(route.includes("randomUUID"));
 console.log("FAMILY_RESOURCES_CONTRACT_TEST: PASS");
+assert.ok(route.includes("applicationId"));
+const migration=await fs.readFile("database/migrations/042_family_case_application_link.sql","utf8");
+assert.ok(migration.includes("ADD COLUMN IF NOT EXISTS application_id"));
+console.log("FAMILY_SERVICE_CASE_LINK_CONTRACT: PASS");
