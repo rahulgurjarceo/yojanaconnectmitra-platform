@@ -38,6 +38,14 @@ export interface CustomerFamilyRepository {
   createPayment(input: { paymentId: string; familyId: string; amountPaise: number; currency: 'INR'; provider: string; providerReference: string }): Promise<void>;
   getPaymentByProviderReference(providerReference: string): Promise<FamilyPayment | null>;
   markPaymentVerified(orderId: string, paymentId: string): Promise<boolean>;
+  createMember(input: { memberId: string; familyId: string; fullName: string; relation: string; mobile?: string; email?: string; dateOfBirth?: string }): Promise<void>;
+  createConsent(input: { consentId: string; familyId: string; memberId?: string; consentType: string; granted: boolean; policyVersion: string }): Promise<void>;
+  createDocument(input: { documentId: string; familyId: string; memberId?: string; documentType: string; storageRef?: string }): Promise<void>;
+  createCase(input: { caseId: string; familyId: string; memberId?: string; caseCategoryId: string; caseCategoryName: string; subService?: string }): Promise<void>;
 }
 
-export function getCustomerFamilyRepository(): CustomerFamilyRepository | null { return null; }
+  createMember(input: { memberId: string; familyId: string; fullName: string; relation: string; mobile?: string; email?: string; dateOfBirth?: string }): Promise<void>;
+  createConsent(input: { consentId: string; familyId: string; memberId?: string; consentType: string; granted: boolean; policyVersion: string }): Promise<void>;
+  createDocument(input: { documentId: string; familyId: string; memberId?: string; documentType: string; storageRef?: string }): Promise<void>;
+  createCase(input: { caseId: string; familyId: string; memberId?: string; caseCategoryId: string; caseCategoryName: string; subService?: string }): Promise<void>;
+
