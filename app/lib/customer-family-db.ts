@@ -42,6 +42,7 @@ export interface CustomerFamilyRepository {
   createConsent(input: { consentId: string; familyId: string; memberId?: string; consentType: string; granted: boolean; policyVersion: string }): Promise<void>;
   createDocument(input: { documentId: string; familyId: string; memberId?: string; documentType: string; storageRef?: string }): Promise<void>;
   createCase(input: { caseId: string; familyId: string; memberId?: string; caseCategoryId: string; caseCategoryName: string; subService?: string; applicationId?: string }): Promise<void>;
+  updateCase(input: { caseId: string; familyId: string; status?: string; priority?: string; dueAt?: string; assignedTo?: string; escalated?: boolean; outcomeCode?: string; outcomeNotes?: string; csatScore?: number; csatComment?: string }): Promise<void>;
 }
 
   createMember(input: { memberId: string; familyId: string; fullName: string; relation: string; mobile?: string; email?: string; dateOfBirth?: string }): Promise<void>;
