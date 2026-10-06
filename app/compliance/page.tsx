@@ -24,6 +24,7 @@ type ComplianceRow = {
 };
 
 type Session = { user?: { role?: string; familyId?: string } };
+type ComplianceSummary = { total: number; due: number; overdue: number; completed: number; employees: Array<{ employeeId: string; total: number; due: number; overdue: number }> };
 
 const statusLabel: Record<string, string> = {
   active: 'On track',
@@ -47,6 +48,7 @@ export default function CompliancePage() {
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [summary, setSummary] = useState<ComplianceSummary | null>(null);
 
   async function load() {
     setLoading(true);
@@ -62,6 +64,7 @@ export default function CompliancePage() {
       const j = await r.json();
       if (!r.ok) throw new Error(j.code || 'COMPLIANCE_UNAVAILABLE');
       setRows(j.schedules || []);
+      setSummary(j.summary || null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'COMPLIANCE_UNAVAILABLE');
     } finally {
@@ -113,7 +116,7 @@ export default function CompliancePage() {
           ))}
         </div>
 
-        <div className="mt-6 rounded-3xl border bg-white p-5 shadow-sm">
+        {role === 'branch_manager' && summary ? (\n          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">\n            {[['Branch total', summary.total], ['Due soon', summary.due], ['Overdue', summary.overdue], ['Completed', summary.completed]].map(([label, count]) => (\n              <div key={String(label)} className="rounded-2xl border bg-white p-4 shadow-sm">\n                <div className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</div>\n                <div className="mt-1 text-2xl font-black">{count}</div>\n              </div>\n            ))}\n          </div>\n        ) : null}\n\n        <div className="mt-6 rounded-3xl border bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-black">Compliance queue</h2>
