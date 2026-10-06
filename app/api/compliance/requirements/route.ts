@@ -39,7 +39,21 @@ export async function GET(r:NextRequest){
        WHERE (${s.role==='employee'} AND cs.assigned_employee_id=(SELECT id FROM ycm_users WHERE user_id=${s.sub} LIMIT 1))
           OR (${privileged.has(s.role)} AND (${s.role} IN ('ceo','management','admin') OR cs.assigned_manager_id=(SELECT id FROM ycm_users WHERE user_id=${s.sub} LIMIT 1)))
        ORDER BY cs.next_due_at ASC LIMIT 1000`;
-  return NextResponse.json({success:true,schedules:rows});
+  const summary = {
+    total: rows.length,
+    due: rows.filter((x:any) => x.status === 'due').length,
+    overdue: rows.filter((x:any) => x.status === 'overdue').length,
+    completed: rows.filter((x:any) => x.status === 'completed').length,
+    employees: Object.values(rows.reduce((acc:any, x:any) => {
+      const key = x.assigned_employee_id || 'unassigned';
+      acc[key] ||= { employeeId: key, total: 0, due: 0, overdue: 0 };
+      acc[key].total += 1;
+      if (x.status === 'due') acc[key].due += 1;
+      if (x.status === 'overdue') acc[key].overdue += 1;
+      return acc;
+    }, {} as Record<string, { employeeId: string; total: number; due: number; overdue: number }>))
+  };
+  return NextResponse.json({success:true,schedules:rows,summary});
  }finally{await sql.end({timeout:3});}
 }
 
