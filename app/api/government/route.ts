@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
         `SELECT jurisdiction_level,state_code,district_code,block_code,gram_panchayat_code,village_code,ward_code,verification_status
          FROM ycm_government_contacts WHERE contact_id=$1 LIMIT 1`,
         [String(body.targetContactId)]
-      ))[0] as {
+      ))[0] as unknown as {
         jurisdiction_level: 'india'|'state'|'district'|'block'|'gram_panchayat'|'village'|'ward';
         state_code: string|null; district_code: string|null; block_code: string|null;
         gram_panchayat_code: string|null; village_code: string|null; ward_code: string|null;
