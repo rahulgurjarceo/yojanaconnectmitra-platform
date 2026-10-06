@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS ycm_compliance_reminders (
 CREATE INDEX IF NOT EXISTS idx_ycm_compliance_reminders_queue
   ON ycm_compliance_reminders(status,scheduled_for);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_ycm_compliance_reminder_once
-  ON ycm_compliance_reminders(schedule_id,recipient_user_id,channel,reminder_kind,scheduled_for);
+  ON ycm_compliance_reminders(schedule_id,COALESCE(recipient_user_id,'00000000-0000-0000-0000-000000000000'::uuid),COALESCE(recipient_family_id,''),channel,reminder_kind,scheduled_for);
 
 CREATE OR REPLACE FUNCTION ycm_refresh_compliance_schedule_status()
 RETURNS TRIGGER AS $$
