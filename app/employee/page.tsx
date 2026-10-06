@@ -70,12 +70,25 @@ export default function Page() {
   const [tasks, setTasks] = useState<Assignment[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [busy, setBusy] = useState('');
+  const [profiles, setProfiles] = useState<Record<string, any>>({});
+  const [profileBusy, setProfileBusy] = useState('');
 
   async function loadTasks() {
     const response = await fetch('/api/work-assignments?mine=true', { cache: 'no-store' });
     const data = await response.json().catch(() => null);
     if (!response.ok) throw new Error(data?.code || 'TASKS_LOAD_FAILED');
     setTasks(data.assignments || []);
+  }
+
+  async function loadProfile(familyId: string) {
+    setProfileBusy(familyId);
+    try {
+      const response = await fetch(`/api/crm/customer-profile?familyId=${encodeURIComponent(familyId)}`, { cache: 'no-store' });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.code || 'PROFILE_LOAD_FAILED');
+      setProfiles((current) => ({ ...current, [familyId]: data.profile }));
+    } catch (e) { setError(e instanceof Error ? e.message : 'PROFILE_LOAD_FAILED'); }
+    finally { setProfileBusy(''); }
   }
 
   async function loadLeads() {
@@ -174,6 +187,25 @@ export default function Page() {
                         <div className="text-slate-500">{dateLabel(lead.next_follow_up_at)}</div>
                       </div>
                     </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {lead.family_id ? <button onClick={() => loadProfile(lead.family_id!)} disabled={profileBusy === lead.family_id} className="rounded-xl bg-slate-950 px-3 py-2 text-xs font-black text-white disabled:opacity-40">{profileBusy === lead.family_id ? 'Loading 360…' : 'Open Customer 360'}</button> : null}
+                      {lead.mobile ? <a href={`tel:${lead.mobile}`} className="rounded-xl border px-3 py-2 text-xs font-black">Call customer</a> : null}
+                    </div>
+                    {lead.family_id && profiles[lead.family_id] ? <div className="mt-4 rounded-2xl bg-slate-50 p-4">
+                      <div className="text-xs font-black uppercase tracking-wide text-slate-500">Customer 360 · Jobs / Schemes / Forms / Preparation</div>
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        {(profiles[lead.family_id].opportunities || []).length === 0 ? <div className="text-sm text-slate-500">No opportunity/form record yet.</div> : (profiles[lead.family_id].opportunities || []).map((op: any) => <div key={op.opportunity_id} className="rounded-xl border bg-white p-3">
+                          <div className="flex items-center justify-between gap-2"><b>{op.title}</b><span className="text-[11px] font-bold text-blue-700">{op.opportunity_type}</span></div>
+                          <div className="mt-1 text-xs text-slate-500">{op.organization || 'YCM opportunity'} · Deadline: {dateLabel(op.application_deadline_at)}</div>
+                          {op.preparation_notes ? <div className="mt-2 text-sm"><b>Preparation:</b> {op.preparation_notes}</div> : null}
+                          {op.form_url ? <a className="mt-2 inline-block text-xs font-black text-blue-700 underline" href={op.form_url} target="_blank" rel="noreferrer">Open form</a> : null}
+                        </div>)}
+                      </div>
+                      <div className="mt-4 text-xs font-black uppercase tracking-wide text-slate-500">Employee Notes</div>
+                      <div className="mt-2 space-y-2">{(profiles[lead.family_id].notes || []).map((n: any) => <div key={n.note_id} className="rounded-xl border bg-white p-3 text-sm"><b>{n.title}</b><div className="mt-1 text-slate-600">{n.content}</div></div>)}</div>
+                      <div className="mt-3 text-xs text-slate-500">Controlled sharing is recorded through the CRM profile API; customer-facing shares should contain only the selected form/opportunity/note payload.</div>
+                    </div> : null}
 
                     <div className="mt-4">
                       <div className="mb-2 text-xs font-black uppercase tracking-wide text-slate-500">Verified compliance snapshot</div>
