@@ -49,7 +49,15 @@ export async function dispatchCase(caseId: string, actorRef?: string): Promise<D
           WHEN r.state_code IS NOT NULL AND r.state_code=${stateCode} THEN 2 ELSE 3 END,
           CASE WHEN r.service_code IS NOT NULL AND r.service_code=${serviceCode} THEN 0 ELSE 1 END,r.priority DESC
         LIMIT 20`;
-      const candidates = (rules as any[]).filter(r => r.manager_user_id);
+      // A team may have multiple matching rules; routing is to the team, so
+      // collapse duplicate team matches before load balancing.
+      const candidatesByTeam = new Map<string, any>();
+      for (const rule of rules as any[]) {
+        if (!rule.manager_user_id) continue;
+        const key = String(rule.team_id);
+        if (!candidatesByTeam.has(key)) candidatesByTeam.set(key, rule);
+      }
+      const candidates = [...candidatesByTeam.values()];
 
       if (!candidates.length) {
         const fallback = (await tx`SELECT t.team_id,t.name AS team_name,t.manager_user_id
@@ -74,7 +82,19 @@ export async function dispatchCase(caseId: string, actorRef?: string): Promise<D
       const existing = (await tx`SELECT assignment_id,status FROM ycm_work_assignments
         WHERE case_id=${caseId} AND status NOT IN ('completed','reassigned')
         ORDER BY created_at DESC LIMIT 1`)[0];
-      if (existing) return { caseId, teamId: chosen.team_id, teamName: chosen.team_name, reused: true, assignmentId: existing.assignment_id };
+      if (existing) {
+        const existingTeam = (await tx`SELECT t.team_id,t.name AS team_name
+          FROM ycm_work_assignments wa
+          JOIN ycm_teams t ON t.team_id=wa.team_id
+          WHERE wa.assignment_id=${existing.assignment_id} LIMIT 1`)[0];
+        return {
+          caseId,
+          teamId: existingTeam?.team_id || chosen.team_id,
+          teamName: existingTeam?.team_name || chosen.team_name,
+          reused: true,
+          assignmentId: existing.assignment_id
+        };
+      }
 
       const actor = actorRef ? ((await tx`SELECT id FROM ycm_users WHERE user_id=${actorRef} LIMIT 1`)[0]?.id || null) : null;
       const assignment = (await tx`INSERT INTO ycm_work_assignments
