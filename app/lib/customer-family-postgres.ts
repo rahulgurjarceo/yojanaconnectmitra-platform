@@ -86,6 +86,22 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
     await this.sql`INSERT INTO ycm_family_cases (case_id, family_id, member_id, case_category_id, case_category_name, sub_service, status, application_id) VALUES (${input.caseId}, ${input.familyId}, ${input.memberId || null}, ${input.caseCategoryId}, ${input.caseCategoryName}, ${input.subService || null}, 'new', ${input.applicationId || null})`;
   }
+  async updateCase(input: { caseId: string; familyId: string; status?: string; priority?: string; dueAt?: string; assignedTo?: string; escalated?: boolean; outcomeCode?: string; outcomeNotes?: string; csatScore?: number; csatComment?: string }): Promise<void> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    await this.sql`UPDATE ycm_family_cases SET
+      status=COALESCE(${input.status || null}, status),
+      priority=COALESCE(${input.priority || null}, priority),
+      due_at=COALESCE(${input.dueAt || null}, due_at),
+      assigned_to=COALESCE(${input.assignedTo || null}, assigned_to),
+      escalated_at=CASE WHEN ${input.escalated === true} THEN COALESCE(escalated_at,NOW()) ELSE escalated_at END,
+      outcome_code=COALESCE(${input.outcomeCode || null}, outcome_code),
+      outcome_notes=COALESCE(${input.outcomeNotes || null}, outcome_notes),
+      outcome_at=CASE WHEN ${input.outcomeCode || null} IS NOT NULL THEN COALESCE(outcome_at,NOW()) ELSE outcome_at END,
+      csat_score=COALESCE(${input.csatScore ?? null}, csat_score),
+      csat_comment=COALESCE(${input.csatComment || null}, csat_comment),
+      updated_at=NOW()
+      WHERE case_id=${input.caseId} AND family_id=${input.familyId}`;
+  }
   async close(): Promise<void> { if (this.sql) await this.sql.end({ timeout: 5 }); }
 }
 let repository: PostgresCustomerFamilyRepository | null | undefined;
