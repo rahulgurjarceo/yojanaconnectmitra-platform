@@ -4,6 +4,11 @@ export type FamilyRecord = {
   fullName: string;
   mobile: string;
   country: string;
+  stateCode?: string;
+  districtCode?: string;
+  blockCode?: string;
+  gramPanchayatCode?: string;
+  villageCode?: string;
   createdAt: string;
   updatedAt: string;
 };
