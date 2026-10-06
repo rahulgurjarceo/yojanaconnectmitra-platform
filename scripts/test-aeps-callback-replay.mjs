@@ -8,6 +8,7 @@ assert.match(route,/idempotent:true/);
 assert.match(route,/recordSuccessfulFinancialTransaction/);
 assert.match(route,/reverseFinancialTransaction/);
 assert.match(route,/client_ref_id=\$1 LIMIT 1/);
-assert.match(route,/status IN \('success','failed','reversed'\) AND status<>\$1/);
+assert.match(route,/status IN \\\('success','failed','reversed'\\\)/);
+assert.match(route,/status<>\\\\\$1/);
 assert.match(route,/WHERE eko_transaction_id=\$6 RETURNING \*/);
 console.log('AEPS_CALLBACK_REPLAY_CONTRACT_TEST: PASS');
