@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS ycm_document_validity_rules (
 CREATE INDEX IF NOT EXISTS idx_ycm_document_validity_lookup
   ON ycm_document_validity_rules(document_type,context_type,context_code,active);
 
+ALTER TABLE ycm_service_documents
+  ADD COLUMN IF NOT EXISTS validity_rule_id UUID REFERENCES ycm_document_validity_rules(rule_id) ON DELETE SET NULL;
+
 ALTER TABLE ycm_family_documents
   ADD COLUMN IF NOT EXISTS validity_rule_id UUID REFERENCES ycm_document_validity_rules(rule_id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS validity_basis VARCHAR(32),
