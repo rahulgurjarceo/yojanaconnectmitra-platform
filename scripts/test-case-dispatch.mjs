@@ -15,15 +15,13 @@ assert.match(geographyMigration,/ADD COLUMN IF NOT EXISTS state_code VARCHAR\(32
 assert.match(geographyMigration,/ADD COLUMN IF NOT EXISTS district_code VARCHAR\(32\)/);
 assert.match(geographyMigration,/ADD COLUMN IF NOT EXISTS block_code VARCHAR\(32\)/);
 assert.match(service,/LEFT JOIN ycm_service_applications a ON a.application_id=c.application_id/);
-assert.doesNotMatch(service,/c\.service_code/);
+assert.match(service,/a\.service_code AS application_service_code/);
+assert.doesNotMatch(service,/\bc\.service_code\b/);
 assert.match(service,/ycm_case_routing_rules/);
 assert.match(service,/state_code/);
 assert.match(service,/district_code/);
 assert.match(service,/block_code/);
-assert.match(service,/CASE WHEN r\.block_code IS NOT NULL AND r\.block_code=\$\{blockCode\} THEN 0/);
-assert.match(service,/CASE WHEN r\.district_code IS NOT NULL AND r\.district_code=\$\{districtCode\} THEN 1/);
-assert.match(service,/CASE WHEN r\.state_code IS NOT NULL AND r\.state_code=\$\{stateCode\} THEN 2/);
-assert.match(service,/ORDER BY CASE WHEN r\.service_code IS NOT NULL AND r\.service_code=\$\{serviceCode\} THEN 0 ELSE 1 END/);
+assert.match(service,/ORDER BY CASE WHEN r\.service_code IS NOT NULL AND r\.service_code=\$\{serviceCode\} THEN 0 ELSE 1 END,\s*CASE WHEN r\.block_code IS NOT NULL AND r\.block_code=\$\{blockCode\} THEN 0 ELSE 3 END,\s*CASE WHEN r\.district_code IS NOT NULL AND r\.district_code=\$\{districtCode\} THEN 1 ELSE 3 END,\s*CASE WHEN r\.state_code IS NOT NULL AND r\.state_code=\$\{stateCode\} THEN 2 ELSE 3 END/);
 assert.match(service,/r\.priority DESC,r\.team_id,r\.rule_id/);
 assert.match(service,/loadDelta/);
 assert.match(service,/candidatesByTeam/);
