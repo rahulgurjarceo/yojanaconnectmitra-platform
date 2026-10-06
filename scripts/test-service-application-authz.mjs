@@ -9,4 +9,6 @@ assert.match(api,/member_id=\$\{body\.memberId\}/);
 assert.match(api,/family_id=\$\{familyId\} AND member_id=\$\{body\.memberId\}/);
 assert.match(api,/FROM ycm_family_documents WHERE family_id=\$\{familyId\}/);
 assert.match(api,/FROM ycm_document_intelligence WHERE family_id=\$\{familyId\}/);
+assert.match(api,/\['ceo', 'admin', 'management'\]\.includes\(session\.role\)/);
+assert.doesNotMatch(api,/\['ceo', 'admin', 'management', 'employee', 'partner', 'referral'\]\.includes\(session\.role\)/);
 console.log('SERVICE_APPLICATION_AUTHZ_CONTRACT_TEST: PASS');
