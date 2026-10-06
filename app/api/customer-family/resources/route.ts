@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       const caseCategoryId = typeof body.caseCategoryId === 'string' ? body.caseCategoryId.trim() : '';
       const caseCategoryName = typeof body.caseCategoryName === 'string' ? body.caseCategoryName.trim() : '';
       if (!caseCategoryId || !caseCategoryName) return NextResponse.json({success:false,code:'CASE_VALIDATION_ERROR'},{status:400});
-      await repository.createCase({ caseId: randomUUID(), familyId, memberId: typeof body.memberId === 'string' ? body.memberId : undefined, caseCategoryId, caseCategoryName, subService: typeof body.subService === 'string' ? body.subService.trim() : undefined });
+      await repository.createCase({ caseId: randomUUID(), familyId, memberId: typeof body.memberId === 'string' ? body.memberId : undefined, caseCategoryId, caseCategoryName, subService: typeof body.subService === 'string' ? body.subService.trim() : undefined, applicationId: typeof body.applicationId === 'string' ? body.applicationId.trim() : undefined });
       return NextResponse.json({success:true,status:'case_created',familyId},{status:201});
     }
     return NextResponse.json({success:false,code:'UNSUPPORTED_FAMILY_ACTION'},{status:400});
