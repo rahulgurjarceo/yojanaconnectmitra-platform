@@ -35,7 +35,8 @@ export async function dispatchCase(caseId: string, actorRef?: string): Promise<D
       const districtCode = c.district_code || null;
       const blockCode = c.block_code || null;
 
-      const rules = await tx`SELECT r.rule_id,r.team_id,r.sla_minutes,r.priority,t.name AS team_name,t.manager_user_id
+      const query: any = tx;
+      const rules = await query`SELECT r.rule_id,r.team_id,r.sla_minutes,r.priority,t.name AS team_name,t.manager_user_id
         FROM ycm_case_routing_rules r
         JOIN ycm_teams t ON t.team_id=r.team_id AND t.status='active'
         WHERE r.active=true
