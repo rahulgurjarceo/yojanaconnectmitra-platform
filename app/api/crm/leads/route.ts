@@ -5,7 +5,7 @@ import {sessionCookieName,verifySession} from '../../../lib/ycm-access-control';
 export const runtime='nodejs';
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:5,prepare:false,connect_timeout:10,idle_timeout:20}):null};
 const actor=(r:NextRequest)=>verifySession(r.cookies.get(sessionCookieName())?.value);
-const manage=(role:string)=>['ceo','management','admin','employee','team_lead'].includes(role);
+const manage=(role:string)=>['ceo','management','admin','employee','team_lead','branch_manager'].includes(role);
 const textMax=(v:unknown,max:number)=>v===undefined||v===null||typeof v==='string'&&v.trim().length<=max;
 const jsonObject=(v:unknown)=>v===undefined||v===null||(typeof v==='object'&&!Array.isArray(v));
 const jsonSizeOk=(v:unknown)=>{try{return JSON.stringify(v??{}).length<=32768}catch{return false}};
@@ -27,8 +27,8 @@ export async function GET(r:NextRequest){
  try{
   const u=new URL(r.url),status=u.searchParams.get('status'),service=u.searchParams.get('serviceCode'),assigned=s.role==='employee'?s.sub:null;
   const rows=assigned
-   ?await sql`SELECT l.*,sm.service_name FROM ycm_leads l LEFT JOIN ycm_service_master sm ON sm.service_code=l.service_code JOIN ycm_users au ON au.id=l.assigned_to WHERE au.user_id=${assigned} AND (${status} IS NULL OR l.status=${status}) ORDER BY l.updated_at DESC LIMIT 500`
-   :await sql`SELECT l.*,sm.service_name FROM ycm_leads l LEFT JOIN ycm_service_master sm ON sm.service_code=l.service_code WHERE (${status} IS NULL OR l.status=${status}) AND (${service} IS NULL OR l.service_code=${service}) ORDER BY l.updated_at DESC LIMIT 500`;
+   ?await sql`SELECT l.*,sm.service_name,COALESCE(cc.compliance_due_count,0) AS compliance_due_count,COALESCE(cc.compliance_overdue_count,0) AS compliance_overdue_count,cc.next_compliance_due_at FROM ycm_leads l LEFT JOIN ycm_service_master sm ON sm.service_code=l.service_code JOIN ycm_users au ON au.id=l.assigned_to LEFT JOIN LATERAL (SELECT COUNT(*) FILTER (WHERE cs.status='due')::int AS compliance_due_count,COUNT(*) FILTER (WHERE cs.status='overdue')::int AS compliance_overdue_count,MIN(cs.next_due_at) AS next_compliance_due_at FROM ycm_compliance_schedules cs WHERE cs.family_id=l.family_id) cc ON TRUE WHERE au.user_id=${assigned} AND (${status} IS NULL OR l.status=${status}) ORDER BY l.updated_at DESC LIMIT 500`
+   :await sql`SELECT l.*,sm.service_name,COALESCE(cc.compliance_due_count,0) AS compliance_due_count,COALESCE(cc.compliance_overdue_count,0) AS compliance_overdue_count,cc.next_compliance_due_at FROM ycm_leads l LEFT JOIN ycm_service_master sm ON sm.service_code=l.service_code LEFT JOIN LATERAL (SELECT COUNT(*) FILTER (WHERE cs.status='due')::int AS compliance_due_count,COUNT(*) FILTER (WHERE cs.status='overdue')::int AS compliance_overdue_count,MIN(cs.next_due_at) AS next_compliance_due_at FROM ycm_compliance_schedules cs WHERE cs.family_id=l.family_id) cc ON TRUE WHERE (${status} IS NULL OR l.status=${status}) AND (${service} IS NULL OR l.service_code=${service}) ORDER BY l.updated_at DESC LIMIT 500`;
   return NextResponse.json({success:true,leads:rows});
  }finally{await sql.end({timeout:3});}
 }
