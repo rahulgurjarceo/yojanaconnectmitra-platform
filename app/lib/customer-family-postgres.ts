@@ -70,6 +70,22 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
     const rows = await this.sql`UPDATE ycm_family_payments SET status = 'success', signature_verified = TRUE, provider_payment_id = ${providerPaymentId} WHERE provider_reference = ${orderId} AND amount_paise = 9900 AND currency = 'INR' AND status IN ('created','pending') RETURNING payment_id`;
     return rows.length > 0;
   }
+  async createMember(input: { memberId: string; familyId: string; fullName: string; relation: string; mobile?: string; email?: string; dateOfBirth?: string }): Promise<void> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    await this.sql`INSERT INTO ycm_family_members (member_id, family_id, full_name, relation, mobile, email, date_of_birth) VALUES (${input.memberId}, ${input.familyId}, ${input.fullName}, ${input.relation}, ${input.mobile || null}, ${input.email || null}, ${input.dateOfBirth || null})`;
+  }
+  async createConsent(input: { consentId: string; familyId: string; memberId?: string; consentType: string; granted: boolean; policyVersion: string }): Promise<void> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    await this.sql`INSERT INTO ycm_family_consents (consent_id, family_id, member_id, consent_type, granted, policy_version, granted_at) VALUES (${input.consentId}, ${input.familyId}, ${input.memberId || null}, ${input.consentType}, ${input.granted}, ${input.policyVersion}, CASE WHEN ${input.granted} THEN NOW() ELSE NULL END)`;
+  }
+  async createDocument(input: { documentId: string; familyId: string; memberId?: string; documentType: string; storageRef?: string }): Promise<void> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    await this.sql`INSERT INTO ycm_family_documents (document_id, family_id, member_id, document_type, storage_ref, status, uploaded_at) VALUES (${input.documentId}, ${input.familyId}, ${input.memberId || null}, ${input.documentType}, ${input.storageRef || null}, 'pending', CASE WHEN ${input.storageRef || null} IS NULL THEN NULL ELSE NOW() END)`;
+  }
+  async createCase(input: { caseId: string; familyId: string; memberId?: string; caseCategoryId: string; caseCategoryName: string; subService?: string }): Promise<void> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    await this.sql`INSERT INTO ycm_family_cases (case_id, family_id, member_id, case_category_id, case_category_name, sub_service, status) VALUES (${input.caseId}, ${input.familyId}, ${input.memberId || null}, ${input.caseCategoryId}, ${input.caseCategoryName}, ${input.subService || null}, 'new')`;
+  }
   async close(): Promise<void> { if (this.sql) await this.sql.end({ timeout: 5 }); }
 }
 let repository: PostgresCustomerFamilyRepository | null | undefined;
