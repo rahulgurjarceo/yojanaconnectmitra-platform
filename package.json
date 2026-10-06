@@ -57,7 +57,8 @@
     "test:service-application-authz": "node scripts/test-service-application-authz.mjs",
     "test:aeps-callback-replay": "node scripts/test-aeps-callback-replay.mjs",
     "test:family-registration": "node scripts/test-family-registration.mjs",
-    "test:family-payment-flow": "node scripts/test-family-payment-flow.mjs"
+    "test:family-payment-flow": "node scripts/test-family-payment-flow.mjs",
+    "test:family-resources": "node scripts/test-family-resources.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
