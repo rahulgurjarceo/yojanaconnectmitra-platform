@@ -123,6 +123,8 @@ jobs:
         run: npm run test:case-cri
       - name: Case operations contract test
         run: npm run test:case-operations
+      - name: Case escalation runner contract test
+        run: npm run test:case-escalation-runner
       - name: Government RBAC scope contract test
         run: npm run test:government-rbac-scope
       - name: Release audit contract test
