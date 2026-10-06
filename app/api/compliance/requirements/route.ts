@@ -92,9 +92,11 @@ export async function PATCH(r:NextRequest){
   const nextDueAt=typeof b?.nextDueAt==='string'?b.nextDueAt:null;
   const complete=b?.complete===true;
   const nextStatus=complete?'completed':status;
+  const computedNextDueAt=complete&&nextDueAt?nextDueAt:complete&&current.frequency_days
+    ?new Date(Date.now()+Number(current.frequency_days)*86400000).toISOString():nextDueAt;
   const row=(await sql`UPDATE ycm_compliance_schedules SET
     status=${nextStatus},
-    next_due_at=COALESCE(${nextDueAt},next_due_at),
+    next_due_at=COALESCE(${computedNextDueAt},next_due_at),
     last_completed_at=CASE WHEN ${complete} THEN NOW() ELSE last_completed_at END,
     updated_at=NOW()
     WHERE schedule_id=${scheduleId} RETURNING *`)[0];
