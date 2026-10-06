@@ -83,6 +83,11 @@ export function validateFamilyRegistrationPayload(input: unknown) {
   const fullName = typeof body.fullName === 'string' ? body.fullName.trim() : '';
   const mobile = typeof body.mobile === 'string' ? body.mobile.replace(/\s+/g, '') : '';
   const country = typeof body.country === 'string' ? body.country.trim() : 'India';
+  const stateCode = typeof body.stateCode === 'string' ? body.stateCode.trim() : '';
+  const districtCode = typeof body.districtCode === 'string' ? body.districtCode.trim() : '';
+  const blockCode = typeof body.blockCode === 'string' ? body.blockCode.trim() : '';
+  const gramPanchayatCode = typeof body.gramPanchayatCode === 'string' ? body.gramPanchayatCode.trim() : '';
+  const villageCode = typeof body.villageCode === 'string' ? body.villageCode.trim() : '';
 
   const errors: string[] = [];
   if (fullName.length < 2) errors.push('fullName is required');
@@ -92,7 +97,7 @@ export function validateFamilyRegistrationPayload(input: unknown) {
   return {
     valid: errors.length === 0,
     errors,
-    data: { fullName, mobile, country },
+    data: { fullName, mobile, country, stateCode, districtCode, blockCode, gramPanchayatCode, villageCode },
   };
 }
 
