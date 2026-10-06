@@ -27,6 +27,12 @@ export type FamilyPayment = {
   signatureVerified: boolean;
 };
 
+import { getPostgresCustomerFamilyRepository } from './customer-family-postgres';
+
+export function getCustomerFamilyRepository() {
+  return getPostgresCustomerFamilyRepository();
+}
+
 export interface CustomerFamilyRepository {
   create(input: Omit<FamilyRecord, 'createdAt' | 'updatedAt'>): Promise<FamilyRecord>;
   findById(familyId: string): Promise<FamilyRecord | null>;
