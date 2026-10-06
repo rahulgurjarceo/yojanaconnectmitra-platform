@@ -41,7 +41,7 @@ export interface CustomerFamilyRepository {
   createMember(input: { memberId: string; familyId: string; fullName: string; relation: string; mobile?: string; email?: string; dateOfBirth?: string }): Promise<void>;
   createConsent(input: { consentId: string; familyId: string; memberId?: string; consentType: string; granted: boolean; policyVersion: string }): Promise<void>;
   createDocument(input: { documentId: string; familyId: string; memberId?: string; documentType: string; storageRef?: string }): Promise<void>;
-  createCase(input: { caseId: string; familyId: string; memberId?: string; caseCategoryId: string; caseCategoryName: string; subService?: string }): Promise<void>;
+  createCase(input: { caseId: string; familyId: string; memberId?: string; caseCategoryId: string; caseCategoryName: string; subService?: string; applicationId?: string }): Promise<void>;
 }
 
   createMember(input: { memberId: string; familyId: string; fullName: string; relation: string; mobile?: string; email?: string; dateOfBirth?: string }): Promise<void>;
