@@ -61,7 +61,8 @@
     "test:family-resources": "node scripts/test-family-resources.mjs",
     "test:case-cri": "node scripts/test-case-cri.mjs",
     "test:case-operations": "node scripts/test-case-operations.mjs",
-    "case:escalate": "node scripts/run-case-escalations.mjs"
+    "case:escalate": "node scripts/run-case-escalations.mjs",
+    "test:case-escalation-runner": "node scripts/test-case-escalation-runner.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
