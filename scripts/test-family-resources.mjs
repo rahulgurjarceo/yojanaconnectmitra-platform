@@ -10,3 +10,8 @@ assert.ok(route.includes("applicationId"));
 const migration=await fs.readFile("database/migrations/042_family_case_application_link.sql","utf8");
 assert.ok(migration.includes("ADD COLUMN IF NOT EXISTS application_id"));
 console.log("FAMILY_SERVICE_CASE_LINK_CONTRACT: PASS");
+assert.ok(route.includes("case_update"));
+assert.ok(route.includes("INVALID_CSAT_SCORE"));
+assert.ok(route.includes("escalated"));
+assert.ok(repo.includes("updateCase"));
+console.log("CASE_OPERATIONS_CONTRACT: PASS");
