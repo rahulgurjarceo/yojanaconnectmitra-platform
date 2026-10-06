@@ -48,7 +48,7 @@ export async function dispatchCase(caseId: string, actorRef?: string): Promise<D
           WHEN r.district_code IS NOT NULL AND r.district_code=${districtCode} THEN 1
           WHEN r.state_code IS NOT NULL AND r.state_code=${stateCode} THEN 2 ELSE 3 END,
           CASE WHEN r.service_code IS NOT NULL AND r.service_code=${serviceCode} THEN 0 ELSE 1 END,r.priority DESC
-        LIMIT 20`;
+        `;
       // A team may have multiple matching rules; routing is to the team, so
       // collapse duplicate team matches before load balancing.
       const candidatesByTeam = new Map<string, any>();
