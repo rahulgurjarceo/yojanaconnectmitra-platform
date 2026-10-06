@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import { calculateCri, CRI_WEIGHTS } from "../app/lib/ycm-cri.ts";
+const excellent = calculateCri({tat:92,documents:92,payment:92,employee:92,authority:92,officeVisits:92,governmentVisits:92,followups:92,rework:92,progress:92,outcome:92,satisfaction:92});
+assert.equal(excellent.score,92); assert.equal(excellent.band,"excellent");
+const attention = calculateCri({tat:71,documents:71,payment:71,employee:71,authority:71,officeVisits:71,governmentVisits:71,followups:71,rework:71,progress:71,outcome:71,satisfaction:71});
+assert.equal(attention.score,71); assert.equal(attention.band,"attention_required");
+const risk = calculateCri({tat:38,documents:38,payment:38,employee:38,authority:38,officeVisits:38,governmentVisits:38,followups:38,rework:38,progress:38,outcome:38,satisfaction:38});
+assert.equal(risk.score,38); assert.equal(risk.band,"at_risk");
+assert.equal(Object.values(CRI_WEIGHTS).reduce((a,b)=>a+b,0),100);
+console.log("CRI_CONTRACT: PASS");
