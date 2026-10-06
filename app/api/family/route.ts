@@ -58,6 +58,11 @@ export async function POST(request: Request) {
       fullName: validation.data.fullName,
       mobile: validation.data.mobile,
       country: validation.data.country,
+      stateCode: validation.data.stateCode,
+      districtCode: validation.data.districtCode,
+      blockCode: validation.data.blockCode,
+      gramPanchayatCode: validation.data.gramPanchayatCode,
+      villageCode: validation.data.villageCode,
     });
 
     return NextResponse.json({
