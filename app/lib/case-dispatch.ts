@@ -44,10 +44,11 @@ export async function dispatchCase(caseId: string, actorRef?: string): Promise<D
           AND (r.state_code IS NULL OR r.state_code=${stateCode})
           AND (r.district_code IS NULL OR r.district_code=${districtCode})
           AND (r.block_code IS NULL OR r.block_code=${blockCode})
-        ORDER BY CASE WHEN r.block_code IS NOT NULL AND r.block_code=${blockCode} THEN 0
+        ORDER BY CASE WHEN r.service_code IS NOT NULL AND r.service_code=${serviceCode} THEN 0 ELSE 1 END,
+          CASE WHEN r.block_code IS NOT NULL AND r.block_code=${blockCode} THEN 0
           WHEN r.district_code IS NOT NULL AND r.district_code=${districtCode} THEN 1
           WHEN r.state_code IS NOT NULL AND r.state_code=${stateCode} THEN 2 ELSE 3 END,
-          CASE WHEN r.service_code IS NOT NULL AND r.service_code=${serviceCode} THEN 0 ELSE 1 END,r.priority DESC
+          r.priority DESC,r.team_id,r.rule_id
         `;
       // A team may have multiple matching rules; routing is to the team, so
       // collapse duplicate team matches before load balancing.
@@ -75,7 +76,11 @@ export async function dispatchCase(caseId: string, actorRef?: string): Promise<D
           AND assigned_to IN ${tx(managerIds)}
         GROUP BY assigned_to`;
       const load = new Map((loadRows as any[]).map(r => [String(r.assigned_to), Number(r.open_count)]));
-      candidates.sort((a,b) => (load.get(String(a.manager_user_id)) || 0) - (load.get(String(b.manager_user_id)) || 0));
+      candidates.sort((a,b) => {
+        const loadDelta = (load.get(String(a.manager_user_id)) || 0) - (load.get(String(b.manager_user_id)) || 0);
+        if (loadDelta !== 0) return loadDelta;
+        return String(a.team_id).localeCompare(String(b.team_id));
+      });
 
       const chosen = candidates[0];
       const dueAt = new Date(Date.now() + Number(chosen.sla_minutes || 1440) * 60000);
