@@ -5,6 +5,8 @@ import { evaluateDocumentCompliance, selectDocumentValidityRule, type DocumentVa
 
 export const runtime = 'nodejs';
 
+const LEGACY_MISSING_OR_EXPIRED_CODE = 'MISSING_OR_EXPIRED';
+
 const db = () => {
   const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
   return url ? postgres(url, { max: 4, prepare: false, connect_timeout: 10, idle_timeout: 20 }) : null;
@@ -110,7 +112,7 @@ export async function POST(request: NextRequest) {
 
     const allDocs = ([...docs, ...intel] as DocumentRecord[]).filter(d => !member?.member_id || !d.member_id || d.member_id === member.member_id);
     const snapshot: SnapshotEntry[] = [];
-    const missing: Array<{documentCode:string;documentName:string;required:boolean;action:string;reason:string;reuploadOnExpiry:boolean;validityDays:number|null;expiryWarningDays:number;compliance?:unknown}> = [];
+    const missing: Array<{documentCode:string;documentName:string;required:boolean;action:string;reason:string;legacyReason:string;reuploadOnExpiry:boolean;validityDays:number|null;expiryWarningDays:number;compliance?:unknown}> = [];
     const findings: Array<Record<string,unknown>> = [];
     const applicationDeadline = body?.applicationDeadline ? new Date(body.applicationDeadline) : null;
     const eventDate = body?.eventDate ? new Date(body.eventDate) : null;
@@ -167,7 +169,7 @@ export async function POST(request: NextRequest) {
       missing.push({
         documentCode: rule.document_code, documentName: rule.document_name,
         required: rule.required, action: hardFailure ? 'resolve_deficiency' : 'upload',
-        reason, reuploadOnExpiry: rule.reupload_on_expiry,
+        reason, legacyReason: hardFailure || reason === 'DOCUMENT_MISSING' ? LEGACY_MISSING_OR_EXPIRED_CODE : reason, reuploadOnExpiry: rule.reupload_on_expiry,
         validityDays: effectiveRule?.validity_days ?? rule.validity_days,
         expiryWarningDays: effectiveRule?.warning_days ?? rule.expiry_warning_days,
         compliance
