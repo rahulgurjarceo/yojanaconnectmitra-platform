@@ -41,6 +41,17 @@ export async function POST(request: NextRequest) {
       await repository.createDocument({ documentId: randomUUID(), familyId, memberId: typeof body.memberId === 'string' ? body.memberId : undefined, documentType, storageRef: typeof body.storageRef === 'string' ? body.storageRef.trim() : undefined });
       return NextResponse.json({success:true,status:'document_registered',familyId},{status:201});
     }
+    if (action === 'case_update') {
+      const caseId = typeof body.caseId === 'string' ? body.caseId.trim() : '';
+      if (!caseId) return NextResponse.json({success:false,code:'CASE_ID_REQUIRED'},{status:400});
+      const status = typeof body.status === 'string' ? body.status : undefined;
+      const priority = typeof body.priority === 'string' ? body.priority : undefined;
+      if (priority && !['low','normal','high','urgent'].includes(priority)) return NextResponse.json({success:false,code:'INVALID_PRIORITY'},{status:400});
+      const csatScore = typeof body.csatScore === 'number' ? body.csatScore : undefined;
+      if (csatScore !== undefined && (!Number.isInteger(csatScore) || csatScore < 1 || csatScore > 5)) return NextResponse.json({success:false,code:'INVALID_CSAT_SCORE'},{status:400});
+      await repository.updateCase({caseId,familyId,status,priority,dueAt:typeof body.dueAt==='string'?body.dueAt:undefined,assignedTo:typeof body.assignedTo==='string'?body.assignedTo:undefined,escalated:body.escalated===true,outcomeCode:typeof body.outcomeCode==='string'?body.outcomeCode:undefined,outcomeNotes:typeof body.outcomeNotes==='string'?body.outcomeNotes:undefined,csatScore,csatComment:typeof body.csatComment==='string'?body.csatComment:undefined});
+      return NextResponse.json({success:true,status:'case_updated',caseId},{status:200});
+    }
     if (action === 'case') {
       const caseCategoryId = typeof body.caseCategoryId === 'string' ? body.caseCategoryId.trim() : '';
       const caseCategoryName = typeof body.caseCategoryName === 'string' ? body.caseCategoryName.trim() : '';
