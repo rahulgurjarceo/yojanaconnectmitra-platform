@@ -57,16 +57,16 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session=verifySession(request.cookies.get(sessionCookieName())?.value);
   if (!session) return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
-  const body=await request.json().catch(()=>null) as Record<string,unknown>|null;
+  const body=(await request.json().catch(()=>null) as Record<string,unknown>|null) ?? {};
+  const stateCode = normalizeGrievanceText(body?.stateCode,20);
+  const districtCode = normalizeGrievanceText(body?.districtCode,40);
+  const blockCode = normalizeGrievanceText(body?.blockCode,40);
   const title=normalizeGrievanceText(body?.title,180), description=normalizeGrievanceText(body?.description,10000);
   const category=normalizeGrievanceText(body?.category,80), allegationType=normalizeGrievanceText(body?.allegationType,40)??'service_issue';
   if(!title||!description||!category) return NextResponse.json({success:false,code:'GRIEVANCE_FIELDS_REQUIRED'},{status:400});
   if(!(GOVERNMENT_GRIEVANCE_CATEGORIES as readonly string[]).includes(category)) return NextResponse.json({success:false,code:'GRIEVANCE_CATEGORY_INVALID'},{status:400});
   if(!['service_issue','delay','refusal','document_issue','misconduct','bribery_report','other'].includes(allegationType)) return NextResponse.json({success:false,code:'GRIEVANCE_ALLEGATION_TYPE_INVALID'},{status:400});
   if (session.role === 'branch_manager') {
-    const stateCode = normalizeGrievanceText(body?.stateCode,20);
-    const districtCode = normalizeGrievanceText(body?.districtCode,40);
-    const blockCode = normalizeGrievanceText(body?.blockCode,40);
     if (!stateCode || !districtCode) return NextResponse.json({success:false,code:'GOVERNMENT_SCOPE_REQUIRED'},{status:403});
     try {
       const allowed = await governmentScopeAllows(session, { geographyLevel: blockCode ? 'block' : 'district', stateCode, districtCode, blockCode });
