@@ -193,30 +193,6 @@ export async function POST(request: NextRequest) {
     };
 
     const ready = hardDeficiencies.length === 0;
-      if (!rule.required_for_application) continue;
-      const candidate = allDocs.find(d => String(d.document_type).toUpperCase() === String(rule.document_code).toUpperCase() && isUsableDocument(d, rule));
-      if (candidate) {
-        const baseDate = candidate.verified_at || candidate.uploaded_at || candidate.created_at;
-        const computedUntil = candidate.valid_until || addDays(new Date(baseDate), rule.validity_days);
-        const expired = computedUntil ? new Date(computedUntil).getTime() < Date.now() : false;
-        if (!expired) {
-          snapshot.push({
-            documentCode: rule.document_code, documentName: rule.document_name,
-            required: rule.required, source: 'existing', reusable: true,
-            documentId: candidate.document_id, storageRef: candidate.storage_ref,
-            validUntil: computedUntil, action: 'reuse'
-          });
-          continue;
-        }
-      }
-      missing.push({
-        documentCode: rule.document_code, documentName: rule.document_name,
-        required: rule.required, action: 'upload',
-        reason: 'MISSING_OR_EXPIRED', reuploadOnExpiry: rule.reupload_on_expiry,
-        validityDays: rule.validity_days, expiryWarningDays: rule.expiry_warning_days
-      });
-    }
-
     const prefillFields = Array.isArray(service.prefill_fields) ? service.prefill_fields : [];
     const prefilledData: Record<string, unknown> = {};
     for (const item of prefillFields as PrefillField[]) {
