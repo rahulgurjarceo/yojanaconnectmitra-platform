@@ -7,7 +7,7 @@ function getClient() {
   return postgres(url, { max: 5, prepare: false, connect_timeout: 10, idle_timeout: 20 });
 }
 function mapRow(row: Record<string, unknown>): FamilyRecord {
-  return { familyId: String(row.family_id), status: row.status as FamilyRecord['status'], fullName: String(row.full_name), mobile: String(row.mobile), country: String(row.country), createdAt: new Date(String(row.created_at)).toISOString(), updatedAt: new Date(String(row.updated_at)).toISOString() };
+  return { familyId: String(row.family_id), status: row.status as FamilyRecord['status'], fullName: String(row.full_name), mobile: String(row.mobile), country: String(row.country), stateCode: row.state_code == null ? undefined : String(row.state_code), districtCode: row.district_code == null ? undefined : String(row.district_code), blockCode: row.block_code == null ? undefined : String(row.block_code), gramPanchayatCode: row.gram_panchayat_code == null ? undefined : String(row.gram_panchayat_code), villageCode: row.village_code == null ? undefined : String(row.village_code), createdAt: new Date(String(row.created_at)).toISOString(), updatedAt: new Date(String(row.updated_at)).toISOString() };
 }
 function mapOtpRow(row: Record<string, unknown>): FamilyOtpChallenge {
   return { familyId: row.family_id == null ? null : String(row.family_id), mobile: String(row.mobile), status: row.status as FamilyOtpChallenge['status'], expiresAt: new Date(String(row.expires_at)).toISOString() };
@@ -20,7 +20,7 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
   isConfigured(): boolean { return this.sql !== null; }
   async create(input: Omit<FamilyRecord, 'createdAt' | 'updatedAt'>): Promise<FamilyRecord> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
-    const rows = await this.sql`INSERT INTO ycm_families (family_id, plan_name, amount_paise, currency, validity_years, status, full_name, mobile, country) VALUES (${input.familyId}, 'Family Registration', 9900, 'INR', 2, ${input.status}, ${input.fullName}, ${input.mobile}, ${input.country}) RETURNING family_id, status, full_name, mobile, country, created_at, updated_at`;
+    const rows = await this.sql`INSERT INTO ycm_families (family_id, plan_name, amount_paise, currency, validity_years, status, full_name, mobile, country, state_code, district_code, block_code, gram_panchayat_code, village_code) VALUES (${input.familyId}, 'Family Registration', 9900, 'INR', 2, ${input.status}, ${input.fullName}, ${input.mobile}, ${input.country}, ${input.stateCode || null}, ${input.districtCode || null}, ${input.blockCode || null}, ${input.gramPanchayatCode || null}, ${input.villageCode || null}) RETURNING family_id, status, full_name, mobile, country, state_code, district_code, block_code, gram_panchayat_code, village_code, created_at, updated_at`;
     return mapRow(rows[0] as unknown as Record<string, unknown>);
   }
   async findById(familyId: string): Promise<FamilyRecord | null> {
