@@ -60,7 +60,8 @@
     "test:family-payment-flow": "node scripts/test-family-payment-flow.mjs",
     "test:family-resources": "node scripts/test-family-resources.mjs",
     "test:case-cri": "node scripts/test-case-cri.mjs",
-    "test:case-operations": "node scripts/test-case-operations.mjs"
+    "test:case-operations": "node scripts/test-case-operations.mjs",
+    "case:escalate": "node scripts/run-case-escalations.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
