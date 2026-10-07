@@ -72,6 +72,14 @@ export default function Page() {
   const [busy, setBusy] = useState('');
   const [profiles, setProfiles] = useState<Record<string, any>>({});
   const [profileBusy, setProfileBusy] = useState('');
+  const [verification, setVerification] = useState<any>(null);
+
+  async function loadVerification() {
+    const response = await fetch('/api/employee/verification', { cache: 'no-store' });
+    const data = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(data?.code || 'VERIFICATION_LOAD_FAILED');
+    setVerification(data.verification || null);
+  }
 
   async function loadTasks() {
     const response = await fetch('/api/work-assignments?mine=true', { cache: 'no-store' });
@@ -104,7 +112,7 @@ export default function Page() {
         const data = await response.json();
         if (!response.ok || data.user?.role !== 'employee') throw new Error('FORBIDDEN_ROLE_SCOPE');
         setOk(true);
-        await Promise.all([loadTasks(), loadLeads()]);
+        await Promise.all([loadTasks(), loadLeads(), loadVerification()]);
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'ACCESS_DENIED'));
   }, []);
@@ -145,6 +153,13 @@ export default function Page() {
           <div className="rounded-2xl bg-white p-5">Loading secure workspace…</div>
         ) : (
           <>
+            <div className="mb-5 rounded-2xl border bg-white p-5 shadow-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div><div className="text-sm font-bold text-slate-500">Employee verification</div><div className="mt-1 text-xl font-black">{verification?.status ? verification.status.toUpperCase() : 'PENDING REVIEW'}</div></div>
+                <div className="text-sm text-slate-500">Test score: <span className="font-black text-slate-900">{verification?.test_score ?? '—'}</span> · Training: <span className="font-black text-slate-900">{verification?.training_completed_at ? 'Completed' : 'Pending'}</span></div>
+              </div>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {(['assigned', 'accepted', 'in_progress', 'blocked'] as const).map((status) => (
                 <div key={status} className="rounded-2xl border bg-white p-5 shadow-sm">
