@@ -19,7 +19,7 @@ const managerUi=fs.readFileSync('app/management/employee-verification/page.tsx',
 for (const marker of ["loadVerification()","/api/employee/verification","Employee verification","PENDING REVIEW"]) {
   if (!employeeUi.includes(marker)) throw new Error('Employee verification UI marker missing: '+marker);
 }
-for (const marker of ["Employee Verification & Vetting","setStatus(","status !== row.status","/api/employee/verification"]) {
+for (const marker of ["Employee Verification & Vetting","setStatus(","status !== row.status","/api/employee/verification","loadEvents(","Verification audit trail","actor_user_id","View audit"]) {
   if (!managerUi.includes(marker)) throw new Error('Manager verification UI marker missing: '+marker);
 }
 console.log('Employee verification / vetting UI contract: PASS');
