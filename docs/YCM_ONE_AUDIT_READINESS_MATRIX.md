@@ -17,8 +17,8 @@ Status definitions:
 | Audit event model | PARTIAL | Coverage, retention and immutability review |
 | Security headers | PASS | Production browser/UAT verification |
 | Provider metadata exposure | PASS | Regression tests |
-| Database migration inventory | PASS | Canonical list includes migrations through 034 |
-| Database migration execution | BLOCKED | Staging/production rehearsal and evidence |
+| Database migration inventory | PASS | Canonical inventory contains 52 numbered migrations through 052 |
+| Database migration execution | BLOCKED | Staging/production rehearsal and evidence; repository migration runner contract is present |
 | Database backup/restore | NOT STARTED | Restore drill and recovery evidence |
 | Database least privilege | NOT STARTED | Separate runtime/migration roles and grants |
 | Encryption/key management | PARTIAL | Production key management and rotation evidence |
@@ -32,7 +32,7 @@ Status definitions:
 | Payment webhook verification | PARTIAL | Gateway-specific official signature verification |
 | Jan Aadhaar integration | BLOCKED | UAT credentials/certs/IP allowlist/endpoint contract |
 | DigiLocker integration | PARTIAL | Official token exchange and UAT evidence |
-| Dependency/SCA scanning | NOT STARTED | CI vulnerability gate |
+| Dependency/SCA scanning | PASS | npm audit high-severity gate is in YCM One CI |
 | SAST | NOT STARTED | CI static security analysis |
 | DAST/API security testing | NOT STARTED | Staging deployment and authenticated testing |
 | Monitoring/alerting | PARTIAL | Production observability and alert thresholds |
@@ -40,7 +40,7 @@ Status definitions:
 | Business continuity/DR | NOT STARTED | RPO/RTO, backup restore and failover drill |
 | Access review | NOT STARTED | Periodic privileged-access certification |
 | Change management | PARTIAL | Release approval and evidence retention |
-| Production deployment | BLOCKED | Hosting, secrets, DB and provider prerequisites |
+| Production deployment | BLOCKED | Hosting, secrets, DB migration rehearsal and provider prerequisites |
 | Government audit evidence pack | NOT STARTED | Completed controls, logs, approvals and test reports |
 
 ## Release gate
