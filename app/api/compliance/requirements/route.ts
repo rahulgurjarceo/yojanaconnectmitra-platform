@@ -1,6 +1,7 @@
 import {NextRequest,NextResponse} from 'next/server';
 import postgres from 'postgres';
 import {sessionCookieName,verifySession} from '../../../lib/ycm-access-control';
+import {requireVerifiedEmployee} from '../../../lib/ycm-employee-verification';
 
 export const runtime='nodejs';
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:5,prepare:false,connect_timeout:10,idle_timeout:20}):null};
@@ -73,6 +74,7 @@ export async function POST(r:NextRequest){
     (frequencyDays!==null&&(!Number.isInteger(frequencyDays)||frequencyDays<=0))||!Number.isInteger(warningDays)||warningDays<0)
    return NextResponse.json({success:false,code:'COMPLIANCE_INPUT_INVALID'},{status:400});
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
+ const employeeGate=await requireVerifiedEmployee(sql,s.role,s.sub);if(employeeGate){await sql.end({timeout:3});return NextResponse.json(employeeGate,{status:403});}
  try{
   const actorId=(await sql`SELECT id FROM ycm_users WHERE user_id=${s.sub} LIMIT 1`)[0]?.id||null;
   let employeeId=typeof b?.assignedEmployeeId==='string'?b.assignedEmployeeId:null;
@@ -97,6 +99,7 @@ export async function PATCH(r:NextRequest){
  const scheduleId=typeof b?.scheduleId==='string'?b.scheduleId.trim():'';
  if(!scheduleId)return NextResponse.json({success:false,code:'SCHEDULE_ID_REQUIRED'},{status:400});
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
+ const employeeGate=await requireVerifiedEmployee(sql,s.role,s.sub);if(employeeGate){await sql.end({timeout:3});return NextResponse.json(employeeGate,{status:403});}
  try{
   const current=(await sql`SELECT * FROM ycm_compliance_schedules WHERE schedule_id=${scheduleId} LIMIT 1`)[0];
   if(!current)return NextResponse.json({success:false,code:'SCHEDULE_NOT_FOUND'},{status:404});
