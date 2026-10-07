@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import postgres from 'postgres';
 import { sessionCookieName, verifySession } from '../../../../lib/ycm-access-control';
-import { requireVerifiedEmployee } from '../../../../lib/ycm-employee-verification';
+import { requireVerifiedEmployee } from '../../../lib/ycm-employee-verification';
 
 export const runtime = 'nodejs';
 
