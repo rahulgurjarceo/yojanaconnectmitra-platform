@@ -13,9 +13,18 @@ const managers = new Set(['team_lead','branch_manager','management','ceo','admin
 export async function GET(r: NextRequest) {
   const s = verifySession(r.cookies.get(sessionCookieName())?.value);
   if (!s || (!managers.has(s.role) && s.role !== 'employee')) return NextResponse.json({success:false,code:'FORBIDDEN'},{status:403});
-  const userId = r.nextUrl.searchParams.get('userId')?.trim() || s.sub;
+  const requestedUserId = r.nextUrl.searchParams.get('userId')?.trim() || '';
   const sql = db(); if (!sql) return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
   try {
+    if (managers.has(s.role) && !requestedUserId) {
+      const verifications = await sql`SELECT v.*,u.role AS user_role,u.status AS user_status
+        FROM ycm_employee_verifications v
+        LEFT JOIN ycm_users u ON u.user_id=v.user_id
+        ORDER BY CASE v.status WHEN 'pending' THEN 0 WHEN 'suspended' THEN 1 WHEN 'rejected' THEN 2 ELSE 3 END, v.updated_at DESC
+        LIMIT 500`;
+      return NextResponse.json({success:true,verifications});
+    }
+    const userId = requestedUserId || s.sub;
     if (s.role === 'employee' && userId !== s.sub) return NextResponse.json({success:false,code:'EMPLOYEE_SCOPE_DENIED'},{status:403});
     const verification = (await sql`SELECT * FROM ycm_employee_verifications WHERE user_id=${userId} LIMIT 1`)[0] || null;
     const events = verification ? await sql`SELECT event_id,event_type,score,details,actor_user_id,created_at FROM ycm_employee_verification_events WHERE verification_id=${verification.verification_id} ORDER BY created_at DESC LIMIT 100` : [];
