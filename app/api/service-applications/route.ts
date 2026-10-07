@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import postgres from 'postgres';
 import { sessionCookieName, verifySession } from '../../lib/ycm-access-control';
+import { requireVerifiedEmployee } from '../../lib/ycm-employee-verification';
 import { evaluateDocumentCompliance, selectDocumentValidityRule, type DocumentValidityRule } from '../../lib/ycm-document-validity';
 
 export const runtime = 'nodejs';
@@ -80,6 +81,8 @@ export async function POST(request: NextRequest) {
 
   const sql = db();
   if (!sql) return NextResponse.json({ success: false, code: 'DATABASE_NOT_CONFIGURED' }, { status: 503 });
+  const employeeGate = await requireVerifiedEmployee(sql, session.role, session.sub);
+  if (employeeGate) { await sql.end({ timeout: 3 }); return NextResponse.json(employeeGate, { status: 403 }); }
 
   try {
     const service = (await sql`
