@@ -9,8 +9,8 @@ const files = [
 for (const file of files) {
   const source = fs.readFileSync(file, 'utf8');
   if (!source.includes('requireVerifiedEmployee')) throw new Error('Missing employee verification enforcement import/call: '+file);
-  if (!source.includes("status: 403")) throw new Error('Missing fail-closed 403 response: '+file);
-  if (!source.includes("EMPLOYEE_VERIFICATION_REQUIRED")) throw new Error('Missing verification denial contract: '+file);
+  if (!source.includes('employeeGate')) throw new Error('Missing centralized employee verification gate handling: '+file);
+  if (!source.includes('status:403') && !source.includes('status: 403')) throw new Error('Missing fail-closed 403 response: '+file);
 }
 const helper = fs.readFileSync('app/lib/ycm-employee-verification.ts','utf8');
 for (const marker of [
