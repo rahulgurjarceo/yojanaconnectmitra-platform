@@ -20,7 +20,7 @@ type VerificationEvent = {
   event_id: string;
   event_type: string;
   score: number | null;
-  details: { notes?: string | null; status?: string; metadata?: Record<string, unknown> } | null;
+  details: Record<string, unknown> | null;
   actor_user_id: string;
   created_at: string;
 };
@@ -119,7 +119,7 @@ export default function EmployeeVerificationPage() {
                           <div key={event.event_id} className="rounded-lg bg-white p-2 text-xs">
                             <div className="font-black">{event.event_type} · {event.score ?? '—'}</div>
                             <div className="text-slate-500">{new Date(event.created_at).toLocaleString('en-IN')} · actor: {event.actor_user_id}</div>
-                            {event.details?.notes ? <div className="mt-1 text-slate-700">{event.details.notes}</div> : null}
+                            {typeof event.details?.notes === 'string' ? <div className="mt-1 text-slate-700">{event.details.notes}</div> : null}
                           </div>
                         ))}
                       </div>
