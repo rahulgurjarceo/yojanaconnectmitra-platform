@@ -45,6 +45,8 @@ jobs:
         run: npm run test:customer-profile-security
       - name: Employee verification contract test
         run: npm run test:employee-verification
+      - name: Employee verification enforcement contract test
+        run: npm run test:employee-verification-enforcement
       - name: Dynamic service operating layer contract test
         run: npm run test:dynamic-service-layer
       - name: Provider workflow contract test
