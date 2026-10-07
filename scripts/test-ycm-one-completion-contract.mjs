@@ -1,1 +1,45 @@
-import { access } from 'node:fs/promises';\nimport path from 'node:path';\n\nconst required = [\n  'app/login/page.tsx',\n  'app/register/page.tsx',\n  'app/family-dashboard/page.tsx',\n  'app/command-center/page.tsx',\n  'app/employee/page.tsx',\n  'app/service-master/page.tsx',\n  'app/case-universe/page.tsx',\n  'app/compliance/page.tsx',\n  'app/impact-proof/page.tsx',\n  'app/education/page.tsx',\n  'app/farmer/page.tsx',\n  'app/legal-mitra/page.tsx',\n  'app/management/page.tsx',\n  'app/workspace/page.tsx',\n  'app/api/auth/login/route.ts',\n  'app/api/family/route.ts',\n  'app/api/service-master/route.ts',\n  'app/api/service-applications/route.ts',\n  'app/api/operations/case-dispatch/route.ts',\n  'app/api/case-operations/route.ts',\n  'app/api/crm/leads/route.ts',\n  'app/api/document-intelligence',\n  'app/api/finance/company/summary/route.ts',\n  'app/api/settlements/route.ts',\n  'app/api/aeps/transactions/route.ts',\n  'app/api/impact-proof/route.ts',\n  'database/migrations/052_employee_verification_vetting.sql',\n  '.github/workflows/ycm-one-ci.yml',\n];\n\nconst missing = [];\nfor (const file of required) {\n  try { await access(path.resolve(file)); } catch { missing.push(file); }\n}\nif (missing.length) {\n  console.error('YCM ONE completion contract FAILED');\n  console.error(missing.join('\\n'));\n  process.exit(1);\n}\nconsole.log('YCM ONE completion contract PASS — ' + required.length + ' core surfaces present.');\n
+import { access } from 'node:fs/promises';
+import path from 'node:path';
+
+const required = [
+  'app/login/page.tsx',
+  'app/register/page.tsx',
+  'app/family-dashboard/page.tsx',
+  'app/command-center/page.tsx',
+  'app/employee/page.tsx',
+  'app/service-master/page.tsx',
+  'app/case-universe/page.tsx',
+  'app/compliance/page.tsx',
+  'app/impact-proof/page.tsx',
+  'app/education/page.tsx',
+  'app/farmer/page.tsx',
+  'app/legal-mitra/page.tsx',
+  'app/management/page.tsx',
+  'app/workspace/page.tsx',
+  'app/api/auth/login/route.ts',
+  'app/api/family/route.ts',
+  'app/api/service-master/route.ts',
+  'app/api/service-applications/route.ts',
+  'app/api/operations/case-dispatch/route.ts',
+  'app/api/case-operations/route.ts',
+  'app/api/crm/leads/route.ts',
+  'app/api/document-intelligence',
+  'app/api/finance/company/summary/route.ts',
+  'app/api/settlements/route.ts',
+  'app/api/aeps/transactions/route.ts',
+  'app/api/impact-proof/route.ts',
+  'database/migrations/052_employee_verification_vetting.sql',
+  '.github/workflows/ycm-one-ci.yml',
+];
+
+const missing = [];
+for (const file of required) {
+  try { await access(path.resolve(file)); } catch { missing.push(file); }
+}
+if (missing.length) {
+  console.error('YCM ONE completion contract FAILED');
+  console.error(missing.join('\
+'));
+  process.exit(1);
+}
+console.log('YCM ONE completion contract PASS — ' + required.length + ' core surfaces present.');
