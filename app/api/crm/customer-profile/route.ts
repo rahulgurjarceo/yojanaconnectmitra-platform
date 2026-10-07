@@ -142,7 +142,7 @@ export async function POST(r: NextRequest) {
          application_deadline_at,form_url,eligibility_summary,preparation_notes,metadata,created_by_user_id)
         VALUES (${familyId},${text(b?.memberId,120)},${opportunityType},${title},${organization},${serviceCode},
           ${status},${text(b?.applicationStartAt,80)},${text(b?.applicationDeadlineAt,80)},${formUrl},
-          ${eligibilitySummary},${preparationNotes},${metadata},${s.sub})
+          ${eligibilitySummary},${preparationNotes},${JSON.stringify(metadata)}::jsonb,${s.sub})
         RETURNING *`)[0];
       return NextResponse.json({ success: true, opportunity: row }, { status: 201 });
     }
@@ -181,7 +181,7 @@ export async function POST(r: NextRequest) {
 
     const row = (await sql`INSERT INTO ycm_customer_shares
       (family_id,member_id,created_by_user_id,share_type,title,payload,target,expires_at)
-      VALUES (${familyId},${text(b?.memberId,120)},${s.sub},${shareType},${title},${payload},${target},${text(b?.expiresAt,80)})
+      VALUES (${familyId},${text(b?.memberId,120)},${s.sub},${shareType},${title},${JSON.stringify(payload)}::jsonb,${target},${text(b?.expiresAt,80)})
       RETURNING share_id,share_type,title,target,expires_at,created_at`)[0];
     return NextResponse.json({ success: true, share: row }, { status: 201 });
   } finally {
