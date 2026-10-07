@@ -71,7 +71,8 @@
     "compliance:reminders": "node scripts/run-compliance-reminders.mjs",
     "test:customer-profile-security": "node scripts/test-customer-profile-security.mjs",
     "test:employee-verification": "node scripts/test-employee-verification.mjs",
-    "test:employee-verification-enforcement": "node scripts/test-employee-verification-enforcement.mjs"
+    "test:employee-verification-enforcement": "node scripts/test-employee-verification-enforcement.mjs",
+    "test:ycm-one-completion": "node scripts/test-ycm-one-completion-contract.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
