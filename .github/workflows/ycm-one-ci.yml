@@ -143,6 +143,8 @@ jobs:
         run: npm run test:government-rbac-scope
       - name: Release audit contract test
         run: npm run test:release-audit
+      - name: YCM ONE completion contract test
+        run: npm run test:ycm-one-completion
       - name: Production build
         run: npm run build
 
