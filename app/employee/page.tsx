@@ -43,6 +43,7 @@ type Lead = {
   next_compliance_due_at: string | null;
   compliance_items: ComplianceItem[];
 };
+type CrossSell = { recommendation_id:string; service_code:string; service_name:string; service_type:string; business_domain_code:string; score:number; reason:string; status:string; };
 
 const nextStatus: Record<Assignment['status'], Assignment['status']> = {
   assigned: 'accepted',
@@ -73,6 +74,8 @@ export default function Page() {
   const [profiles, setProfiles] = useState<Record<string, any>>({});
   const [profileBusy, setProfileBusy] = useState('');
   const [verification, setVerification] = useState<any>(null);
+  const [crossSell, setCrossSell] = useState<Record<string, CrossSell[]>>({});
+  const [crossSellBusy, setCrossSellBusy] = useState('');
 
   async function loadVerification() {
     const response = await fetch('/api/employee/verification', { cache: 'no-store' });
@@ -97,6 +100,28 @@ export default function Page() {
       setProfiles((current) => ({ ...current, [familyId]: data.profile }));
     } catch (e) { setError(e instanceof Error ? e.message : 'PROFILE_LOAD_FAILED'); }
     finally { setProfileBusy(''); }
+  }
+
+  async function loadCrossSell(leadId: string) {
+    setCrossSellBusy(leadId);
+    try {
+      const response = await fetch(`/api/crm/lead-cross-sell?leadId=${encodeURIComponent(leadId)}`, { cache: 'no-store' });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.code || 'CROSS_SELL_LOAD_FAILED');
+      setCrossSell((current) => ({ ...current, [leadId]: data.recommendations || [] }));
+    } catch (e) { setError(e instanceof Error ? e.message : 'CROSS_SELL_LOAD_FAILED'); }
+    finally { setCrossSellBusy(''); }
+  }
+
+  async function updateCrossSell(recommendationId: string, leadId: string, status: string) {
+    setCrossSellBusy(recommendationId);
+    try {
+      const response = await fetch('/api/crm/lead-cross-sell', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recommendationId, status }) });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.code || 'CROSS_SELL_UPDATE_FAILED');
+      await loadCrossSell(leadId);
+    } catch (e) { setError(e instanceof Error ? e.message : 'CROSS_SELL_UPDATE_FAILED'); }
+    finally { setCrossSellBusy(''); }
   }
 
   async function loadLeads() {
@@ -206,6 +231,24 @@ export default function Page() {
                     <div className="mt-4 flex flex-wrap gap-2">
                       {lead.family_id ? <button onClick={() => loadProfile(lead.family_id!)} disabled={profileBusy === lead.family_id} className="rounded-xl bg-slate-950 px-3 py-2 text-xs font-black text-white disabled:opacity-40">{profileBusy === lead.family_id ? 'Loading 360…' : 'Open Customer 360'}</button> : null}
                       {lead.mobile ? <a href={`tel:${lead.mobile}`} className="rounded-xl border px-3 py-2 text-xs font-black">Call customer</a> : null}
+                    </div>
+                    <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/40 p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div><div className="text-xs font-black uppercase tracking-wide text-blue-700">Next Best Services · Cross-sell</div><div className="mt-1 text-sm text-slate-600">Relevant YCM services for this customer/family.</div></div>
+                        <button onClick={() => loadCrossSell(lead.lead_id)} disabled={crossSellBusy === lead.lead_id} className="rounded-xl bg-blue-700 px-3 py-2 text-xs font-black text-white disabled:opacity-40">{crossSellBusy === lead.lead_id ? 'Finding…' : 'Find opportunities'}</button>
+                      </div>
+                      {crossSell[lead.lead_id]?.length ? <div className="mt-3 grid gap-2 md:grid-cols-2">
+                        {crossSell[lead.lead_id].map((item) => <div key={item.recommendation_id} className="rounded-xl border bg-white p-3">
+                          <div className="flex items-start justify-between gap-2"><div><div className="font-black">{item.service_name}</div><div className="text-[11px] text-slate-500">{item.service_code} · {item.score}% relevance</div></div><span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black text-emerald-700">{item.status}</span></div>
+                          <div className="mt-2 text-xs text-slate-600">{item.reason}</div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {item.status === 'recommended' ? <button onClick={() => updateCrossSell(item.recommendation_id, lead.lead_id, 'offered')} disabled={crossSellBusy === item.recommendation_id} className="rounded-lg bg-slate-950 px-3 py-1.5 text-[11px] font-black text-white">Offer</button> : null}
+                            {item.status === 'offered' ? <button onClick={() => updateCrossSell(item.recommendation_id, lead.lead_id, 'interested')} disabled={crossSellBusy === item.recommendation_id} className="rounded-lg bg-emerald-700 px-3 py-1.5 text-[11px] font-black text-white">Interested</button> : null}
+                            {item.status === 'interested' ? <button onClick={() => updateCrossSell(item.recommendation_id, lead.lead_id, 'converted')} disabled={crossSellBusy === item.recommendation_id} className="rounded-lg bg-blue-700 px-3 py-1.5 text-[11px] font-black text-white">Convert</button> : null}
+                            {!['converted','dismissed','rejected'].includes(item.status) ? <button onClick={() => updateCrossSell(item.recommendation_id, lead.lead_id, 'dismissed')} disabled={crossSellBusy === item.recommendation_id} className="rounded-lg border px-3 py-1.5 text-[11px] font-black">Dismiss</button> : null}
+                          </div>
+                        </div>)}
+                      </div> : null}
                     </div>
                     {lead.family_id && profiles[lead.family_id] ? <div className="mt-4 rounded-2xl bg-slate-50 p-4">
                       <div className="text-xs font-black uppercase tracking-wide text-slate-500">Customer 360 · Jobs / Schemes / Forms / Preparation</div>
