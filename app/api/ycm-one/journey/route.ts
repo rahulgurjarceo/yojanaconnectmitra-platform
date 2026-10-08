@@ -28,7 +28,8 @@ export async function POST(request:NextRequest){
   if(!family)return NextResponse.json({success:false,code:'FAMILY_NOT_FOUND'},{status:404});
   const member=memberId?(await sql`SELECT member_id FROM ycm_family_members WHERE family_id=${familyId} AND member_id=${memberId} LIMIT 1`)[0]:null;
   if(memberId&&!member)return NextResponse.json({success:false,code:'MEMBER_NOT_FOUND'},{status:404});
-  const service=serviceCode?(await sql`SELECT service_code,service_name,service_type,requires_documents,requires_provider FROM ycm_service_master WHERE service_code=${serviceCode} AND status='active' LIMIT 1`)[0] as Record<string,unknown>|undefined:null;
+  const service=serviceCode?(await sql`SELECT service_code,service_name,service_type,business_domain_code,requires_documents,requires_provider FROM ycm_service_master WHERE service_code=${serviceCode} AND status='active' LIMIT 1`)[0] as Record<string,unknown>|undefined:null;
+  if(serviceCode && String(service?.business_domain_code||'')!==domain)return NextResponse.json({success:false,code:'SERVICE_DOMAIN_MISMATCH'},{status:409});
   const caseId=crypto.randomUUID();
   await sql`INSERT INTO ycm_family_cases(case_id,family_id,member_id,case_category_id,case_category_name,sub_service,status,need_text,location_id,next_action)
     VALUES(${caseId},${familyId},${memberId||null},${domain},${String(domainRow.name)},${serviceCode||null},'new',${needText},${locationId||null},'discover_service')`;
