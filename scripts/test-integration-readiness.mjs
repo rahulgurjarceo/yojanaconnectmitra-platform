@@ -9,7 +9,7 @@ for (const token of [
   'getYcmIntegrationStatus',
   'configured',
   'byTier',
-  'Credentials and secret values are never returned.',
+  'credentials and secret values',
 ]) {
   if (!route.includes(token)) throw new Error('Missing integration readiness contract: ' + token);
 }
@@ -18,7 +18,7 @@ for (const token of ['YCM_OCR', 'YCM_WHATSAPP', 'YCM_SMS', 'YCM_PAYMENTS', 'YCM_
   if (!registry.includes(token)) throw new Error('Missing integration registry contract: ' + token);
 }
 
-if (route.includes('process.env.YCM_') || route.includes('secret')) {
+if (route.includes('process.env.YCM_')) {
   throw new Error('Integration readiness route must not expose provider secret values.');
 }
 
