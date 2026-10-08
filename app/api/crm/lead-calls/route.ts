@@ -15,6 +15,7 @@ export async function POST(r:NextRequest){
   if(s.role==='employee'&&lead.assigned_to!==s.userId)return NextResponse.json({success:false,code:'LEAD_NOT_ASSIGNED'} ,{status:403});
   const connected=outcome==='connected'?1:0, missed=outcome==='no_answer'||outcome==='busy'||outcome==='switched_off'?1:0;
   const row=(await sql`INSERT INTO ycm_lead_call_attempts(lead_id,employee_user_id,outcome,duration_seconds,notes) VALUES(${leadId},${s.userId},${outcome},${duration},${notes||null}) RETURNING *`)[0];
+  await sql`INSERT INTO ycm_lead_daily_distribution(distribution_date,employee_user_id,target_count,called_count,connected_count,no_answer_count) VALUES(CURRENT_DATE,${s.userId},200,1,${connected},${missed}) ON CONFLICT(distribution_date,employee_user_id) DO UPDATE SET called_count=ycm_lead_daily_distribution.called_count+1,connected_count=ycm_lead_daily_distribution.connected_count+${connected},no_answer_count=ycm_lead_daily_distribution.no_answer_count+${missed}`;
   await sql`UPDATE ycm_leads SET call_attempts=call_attempts+1,calls_received=calls_received+${connected},calls_missed=calls_missed+${missed},last_call_outcome=${outcome},last_call_at=NOW(),last_contacted_at=NOW(),status=CASE WHEN ${outcome}='connected' AND status IN ('new','qualified','assigned') THEN 'contacted' ELSE status END,updated_at=NOW() WHERE lead_id=${leadId}`;
   return NextResponse.json({success:true,call:row});
  }catch{return NextResponse.json({success:false,code:'CALL_LOG_FAILED'},{status:400})}finally{await sql.end({timeout:3})}
