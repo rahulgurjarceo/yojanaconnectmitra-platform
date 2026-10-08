@@ -149,6 +149,8 @@ jobs:
         run: npm run test:village-opportunity-intelligence
       - name: Integration readiness contract test
         run: npm run test:integration-readiness
+      - name: Voice Mitra contract test
+        run: npm run test:voice-mitra
       - name: Production build
         run: npm run build
 
