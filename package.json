@@ -81,7 +81,8 @@
     "test:enterprise-lead-cross-sell": "node scripts/test-enterprise-lead-cross-sell.mjs",
     "test:lead-call-daily-distribution": "node scripts/test-lead-call-and-daily-distribution.mjs",
     "test:employee-master": "node scripts/test-employee-master.mjs",
-    "test:universal-journey": "node scripts/test-universal-journey.mjs"
+    "test:universal-journey": "node scripts/test-universal-journey.mjs",
+    "test:voice-ivr": "node scripts/test-voice-ivr.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
