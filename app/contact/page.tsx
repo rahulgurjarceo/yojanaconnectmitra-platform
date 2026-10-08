@@ -33,10 +33,6 @@ export default function ContactPage() {
     } finally { setBusy(false); }
   }
 
-  const whatsapp = 'https://wa.me/919999999999?text=' + encodeURIComponent('Hello YCM, I want to discuss a project/service requirement.');
-  const tel = 'tel:+919999999999';
-  const email = 'mailto:contact@yojanaconnectmitra.com';
-
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <header className="border-b bg-white">
@@ -51,10 +47,8 @@ export default function ContactPage() {
             <p className="text-xs font-black uppercase tracking-[.2em] text-cyan-300">CONTACT YCM ONE</p>
             <h1 className="mt-4 text-4xl font-black leading-tight sm:text-5xl">Tell us what you need. We’ll route it to the right Mitra team.</h1>
             <p className="mt-5 max-w-2xl leading-7 text-blue-100">Domestic, USA or international — website, software, calling, customer support, digital services or YCM citizen-service projects. Submit one requirement and our team can take it forward.</p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <a href={whatsapp} target="_blank" rel="noreferrer" className="rounded-2xl bg-emerald-400 px-5 py-3 font-black text-slate-950">WhatsApp →</a>
-              <a href={tel} className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 font-black">Call →</a>
-              <a href={email} className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 font-black">Email →</a>
+            <div className="mt-7 rounded-2xl border border-white/15 bg-white/10 p-4 text-sm text-blue-100">
+              Prefer WhatsApp, phone call or email? Select your preferred channel in the form and the team will follow up.
             </div>
           </div>
           <div className="rounded-[30px] bg-white p-6 text-slate-950 shadow-2xl">
@@ -78,7 +72,7 @@ export default function ContactPage() {
           <div className="rounded-[30px] border border-emerald-200 bg-white p-8 text-center shadow-sm">
             <div className="text-4xl">✓</div><h2 className="mt-3 text-2xl font-black">Request received.</h2>
             <p className="mt-2 text-slate-600">YCM has captured your requirement. Our team can follow up using the contact details you provided.</p>
-            <div className="mt-6 flex justify-center gap-3"><a href={whatsapp} target="_blank" rel="noreferrer" className="rounded-xl bg-emerald-500 px-5 py-3 font-black text-white">WhatsApp Team</a><Link href="/" className="rounded-xl border px-5 py-3 font-black">Back to Home</Link></div>
+            <div className="mt-6 flex justify-center"><Link href="/" className="rounded-xl border px-5 py-3 font-black">Back to Home</Link></div>
           </div>
         ) : (
           <form onSubmit={submit} className="rounded-[30px] border bg-white p-6 shadow-sm sm:p-8">
@@ -90,6 +84,7 @@ export default function ContactPage() {
               <label className="text-sm font-bold">Email<input type="email" name="email" className="mt-2 w-full rounded-xl border px-4 py-3 font-normal outline-none focus:border-blue-500" placeholder="you@company.com" /></label>
               <label className="text-sm font-bold">Country<input name="country" defaultValue={market === 'usa' ? 'United States' : market === 'domestic' ? 'India' : ''} className="mt-2 w-full rounded-xl border px-4 py-3 font-normal outline-none focus:border-blue-500" /></label>
               <label className="text-sm font-bold">Project / Service<select required name="projectType" className="mt-2 w-full rounded-xl border bg-white px-4 py-3 font-normal outline-none focus:border-blue-500">{projectTypes.map(([v,l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+              <label className="text-sm font-bold">Preferred contact<select name="preferredChannel" className="mt-2 w-full rounded-xl border bg-white px-4 py-3 font-normal outline-none focus:border-blue-500"><option value="whatsapp">WhatsApp</option><option value="phone">Phone Call</option><option value="email">Email</option></select></label>
               <label className="text-sm font-bold sm:col-span-2">Requirement<textarea required name="need" rows={5} className="mt-2 w-full rounded-xl border px-4 py-3 font-normal outline-none focus:border-blue-500" placeholder="Tell us what you want to build, outsource or get help with..." /></label>
             </div>
             {error && <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p>}
