@@ -75,7 +75,8 @@
     "test:ycm-one-completion": "node scripts/test-ycm-one-completion-contract.mjs",
     "test:village-opportunity-intelligence": "node scripts/test-village-opportunity-intelligence.mjs",
     "test:integration-readiness": "node scripts/test-integration-readiness.mjs",
-    "test:voice-mitra": "node scripts/test-voice-mitra.mjs"
+    "test:voice-mitra": "node scripts/test-voice-mitra.mjs",
+    "test:voice-form-assistant": "node scripts/test-voice-form-assistant.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
