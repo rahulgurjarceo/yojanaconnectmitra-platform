@@ -88,7 +88,10 @@ export default function Home() {
             <button onClick={() => router.push('/education/universities')}>Education</button>
             <button onClick={() => router.push('/legal-mitra')}>Legal</button>
           </nav>
-          <button onClick={() => router.push('/login')} className="ml-auto rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-slate-950/10 transition hover:bg-blue-800">Login / Register</button>
+          <div className="ml-auto flex items-center gap-2">
+            <button onClick={() => router.push('/contact')} className="hidden rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-extrabold text-blue-800 sm:block">Contact / Project</button>
+            <button onClick={() => router.push('/login')} className="rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-slate-950/10 transition hover:bg-blue-800">Login / Register</button>
+          </div>
         </div>
         <div className="mx-auto flex max-w-7xl gap-2 px-4 pb-3 md:hidden">
           <input value={q} onChange={e => setQ(e.target.value)} placeholder="आपको क्या चाहिए?" className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none" />
@@ -182,7 +185,7 @@ export default function Home() {
 
       <footer className="bg-slate-950 text-white">
         <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><b>YOJANA CONNECT MITRA</b><p className="mt-1 text-xs text-slate-500">YCM ONE • Global-ready digital public-service platform</p></div><div className="flex flex-wrap gap-5 text-sm text-slate-400"><button onClick={() => router.push('/services')}>Services</button><button onClick={() => router.push('/login')}>Login</button><button onClick={() => router.push('/legal-mitra')}>Legal Mitra</button></div></div>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><b>YOJANA CONNECT MITRA</b><p className="mt-1 text-xs text-slate-500">YCM ONE • Global-ready digital public-service platform</p></div><div className="flex flex-wrap gap-5 text-sm text-slate-400"><button onClick={() => router.push('/services')}>Services</button><button onClick={() => router.push('/login')}>Login</button><button onClick={() => router.push('/legal-mitra')}>Legal Mitra</button><button onClick={() => router.push('/contact')}>Contact / Projects</button></div></div>
           <div className="mt-7 border-t border-white/10 pt-5 text-xs text-slate-500">© {new Date().getFullYear()} Yojana Connect Mitra Pvt Ltd. • Country and service availability varies by verified local catalogue.</div>
         </div>
       </footer>
