@@ -53,6 +53,10 @@ jobs:
         run: npm run test:provider-workflow
       - name: Unified lead intake contract test
         run: npm run test:unified-lead-intake
+      - name: Enterprise lead routing contract test
+        run: npm run test:enterprise-lead-routing
+      - name: Enterprise lead cross-sell contract test
+        run: npm run test:enterprise-lead-cross-sell
       - name: Individual and family membership contract test
         run: npm run test:membership
       - name: Service governance UI contract test
