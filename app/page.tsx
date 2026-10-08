@@ -118,6 +118,7 @@ export default function Home() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button onClick={() => router.push('/login')} className="rounded-2xl bg-cyan-400 px-6 py-3.5 font-black text-slate-950 shadow-xl shadow-cyan-500/20 transition hover:bg-cyan-300">मेरी Family शुरू करें →</button>
               <button onClick={() => router.push('/services')} className="rounded-2xl border border-white/20 bg-white/10 px-6 py-3.5 font-bold transition hover:bg-white/15">Explore Services</button>
+              <button onClick={() => router.push('/contact')} className="rounded-2xl border border-cyan-300/30 bg-cyan-300/10 px-6 py-3.5 font-bold text-cyan-100 transition hover:bg-cyan-300/20">USA / International Projects →</button>
             </div>
             <div className="mt-8 flex flex-wrap gap-2">
               {quick.map(x => <button key={x} onClick={() => setQ(x)} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-blue-100 transition hover:bg-white/10">{x}</button>)}
