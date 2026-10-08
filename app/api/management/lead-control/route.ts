@@ -42,6 +42,7 @@ export async function POST(r:NextRequest){
     if(!e)break;
     await sql`UPDATE ycm_leads SET assigned_to=${e.id},status='assigned',assigned_at=NOW(),assignment_version=assignment_version+1,updated_at=NOW() WHERE lead_id=${lead.lead_id} AND (assigned_to IS NULL OR assigned_to='00000000-0000-0000-0000-000000000000')`;
     await sql`INSERT INTO ycm_lead_assignments(lead_id,assignee_user_id,sequence_no,release_reason) VALUES(${lead.lead_id},${e.id},1,'DAILY_MANAGER_DISTRIBUTION')`;
+    await sql`INSERT INTO ycm_lead_daily_distribution(distribution_date,employee_user_id,target_count,distributed_count) VALUES(CURRENT_DATE,${e.id},200,1) ON CONFLICT(distribution_date,employee_user_id) DO UPDATE SET distributed_count=ycm_lead_daily_distribution.distributed_count+1`;
     assigned++;
    }
    return NextResponse.json({success:true,assigned,requested:count});
