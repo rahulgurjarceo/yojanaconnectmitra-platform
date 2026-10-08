@@ -74,7 +74,8 @@
     "test:employee-verification-enforcement": "node scripts/test-employee-verification-enforcement.mjs",
     "test:ycm-one-completion": "node scripts/test-ycm-one-completion-contract.mjs",
     "test:village-opportunity-intelligence": "node scripts/test-village-opportunity-intelligence.mjs",
-    "test:integration-readiness": "node scripts/test-integration-readiness.mjs"
+    "test:integration-readiness": "node scripts/test-integration-readiness.mjs",
+    "test:voice-mitra": "node scripts/test-voice-mitra.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
