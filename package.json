@@ -72,7 +72,8 @@
     "test:customer-profile-security": "node scripts/test-customer-profile-security.mjs",
     "test:employee-verification": "node scripts/test-employee-verification.mjs",
     "test:employee-verification-enforcement": "node scripts/test-employee-verification-enforcement.mjs",
-    "test:ycm-one-completion": "node scripts/test-ycm-one-completion-contract.mjs"
+    "test:ycm-one-completion": "node scripts/test-ycm-one-completion-contract.mjs",
+    "test:village-opportunity-intelligence": "node scripts/test-village-opportunity-intelligence.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
