@@ -80,7 +80,8 @@
     "test:enterprise-lead-routing": "node scripts/test-enterprise-lead-routing.mjs",
     "test:enterprise-lead-cross-sell": "node scripts/test-enterprise-lead-cross-sell.mjs",
     "test:lead-call-daily-distribution": "node scripts/test-lead-call-and-daily-distribution.mjs",
-    "test:employee-master": "node scripts/test-employee-master.mjs"
+    "test:employee-master": "node scripts/test-employee-master.mjs",
+    "test:universal-journey": "node scripts/test-universal-journey.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
