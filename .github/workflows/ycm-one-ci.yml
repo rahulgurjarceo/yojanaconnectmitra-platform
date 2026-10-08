@@ -157,6 +157,8 @@ jobs:
         run: npm run test:integration-readiness
       - name: Voice Mitra contract test
         run: npm run test:voice-mitra
+      - name: Universal 35-domain journey contract test
+        run: npm run test:universal-journey
       - name: Voice form assistant contract test
         run: npm run test:voice-form-assistant
       - name: Production build
