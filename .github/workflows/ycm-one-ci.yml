@@ -57,6 +57,8 @@ jobs:
         run: npm run test:enterprise-lead-routing
       - name: Enterprise lead cross-sell contract test
         run: npm run test:enterprise-lead-cross-sell
+      - name: Lead call + daily distribution contract
+        run: npm run test:lead-call-daily-distribution
       - name: Individual and family membership contract test
         run: npm run test:membership
       - name: Service governance UI contract test
