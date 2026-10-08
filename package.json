@@ -79,7 +79,8 @@
     "test:voice-form-assistant": "node scripts/test-voice-form-assistant.mjs",
     "test:enterprise-lead-routing": "node scripts/test-enterprise-lead-routing.mjs",
     "test:enterprise-lead-cross-sell": "node scripts/test-enterprise-lead-cross-sell.mjs",
-    "test:lead-call-daily-distribution": "node scripts/test-lead-call-and-daily-distribution.mjs"
+    "test:lead-call-daily-distribution": "node scripts/test-lead-call-and-daily-distribution.mjs",
+    "test:employee-master": "node scripts/test-employee-master.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
