@@ -5,6 +5,7 @@ export default function ManagementDashboard() {
     ["Employee Verification", "/management/employee-verification"],
     ["CEO Command Center", "/command-center"],
     ["Work Assignments", "/workspace"],
+    ["Lead Control Center", "/management/lead-control"],
     ["Service Master", "/service-master"],
   ];
   return (
