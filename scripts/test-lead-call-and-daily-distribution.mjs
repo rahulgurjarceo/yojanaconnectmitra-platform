@@ -1,0 +1,13 @@
+import fs from 'node:fs'; import path from 'node:path'; import assert from 'node:assert/strict';
+const root=process.cwd();
+const migration=fs.readFileSync(path.join(root,'database/migrations/054_lead_call_outcomes_daily_distribution.sql'),'utf8');
+const calls=fs.readFileSync(path.join(root,'app/api/crm/lead-calls/route.ts'),'utf8');
+const control=fs.readFileSync(path.join(root,'app/api/management/lead-control/route.ts'),'utf8');
+const employee=fs.readFileSync(path.join(root,'app/employee/page.tsx'),'utf8');
+const worker=fs.readFileSync(path.join(root,'scripts/run-lead-daily-distribution.mjs'),'utf8');
+for(const token of ['ycm_lead_call_attempts','ycm_lead_daily_distribution','calls_received','calls_missed']) assert.match(migration,new RegExp(token));
+for(const token of ['connected','no_answer','busy']) assert.match(calls,new RegExp(token));
+for(const token of ['transfer','distribute','set_target']) assert.match(control,new RegExp(token));
+for(const token of ['Received','No Answer','Busy']) assert.match(employee,new RegExp(token));
+assert.match(worker,/target/); assert.match(worker,/AUTOMATED_DAILY_DISTRIBUTION/);
+console.log('lead call + daily distribution contract: PASS');
