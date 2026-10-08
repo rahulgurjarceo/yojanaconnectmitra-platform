@@ -124,6 +124,12 @@ export default function Page() {
     finally { setCrossSellBusy(''); }
   }
 
+  async function logCall(leadId: string, outcome: string) {
+    setBusy(leadId + ':' + outcome);
+    try { const response = await fetch('/api/crm/lead-calls', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ leadId, outcome }) }); const data=await response.json().catch(()=>null); if(!response.ok) throw new Error(data?.code || 'CALL_LOG_FAILED'); await loadLeads(); }
+    catch(e){setError(e instanceof Error ? e.message : 'CALL_LOG_FAILED');} finally {setBusy('');}
+  }
+
   async function loadLeads() {
     const response = await fetch('/api/crm/leads', { cache: 'no-store' });
     const data = await response.json().catch(() => null);
@@ -231,6 +237,9 @@ export default function Page() {
                     <div className="mt-4 flex flex-wrap gap-2">
                       {lead.family_id ? <button onClick={() => loadProfile(lead.family_id!)} disabled={profileBusy === lead.family_id} className="rounded-xl bg-slate-950 px-3 py-2 text-xs font-black text-white disabled:opacity-40">{profileBusy === lead.family_id ? 'Loading 360…' : 'Open Customer 360'}</button> : null}
                       {lead.mobile ? <a href={`tel:${lead.mobile}`} className="rounded-xl border px-3 py-2 text-xs font-black">Call customer</a> : null}
+                      {lead.mobile ? <button disabled={busy.startsWith(lead.lead_id + ':')} onClick={() => logCall(lead.lead_id, 'connected')} className="rounded-xl bg-emerald-700 px-3 py-2 text-xs font-black text-white disabled:opacity-40">Received</button> : null}
+                      {lead.mobile ? <button disabled={busy.startsWith(lead.lead_id + ':')} onClick={() => logCall(lead.lead_id, 'no_answer')} className="rounded-xl bg-amber-500 px-3 py-2 text-xs font-black text-white disabled:opacity-40">No Answer</button> : null}
+                      {lead.mobile ? <button disabled={busy.startsWith(lead.lead_id + ':')} onClick={() => logCall(lead.lead_id, 'busy')} className="rounded-xl border px-3 py-2 text-xs font-black disabled:opacity-40">Busy</button> : null}
                     </div>
                     <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/40 p-4">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
