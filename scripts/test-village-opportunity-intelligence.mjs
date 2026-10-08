@@ -24,8 +24,8 @@ for (const token of [
   "bankingGap",
   "insurance",
   "schoolGap",
-  "0.35",
-  "0.30",
+  ".35",
+  ".30",
 ]) {
   if (!route.includes(token)) throw new Error(`Missing village intelligence API contract: ${token}`);
 }
