@@ -3,6 +3,9 @@ const required=['database/migrations/055_employee_master_performance_followups_p
 for(const p of required)if(!fs.existsSync(p))throw new Error('missing '+p);
 const m=fs.readFileSync(required[0],'utf8');
 for(const x of ['ycm_employee_followups','ycm_employee_projects','ycm_employee_performance_monthly','ycm_employee_performance_weights','ycm_employee_promotions'])if(!m.includes(x))throw new Error('missing schema '+x);
-const api=fs.readFileSync(required[1],'utf8');if(!api.includes('months')||!api.includes('promotion_readiness'))throw new Error('master API incomplete');
+const api=fs.readFileSync(required[1],'utf8');if(!api.includes('months')||!api.includes('promotion_readiness')||!api.includes('MANAGEMENT_ONLY')||!api.includes('contributionSlabs'))throw new Error('master API incomplete or visibility policy missing');
+if(api.includes("new Set(['employee'"))throw new Error('employee role must not access master performance API');
+const m2=fs.readFileSync('database/migrations/056_employee_contribution_slabs_visibility.sql','utf8');
+if(!m2.includes('ycm_employee_contribution_slabs')||!m2.includes('contribution_percent'))throw new Error('contribution slabs missing');
 const f=fs.readFileSync(required[2],'utf8');if(!f.includes('next_follow_up_at')||!f.includes('follow_up'))throw new Error('followup API incomplete');
 console.log('employee master contract: PASS');
