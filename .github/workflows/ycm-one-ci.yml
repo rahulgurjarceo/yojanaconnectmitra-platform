@@ -147,6 +147,8 @@ jobs:
         run: npm run test:ycm-one-completion
       - name: Village opportunity intelligence contract test
         run: npm run test:village-opportunity-intelligence
+      - name: Integration readiness contract test
+        run: npm run test:integration-readiness
       - name: Production build
         run: npm run build
 
