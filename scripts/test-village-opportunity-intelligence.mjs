@@ -20,7 +20,7 @@ for (const token of [
 for (const token of [
   "verifySession",
   "sessionCookieName",
-  "['ceo','admin','management']",
+  "ceo","admin","management",
   "bankingGap",
   "insurance",
   "schoolGap",
