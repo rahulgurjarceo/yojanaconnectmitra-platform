@@ -12,7 +12,7 @@ assert.equal(nums.length,new Set(nums).size,'Duplicate migration number detected
 
 const docker=await fs.readFile('Dockerfile','utf8');
 assert.match(docker,/\.next\/standalone/);
-assert.match(docker,/CMD \["node","server\.js"\]/);
+assert.match(docker,/CMD \["node","server\.js"\]/);\nassert.match(docker,/node:24-alpine/);
 
 const env=await fs.readFile('.env.example','utf8');
 for(const name of ['DATABASE_URL','YCM_SESSION_SECRET','RAZORPAY_KEY_SECRET','PAYU_MERCHANT_SALT','PAYTM_MERCHANT_KEY']) assert.match(env,new RegExp('^'+name+'=', 'm'));
