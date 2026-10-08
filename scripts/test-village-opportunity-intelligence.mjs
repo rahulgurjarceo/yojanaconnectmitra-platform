@@ -1,6 +1,6 @@
 import fs from "node:fs";
 
-const migration = fs.readFileSync("database/migrations/053_village_opportunity_intelligence.sql", "utf8");
+const migration = fs.readFileSync("database/migrations/058_village_opportunity_intelligence.sql", "utf8");
 const route = fs.readFileSync("app/api/management/village-intelligence/route.ts", "utf8");
 const page = fs.readFileSync("app/management/village-intelligence/page.tsx", "utf8");
 
