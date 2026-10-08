@@ -16,6 +16,6 @@ export const YCM_MODULES:YCMModule[] = [
 {id:'integrations',number:12,name:'Integrations',section:'Integrations',status:'partial',progress:50,description:'Central integration registry for government, payment, AEPS and partner providers.',metrics:['Registered','Connected','Pending'],nextBuild:['Health checks','Secrets rotation']},
 {id:'security-audit',number:13,name:'Security / Audit',section:'Security/Audit',status:'partial',progress:60,description:'Session, authorization, audit and security policy foundations.',metrics:['Audit events','Privileged actions','Security alerts'],nextBuild:['MFA','Session revocation hardening']},
 {id:'reports',number:14,name:'Reports',section:'Reports',status:'partial',progress:50,description:'Management reporting layer for operations, finance and verified impact.',metrics:['Reports','Scheduled','Evidence packets'],nextBuild:['Export service','Report permissions']},
-];
 {id:'village-opportunity-intelligence',number:15,name:'Village Opportunity Intelligence',section:'Village Intelligence',status:'partial',progress:65,description:'Village-level decision support for banking, insurance and government-school access gaps using verified geographic evidence.',metrics:['Villages','Opportunity score','High-priority gaps'],nextBuild:['Source-backed imports','Verification workflow','Map drill-down']},
+];
 export const YCM_LIFECYCLE=['Family','Need','Service','Documents','Case','Assignment','Provider','Result','Outcome','Evidence','Audit'];
