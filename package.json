@@ -85,7 +85,8 @@
     "test:voice-ivr": "node scripts/test-voice-ivr.mjs",
     "test:document-intelligence-authz": "node scripts/test-document-intelligence-authz.mjs",
     "test:supply-inventory": "node scripts/test-supply-inventory.mjs",
-    "test:customer-family-otp": "node scripts/test-customer-family-otp.mjs"
+    "test:customer-family-otp": "node scripts/test-customer-family-otp.mjs",
+    "test:customer-family-payment": "node scripts/test-customer-family-payment.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
