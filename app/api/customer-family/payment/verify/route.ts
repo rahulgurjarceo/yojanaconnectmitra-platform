@@ -28,13 +28,21 @@ export async function POST(request: NextRequest) {
   if (!['created', 'pending'].includes(payment.status)) return NextResponse.json({ success: false, code: 'PAYMENT_ORDER_NOT_ACTIVE' }, { status: 409 });
 
   try {
-    const result = await provider.verifyPayment({ orderId: body.orderId, paymentId: body.paymentId, signature: body.signature });
+    const result = await provider.verifyPayment({
+      orderId: body.orderId,
+      paymentId: body.paymentId,
+      signature: body.signature,
+      amountPaise: payment.amountPaise,
+    });
     if (!result.verified) return NextResponse.json({ success: false, code: 'PAYMENT_SIGNATURE_INVALID' }, { status: 400 });
     const persisted = await repository.markPaymentVerified(body.orderId, body.paymentId);
     if (!persisted) return NextResponse.json({ success: false, code: 'PAYMENT_ORDER_NOT_ACTIVE' }, { status: 409 });
     return NextResponse.json({ success: true, status: 'payment_verified', familyId });
   } catch (error) {
-    console.error('Family payment verification failed', error);
-    return NextResponse.json({ success: false, code: 'PAYMENT_VERIFICATION_FAILED' }, { status: 502 });
+    const code = error instanceof Error && ['PAYMENT_PROVIDER_RATE_LIMITED', 'PAYMENT_PROVIDER_REQUEST_FAILED', 'PAYMENT_PROVIDER_INVALID_RESPONSE'].includes(error.message)
+      ? error.message
+      : 'PAYMENT_VERIFICATION_FAILED';
+    console.error('Family payment verification failed');
+    return NextResponse.json({ success: false, code }, { status: 502 });
   }
 }
