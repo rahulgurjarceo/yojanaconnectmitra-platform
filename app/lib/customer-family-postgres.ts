@@ -63,6 +63,17 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
       RETURNING request_count`;
     return rows.length > 0;
   }
+  async reserveOtpVerification(challengeId: string): Promise<boolean> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    const rows = await this.sql`UPDATE ycm_family_otp_challenges
+      SET verification_attempts = verification_attempts + 1
+      WHERE challenge_id = ${challengeId}
+        AND status IN ('created','sent')
+        AND expires_at > NOW()
+        AND verification_attempts < 5
+      RETURNING challenge_id`;
+    return rows.length > 0;
+  }
   async createOtpChallenge(input: { challengeId: string; familyId?: string; mobile: string; provider: string; expiresAt: string }): Promise<void> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
     await this.sql`INSERT INTO ycm_family_otp_challenges (challenge_id, family_id, mobile, provider, status, expires_at) VALUES (${input.challengeId}, ${input.familyId || null}, ${input.mobile}, ${input.provider}, 'sent', ${input.expiresAt})`;
