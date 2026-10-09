@@ -22,7 +22,7 @@ export async function POST(r:NextRequest){
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
   const b=await r.json() as Record<string,unknown>;const action=String(b.action||'');const employeeId=String(b.employeeId||'').trim();const leadId=String(b.leadId||'').trim();const count=Math.max(1,Math.min(1000,Number(b.count||0)));
-  if(action==='set_target'){const target=Math.max(1,Math.min(5000,Number(b.targetPerDay||200)));await sql`UPDATE ycm_lead_daily_settings SET target_per_day=${target},updated_by=${s.userId},updated_at=NOW() WHERE setting_key='default_employee_daily_target'`;return NextResponse.json({success:true,targetPerDay:target});}
+  if(action==='set_target'){const target=Math.max(1,Math.min(5000,Number(b.targetPerDay||200)));await sql`UPDATE ycm_lead_daily_settings SET target_per_day=${target},updated_by=${s.sub},updated_at=NOW() WHERE setting_key='default_employee_daily_target'`;return NextResponse.json({success:true,targetPerDay:target});}
   if(action==='transfer'){
    if(!employeeId||!leadId)return NextResponse.json({success:false,code:'TRANSFER_FIELDS_REQUIRED'},{status:400});
    const e=(await sql`SELECT id FROM ycm_users WHERE id=${employeeId} AND role=ANY(${sql.array(employees)}) AND status='active' LIMIT 1`)[0];if(!e)return NextResponse.json({success:false,code:'EMPLOYEE_NOT_FOUND'},{status:404});
