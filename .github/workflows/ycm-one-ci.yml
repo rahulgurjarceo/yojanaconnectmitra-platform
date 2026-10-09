@@ -41,6 +41,8 @@ jobs:
         run: npm run test:service-application
       - name: Service application compliance intelligence contract test
         run: npm run test:document-validity-kyc
+      - name: Document intelligence family authorization contract test
+        run: npm run test:document-intelligence-authz
       - name: Customer profile CRM security contract test
         run: npm run test:customer-profile-security
       - name: Employee verification contract test
