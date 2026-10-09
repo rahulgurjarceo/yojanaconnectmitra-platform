@@ -41,16 +41,16 @@ export async function POST(request:NextRequest){
   let providers:unknown[]=[];
   if(selectedCode){
    if(Number.isFinite(lat)&&Number.isFinite(lon)){
-    providers=await sql`SELECT p.provider_id,p.provider_code,p.provider_name,p.provider_type,p.capabilities,p.status,p.latitude,p.longitude,sp.priority,sp.enabled,
+    providers=[...await sql`SELECT p.provider_id,p.provider_code,p.provider_name,p.provider_type,p.capabilities,p.status,p.latitude,p.longitude,sp.priority,sp.enabled,
       (6371*acos(LEAST(1,GREATEST(-1,cos(radians(${lat}))*cos(radians(p.latitude))*cos(radians(p.longitude)-radians(${lon}))+sin(radians(${lat}))*sin(radians(p.latitude)))))) AS distance_km
       FROM ycm_service_providers p JOIN ycm_service_provider_links sp ON sp.provider_id=p.provider_id
       WHERE sp.service_code=${selectedCode} AND sp.enabled=true AND p.status='active' AND p.latitude IS NOT NULL AND p.longitude IS NOT NULL
-      ORDER BY distance_km,sp.priority,p.provider_name LIMIT 10`;
+      ORDER BY distance_km,sp.priority,p.provider_name LIMIT 10`];
    }else{
-    providers=await sql`SELECT p.provider_id,p.provider_code,p.provider_name,p.provider_type,p.capabilities,p.status,p.latitude,p.longitude,sp.priority,sp.enabled
+    providers=[...await sql`SELECT p.provider_id,p.provider_code,p.provider_name,p.provider_type,p.capabilities,p.status,p.latitude,p.longitude,sp.priority,sp.enabled
       FROM ycm_service_providers p JOIN ycm_service_provider_links sp ON sp.provider_id=p.provider_id
       WHERE sp.service_code=${selectedCode} AND sp.enabled=true AND p.status='active' AND (${locationId}='' OR p.location_id=${locationId})
-      ORDER BY sp.priority,p.provider_name LIMIT 10`;
+      ORDER BY sp.priority,p.provider_name LIMIT 10`];
    }
   }
   await sql`UPDATE ycm_family_cases SET next_action=${providers.length?'review_provider_and_requirements':selectedCode?'review_requirements_and_application':'select_service'},updated_at=NOW() WHERE case_id=${caseId}`;
