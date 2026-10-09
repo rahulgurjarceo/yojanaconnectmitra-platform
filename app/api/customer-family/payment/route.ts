@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       familyId,
       amountPaise: FAMILY_REGISTRATION_PLAN.amount * 100,
       currency: 'INR',
-      provider: 'configured',
+      provider: 'razorpay',
       providerReference: order.orderId,
     });
     return NextResponse.json({
