@@ -13,6 +13,9 @@ for (const token of [
   "RAZORPAY_API + '/orders'",
   "RAZORPAY_API + '/payments/'",
   'verifyRazorpayCheckoutSignature',
+  "receipt: 'YCMF-' + randomUUID()",
+  "reason: 'signature_invalid'",
+  "reason: 'payment_not_captured_or_mismatch'",
   'timingSafeEqual',
   'AbortSignal.timeout(PROVIDER_TIMEOUT_MS)',
   "payment.status === 'captured'",
@@ -25,6 +28,8 @@ for (const token of [
 }
 assert.match(verifyRoute, /amountPaise: payment\.amountPaise/);
 assert.match(verifyRoute, /PAYMENT_SIGNATURE_INVALID/);
+assert.match(verifyRoute, /PAYMENT_NOT_CAPTURED_OR_MISMATCHED/);
+assert.match(orderRoute, /provider: 'razorpay'/);
 assert.match(orderRoute, /FAMILY_REGISTRATION_PLAN\.amount/);
 
 // Deterministic Razorpay Checkout signature fixture; verifies the contract vector used by the adapter.
