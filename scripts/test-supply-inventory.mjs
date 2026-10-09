@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
-const migration=await fs.readFile('database/migrations/033_supply_inventory_management.sql','utf8');
+const migration=await fs.readFile('database/migrations/060_supply_inventory_management.sql','utf8');
 const route=await fs.readFile('app/api/supply/inventory/route.ts','utf8');
 const pkg=JSON.parse(await fs.readFile('package.json','utf8'));
 const ci=await fs.readFile('.github/workflows/ycm-one-ci.yml','utf8');
