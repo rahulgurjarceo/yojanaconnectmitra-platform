@@ -43,6 +43,7 @@ export interface CustomerFamilyRepository {
   findById(familyId: string): Promise<FamilyRecord | null>;
   updateStatus(familyId: string, status: FamilyRecord['status']): Promise<FamilyRecord | null>;
   getActivationState(familyId: string): Promise<FamilyActivationState>;
+  reserveOtpSend(mobile: string): Promise<boolean>;
   createOtpChallenge(input: { challengeId: string; familyId?: string; mobile: string; provider: string; expiresAt: string }): Promise<void>;
   getOtpChallenge(challengeId: string): Promise<FamilyOtpChallenge | null>;
   markOtpChallengeVerified(challengeId: string): Promise<boolean>;
