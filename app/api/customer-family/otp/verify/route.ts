@@ -79,7 +79,7 @@ export async function POST(request: Request) {
     } catch {
       return NextResponse.json({ success: false, code: 'AUTH_SESSION_ISSUANCE_FAILED' }, { status: 503 });
     }
-  } catch (error) {
+  } catch {
     console.error('customer-family OTP verification failed');
     return NextResponse.json({ success: false, code: 'OTP_AUTHENTICATION_FAILED' }, { status: 503 });
   }
