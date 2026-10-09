@@ -169,6 +169,8 @@ jobs:
         run: npm run test:supply-inventory
       - name: Customer family OTP gateway security contract test
         run: npm run test:customer-family-otp
+      - name: Customer family Razorpay payment contract test
+        run: npm run test:customer-family-payment
       - name: Production build
         run: npm run build
 
