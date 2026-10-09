@@ -5,11 +5,12 @@ import {getOcrProvider} from '../../lib/ycm-ocr';
 import {validateDocumentAgainstMember} from '../../lib/ycm-document-validation';
 export const runtime='nodejs';
 const getDb=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:3,prepare:false,connect_timeout:10,idle_timeout:20}):null};
+function familyAccessAllowed(session:ReturnType<typeof verifySession>,familyId:string){if(!session)return false;if(['ceo','admin','management'].includes(session.role))return true;return session.familyId===familyId;}
 export async function POST(request:NextRequest){
  const s=verifySession(request.cookies.get(sessionCookieName())?.value);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
  const b=await request.json().catch(()=>null) as {familyId?:string;memberId?:string;documentType?:string;storageRef?:string;documentVersion?:string;sha256?:string;consentAt?:string}|null;
  if(!b?.familyId||!b.documentType||!b.storageRef||!b.consentAt)return NextResponse.json({success:false,code:'DOCUMENT_FIELDS_REQUIRED'},{status:400});
- if(!['ceo','admin','management','employee','partner','referral'].includes(s.role)&&s.familyId!==b.familyId)return NextResponse.json({success:false,code:'FAMILY_ACCESS_DENIED'},{status:403});
+ if(!familyAccessAllowed(s,b.familyId))return NextResponse.json({success:false,code:'FAMILY_ACCESS_DENIED'},{status:403});
  const sql=getDb();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
   const member=b.memberId?(await sql`SELECT member_id,full_name,date_of_birth FROM ycm_family_members WHERE family_id=${b.familyId} AND member_id=${b.memberId} LIMIT 1`)[0]:null;
