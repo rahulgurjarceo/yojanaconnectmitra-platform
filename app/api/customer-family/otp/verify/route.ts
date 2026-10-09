@@ -25,9 +25,7 @@ export async function POST(request: Request) {
     if (challenge.status === 'verified') return NextResponse.json({ success: false, code: 'OTP_CHALLENGE_ALREADY_USED' }, { status: 409 });
     if (new Date(challenge.expiresAt).getTime() <= Date.now()) return NextResponse.json({ success: false, code: 'OTP_CHALLENGE_EXPIRED' }, { status: 409 });
 
-    const result = await provider.verifyOtp(body.challengeId, body.otp);
-    if (!result.verified) return NextResponse.json({ success: false, code: 'OTP_INVALID' }, { status: 400 });
-
+    // Validate the challenge's family binding before spending a provider verification attempt.
     if (!challenge.familyId) return NextResponse.json({ success: false, code: 'OTP_FAMILY_NOT_LINKED' }, { status: 409 });
     const family = await repository.findById(challenge.familyId);
     if (!family) return NextResponse.json({ success: false, code: 'FAMILY_NOT_FOUND' }, { status: 404 });
@@ -35,6 +33,15 @@ export async function POST(request: Request) {
     if (family.status === 'expired' || family.status === 'suspended') {
       return NextResponse.json({ success: false, code: 'FAMILY_ACCESS_BLOCKED', status: family.status }, { status: 403 });
     }
+
+    // The DB update is atomic, so parallel guesses cannot exceed the five-attempt limit.
+    const attemptReserved = await repository.reserveOtpVerification(body.challengeId);
+    if (!attemptReserved) {
+      return NextResponse.json({ success: false, code: 'OTP_ATTEMPTS_EXCEEDED' }, { status: 429, headers: { 'Cache-Control': 'no-store' } });
+    }
+
+    const result = await provider.verifyOtp(body.challengeId, body.otp);
+    if (!result.verified) return NextResponse.json({ success: false, code: 'OTP_INVALID' }, { status: 400 });
 
     const persisted = await repository.markOtpChallengeVerified(body.challengeId);
     if (!persisted) return NextResponse.json({ success: false, code: 'OTP_CHALLENGE_NOT_ACTIVE' }, { status: 409 });
@@ -73,7 +80,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, code: 'AUTH_SESSION_ISSUANCE_FAILED' }, { status: 503 });
     }
   } catch (error) {
-    console.error('customer-family OTP verification failed', error);
+    console.error('customer-family OTP verification failed');
     return NextResponse.json({ success: false, code: 'OTP_AUTHENTICATION_FAILED' }, { status: 503 });
   }
 }
