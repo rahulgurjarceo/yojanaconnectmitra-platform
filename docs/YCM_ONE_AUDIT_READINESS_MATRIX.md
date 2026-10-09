@@ -5,7 +5,7 @@ This is an engineering audit-readiness register, not a government certification 
 Status definitions:
 - PASS — implemented and statically/contract verified in repository.
 - PARTIAL — control exists but requires runtime, environment, integration, or broader verification.
-- BLOCKED — required evidence/credential/contract is not yet available.
+- BLOCKED — required evidence, credentials, provider contract, or infrastructure is not yet available.
 - NOT STARTED — control has not yet been implemented.
 
 | Area | Status | Next verification |
@@ -17,7 +17,7 @@ Status definitions:
 | Audit event model | PARTIAL | Coverage, retention and immutability review |
 | Security headers | PASS | Production browser/UAT verification |
 | Provider metadata exposure | PASS | Regression tests |
-| Database migration inventory | PASS | Canonical inventory contains 52 numbered migrations through 052 |
+| Database migration inventory | PASS | Current branch contains 59 migration files, with the latest numbered migration 060; reconcile the canonical inventory against the actual migration directory |
 | Database migration execution | BLOCKED | Staging/production rehearsal and evidence; repository migration runner contract is present |
 | Database backup/restore | NOT STARTED | Restore drill and recovery evidence |
 | Database least privilege | NOT STARTED | Separate runtime/migration roles and grants |
@@ -30,8 +30,10 @@ Status definitions:
 | AEPS webhook authenticity | PARTIAL | Provider-specific callback verification |
 | EKO callback authenticity | BLOCKED | Official provider callback verification contract |
 | Payment webhook verification | PARTIAL | Gateway-specific official signature verification |
+| Customer/family OTP delivery | BLOCKED | Select and configure an SMS/OTP provider; the current provider factory returns null, so live OTP delivery is not enabled |
 | Jan Aadhaar integration | BLOCKED | UAT credentials/certs/IP allowlist/endpoint contract |
 | DigiLocker integration | PARTIAL | Official token exchange and UAT evidence |
+| Voice/IVR integration | PARTIAL | Configure a telephony provider and verify callbacks in provider UAT |
 | Dependency/SCA scanning | PASS | npm audit high-severity gate is in YCM One CI |
 | SAST | NOT STARTED | CI static security analysis |
 | DAST/API security testing | NOT STARTED | Staging deployment and authenticated testing |
@@ -44,7 +46,20 @@ Status definitions:
 | Government audit evidence pack | NOT STARTED | Completed controls, logs, approvals and test reports |
 
 ## Release gate
+
 Before live launch require: CI/build/tests green; database migration rehearsal and evidence; security test evidence; provider UAT evidence; backup/restore evidence; privileged-access review; incident/DR readiness; production secrets review; and final human security/compliance review.
 
+## Owner-dependent prerequisites
+
+These items require account access, credentials, or decisions from the company owner and cannot be safely fabricated in code:
+1. Hosting target and production environment variables.
+2. PostgreSQL connection and a verified migration/backup/restore rehearsal.
+3. SMS/OTP provider selection and credentials.
+4. Payment/AEPS/telephony provider credentials and callback contracts.
+5. Government integration permissions and UAT evidence.
+
+Keep these as explicit blockers until verified; do not mark them complete based only on source code.
+
 ## Audit rule
+
 No control is marked PASS merely because source code exists when the control depends on production configuration, external provider behavior, infrastructure, operational evidence, or an independent audit.
