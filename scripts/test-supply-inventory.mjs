@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const migration=await fs.readFile('database/migrations/060_supply_inventory_management.sql','utf8');
 const route=await fs.readFile('app/api/supply/inventory/route.ts','utf8');
+const page=await fs.readFile('app/supply/page.tsx','utf8');
 const pkg=JSON.parse(await fs.readFile('package.json','utf8'));
 const ci=await fs.readFile('.github/workflows/ycm-one-ci.yml','utf8');
 for(const table of ['ycm_supply_locations','ycm_supply_items','ycm_supply_stock','ycm_supply_transfers','ycm_supply_transfer_lines','ycm_supply_movements'])assert.ok(migration.includes('CREATE TABLE IF NOT EXISTS '+table),'missing table '+table);
@@ -12,4 +13,5 @@ for(const token of ['AUTHENTICATION_REQUIRED','FORBIDDEN','DATABASE_NOT_CONFIGUR
 assert.ok(route.includes('sql.begin'),'stock mutations must use transactions');
 assert.equal(pkg.scripts['test:supply-inventory'],'node scripts/test-supply-inventory.mjs');
 assert.ok(ci.includes('npm run test:supply-inventory'),'CI must run supply inventory contract');
+for(const uiToken of ['Supply & Inventory Management','Receive Purchased Stock','Transfer Stock Between Centres','Stock by Location','Confirm Receipt'])assert.ok(page.includes(uiToken),'missing supply UI feature '+uiToken);
 console.log('SUPPLY_INVENTORY_CONTRACT: PASS');
