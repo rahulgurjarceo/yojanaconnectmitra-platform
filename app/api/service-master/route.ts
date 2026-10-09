@@ -120,10 +120,17 @@ export async function PATCH(r:NextRequest){
   const expiryWarningDays=b.expiryWarningDays==null?30:Number(b.expiryWarningDays);
   const renewalWindowDays=b.renewalWindowDays==null?60:Number(b.renewalWindowDays);
   if((validityDays!==null&&(!Number.isInteger(validityDays)||validityDays<0))||expiryWarningDays<0||renewalWindowDays<0)return NextResponse.json({success:false,code:'SERVICE_LIFECYCLE_INVALID'},{status:400});
+  const current=(await sql`SELECT status FROM ycm_service_master WHERE service_code=${code} LIMIT 1`)[0];
+  if(!current)return NextResponse.json({success:false,code:'SERVICE_NOT_FOUND'},{status:404});
+  const contentFields=['serviceName','serviceType','businessDomainCode','parentServiceCode','channel','requiresCase','requiresDocuments','requiresProvider','metadata','validityDays','expiryWarningDays','renewalAllowed','renewalWindowDays','prefillFields','documentRequirements'];
+  const contentChangeRequested=contentFields.some((field)=>Object.prototype.hasOwnProperty.call(b,field));
+  // Published catalogue entries cannot be silently edited. Pause them first; after edits,
+  // the service must be submitted for approval again before it can be published.
+  if(String(current.status)==='published'&&contentChangeRequested&&b.status!=='paused'){
+   return NextResponse.json({success:false,code:'PUBLISHED_SERVICE_MUST_BE_PAUSED_BEFORE_EDIT'},{status:409});
+  }
   if(b.status!==undefined){
    const next=String(b.status) as YcmServiceStatus;
-   const current=(await sql`SELECT status FROM ycm_service_master WHERE service_code=${code} LIMIT 1`)[0];
-   if(!current)return NextResponse.json({success:false,code:'SERVICE_NOT_FOUND'},{status:404});
    if(!canTransitionServiceStatus(s.role,String(current.status) as YcmServiceStatus,next))return NextResponse.json({success:false,code:'SERVICE_STATUS_TRANSITION_FORBIDDEN'},{status:403});
   }
   const rows=await sql`UPDATE ycm_service_master SET
