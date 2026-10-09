@@ -1,4 +1,5 @@
 import postgres from 'postgres';
+import { createHmac } from 'node:crypto';
 import type { CustomerFamilyRepository, FamilyActivationState, FamilyOtpChallenge, FamilyPayment, FamilyRecord } from './customer-family-db';
 
 function getClient() {
@@ -41,6 +42,26 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
     const otpRows = await this.sql`SELECT 1 FROM ycm_family_otp_challenges WHERE family_id = ${familyId} AND mobile = ${mobile} AND status = 'verified' ORDER BY verified_at DESC NULLS LAST, created_at DESC LIMIT 1`;
     const paymentRows = await this.sql`SELECT 1 FROM ycm_family_payments WHERE family_id = ${familyId} AND amount_paise = 9900 AND currency = 'INR' AND status = 'success' AND signature_verified = TRUE ORDER BY created_at DESC LIMIT 1`;
     return { otpVerified: otpRows.length > 0, paymentVerified: paymentRows.length > 0 };
+  }
+  async reserveOtpSend(mobile: string): Promise<boolean> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    const secret = process.env.YCM_SESSION_SECRET?.trim();
+    if (!secret || secret.length < 32) throw new Error('OTP_RATE_LIMIT_SECRET_NOT_CONFIGURED');
+    const mobileHash = createHmac('sha256', secret).update(mobile).digest('hex');
+    // Atomic per-mobile gate: one send per minute and at most five sends per hour.
+    // A failed provider attempt still consumes a slot to prevent abuse/cost spikes.
+    const rows = await this.sql`INSERT INTO ycm_family_otp_rate_limits AS current_limit
+      (mobile_hash, window_started_at, request_count, last_requested_at)
+      VALUES (${mobileHash}, NOW(), 1, NOW())
+      ON CONFLICT (mobile_hash) DO UPDATE SET
+        window_started_at = CASE WHEN current_limit.window_started_at <= NOW() - INTERVAL '1 hour' THEN NOW() ELSE current_limit.window_started_at END,
+        request_count = CASE WHEN current_limit.window_started_at <= NOW() - INTERVAL '1 hour' THEN 1 ELSE current_limit.request_count + 1 END,
+        last_requested_at = NOW(),
+        updated_at = NOW()
+      WHERE (current_limit.window_started_at <= NOW() - INTERVAL '1 hour' OR current_limit.request_count < 5)
+        AND current_limit.last_requested_at <= NOW() - INTERVAL '60 seconds'
+      RETURNING request_count`;
+    return rows.length > 0;
   }
   async createOtpChallenge(input: { challengeId: string; familyId?: string; mobile: string; provider: string; expiresAt: string }): Promise<void> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
