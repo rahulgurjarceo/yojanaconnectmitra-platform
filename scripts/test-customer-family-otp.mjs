@@ -2,6 +2,10 @@ import fs from 'node:fs';
 
 const provider = fs.readFileSync('app/lib/customer-family-otp.ts', 'utf8');
 const readiness = fs.readFileSync('app/api/ready/route.ts', 'utf8');
+const repository = fs.readFileSync('app/lib/customer-family-postgres.ts', 'utf8');
+const repositoryTypes = fs.readFileSync('app/lib/customer-family-db.ts', 'utf8');
+const otpRoute = fs.readFileSync('app/api/customer-family/otp/route.ts', 'utf8');
+const rateLimitMigration = fs.readFileSync('database/migrations/061_customer_family_otp_rate_limits.sql', 'utf8');
 
 for (const token of [
   'YCM_OTP_API_URL',
@@ -9,8 +13,8 @@ for (const token of [
   "callOtpGateway(baseUrl, apiKey, 'send'",
   "callOtpGateway(baseUrl, apiKey, 'verify'",
   "Authorization: `Bearer ${apiKey}`",
-  "AbortSignal.timeout(REQUEST_TIMEOUT_MS)",
-  "OTP_PROVIDER_INVALID_RESPONSE",
+  'AbortSignal.timeout(REQUEST_TIMEOUT_MS)',
+  'OTP_PROVIDER_INVALID_RESPONSE',
   "process.env.NODE_ENV === 'production' && url.protocol !== 'https:'",
   'Never return gateway response bodies',
 ]) {
@@ -19,4 +23,14 @@ for (const token of [
 if (!readiness.includes('getCustomerFamilyOtpProvider()')) {
   throw new Error('Readiness must continue to require a configured OTP provider');
 }
-console.log('Customer family OTP gateway contract: PASS');
+for (const [name, source, tokens] of [
+  ['OTP rate limit migration', rateLimitMigration, ['ycm_family_otp_rate_limits', 'mobile_hash', 'request_count', 'last_requested_at']],
+  ['OTP repository', repository, ['reserveOtpSend(mobile: string)', 'createHmac', "INTERVAL '1 hour'", "INTERVAL '60 seconds'", 'current_limit.request_count < 5', 'OTP_RATE_LIMIT_SECRET_NOT_CONFIGURED']],
+  ['OTP repository interface', repositoryTypes, ['reserveOtpSend(mobile: string): Promise<boolean>']],
+  ['OTP send route', otpRoute, ['repository.reserveOtpSend(mobile)', 'OTP_RATE_LIMITED', "'Retry-After': '60'", 'OTP_RATE_LIMIT_CHECK_FAILED']],
+]) {
+  for (const token of tokens) {
+    if (!source.includes(token)) throw new Error(name + ': missing ' + token);
+  }
+}
+console.log('Customer family OTP gateway and rate-limit contract: PASS');
