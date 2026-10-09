@@ -9,7 +9,7 @@ export async function GET(r:NextRequest){
  if(!s||!managementRoles.has(s.role))return NextResponse.json({success:false,code:'MANAGEMENT_ONLY'},{status:403});
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
-  const employeeId=r.nextUrl.searchParams.get('employeeId')||s.userId;
+  const employeeId=r.nextUrl.searchParams.get('employeeId')||s.sub;
   const months=Math.max(1,Math.min(12,Number(r.nextUrl.searchParams.get('months')||12)));
   const [employee,performance,followups,projects,weights,slabs]=await Promise.all([
    sql`SELECT u.id,u.user_id,u.role,u.status,c.monthly_salary,c.salary_currency,c.effective_from,c.effective_to FROM ycm_users u LEFT JOIN ycm_employee_compensation c ON c.employee_user_id=u.id AND c.status='active' WHERE u.id=${employeeId} LIMIT 1`,
