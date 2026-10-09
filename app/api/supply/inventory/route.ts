@@ -41,7 +41,7 @@ export async function POST(r:NextRequest){
     const loc=await tx`SELECT location_id FROM ycm_supply_locations WHERE location_id=${b.locationId} AND status='active'`,item=await tx`SELECT item_id FROM ycm_supply_items WHERE item_id=${b.itemId} AND status='active'`;
     if(!loc.length||!item.length)throw new Error('LOCATION_OR_ITEM_NOT_FOUND');
     await tx`INSERT INTO ycm_supply_stock(location_id,item_id,quantity,average_unit_cost_paise) VALUES(${b.locationId},${b.itemId},${Number(b.quantity)},${Number(b.unitCostPaise)}) ON CONFLICT(location_id,item_id) DO UPDATE SET quantity=ycm_supply_stock.quantity+EXCLUDED.quantity,average_unit_cost_paise=FLOOR(((ycm_supply_stock.quantity*ycm_supply_stock.average_unit_cost_paise)+(EXCLUDED.quantity*EXCLUDED.average_unit_cost_paise))::numeric/(ycm_supply_stock.quantity+EXCLUDED.quantity))::bigint,updated_at=NOW()`;
-    await tx`INSERT INTO ycm_supply_movements(location_id,item_id,movement_type,quantity_delta,unit_cost_paise,vendor_name,invoice_reference,external_reference,notes,created_by) VALUES(${b.locationId},${b.itemId},'purchase_receipt',${Number(b.quantity)},${Number(b.unitCostPaise)},${typeof b.vendorName==='string'?b.vendorName:null},${typeof b.invoiceReference==='string'?b.invoiceReference:null},${typeof b.externalReference==='string'?b.externalReference:null},${typeof b.notes==='string'?b.notes.slice(0,1000):null},${s.userId||null})`;
+    await tx`INSERT INTO ycm_supply_movements(location_id,item_id,movement_type,quantity_delta,unit_cost_paise,vendor_name,invoice_reference,external_reference,notes,created_by) VALUES(${b.locationId},${b.itemId},'purchase_receipt',${Number(b.quantity)},${Number(b.unitCostPaise)},${typeof b.vendorName==='string'?b.vendorName:null},${typeof b.invoiceReference==='string'?b.invoiceReference:null},${typeof b.externalReference==='string'?b.externalReference:null},${typeof b.notes==='string'?b.notes.slice(0,1000):null},${s.sub||null})`;
     return {receivedQuantity:Number(b.quantity)};
    });return NextResponse.json({success:true,...result},{status:201});
   }
@@ -51,11 +51,11 @@ export async function POST(r:NextRequest){
    const transferId=randomUUID(),reference='YCM-ST-'+Date.now().toString(36).toUpperCase()+'-'+transferId.slice(0,8).toUpperCase();
    await sql.begin(async tx=>{
     const locs=await tx`SELECT location_id FROM ycm_supply_locations WHERE location_id IN (${tx.array([b.sourceLocationId,b.destinationLocationId])}::uuid[]) AND status='active' FOR SHARE`;if(locs.length!==2)throw new Error('LOCATION_NOT_FOUND');
-    await tx`INSERT INTO ycm_supply_transfers(transfer_id,transfer_reference,source_location_id,destination_location_id,notes,created_by) VALUES(${transferId},${reference},${b.sourceLocationId},${b.destinationLocationId},${typeof b.notes==='string'?b.notes.slice(0,1000):null},${s.userId||null})`;
+    await tx`INSERT INTO ycm_supply_transfers(transfer_id,transfer_reference,source_location_id,destination_location_id,notes,created_by) VALUES(${transferId},${reference},${b.sourceLocationId},${b.destinationLocationId},${typeof b.notes==='string'?b.notes.slice(0,1000):null},${s.sub||null})`;
     for(const line of lines){const rows=await tx`SELECT quantity,average_unit_cost_paise FROM ycm_supply_stock WHERE location_id=${b.sourceLocationId} AND item_id=${line.itemId} FOR UPDATE`;const q=Number(line.quantity);if(!rows.length||Number(rows[0].quantity)<q)throw new Error('INSUFFICIENT_STOCK');const cost=Number(rows[0].average_unit_cost_paise);
      await tx`UPDATE ycm_supply_stock SET quantity=quantity-${q},updated_at=NOW() WHERE location_id=${b.sourceLocationId} AND item_id=${line.itemId}`;
      await tx`INSERT INTO ycm_supply_transfer_lines(transfer_id,item_id,quantity,unit_cost_paise) VALUES(${transferId},${line.itemId},${q},${cost})`;
-     await tx`INSERT INTO ycm_supply_movements(location_id,item_id,movement_type,quantity_delta,unit_cost_paise,transfer_id,created_by) VALUES(${b.sourceLocationId},${line.itemId},'transfer_out',${-q},${cost},${transferId},${s.userId||null})`;
+     await tx`INSERT INTO ycm_supply_movements(location_id,item_id,movement_type,quantity_delta,unit_cost_paise,transfer_id,created_by) VALUES(${b.sourceLocationId},${line.itemId},'transfer_out',${-q},${cost},${transferId},${s.sub||null})`;
     }
    });return NextResponse.json({success:true,transferId,transferReference:reference,status:'in_transit'},{status:201});
   }
@@ -65,8 +65,8 @@ export async function POST(r:NextRequest){
     const rows=await tx`SELECT * FROM ycm_supply_transfers WHERE transfer_id=${b.transferId} FOR UPDATE`;const t=rows[0];if(!t)throw new Error('TRANSFER_NOT_FOUND');if(t.status!=='in_transit')throw new Error('TRANSFER_NOT_IN_TRANSIT');
     const lines=await tx`SELECT item_id,quantity,unit_cost_paise FROM ycm_supply_transfer_lines WHERE transfer_id=${b.transferId}`;
     for(const line of lines){await tx`INSERT INTO ycm_supply_stock(location_id,item_id,quantity,average_unit_cost_paise) VALUES(${t.destination_location_id},${line.item_id},${line.quantity},${line.unit_cost_paise}) ON CONFLICT(location_id,item_id) DO UPDATE SET quantity=ycm_supply_stock.quantity+EXCLUDED.quantity,average_unit_cost_paise=FLOOR(((ycm_supply_stock.quantity*ycm_supply_stock.average_unit_cost_paise)+(EXCLUDED.quantity*EXCLUDED.average_unit_cost_paise))::numeric/(ycm_supply_stock.quantity+EXCLUDED.quantity))::bigint,updated_at=NOW()`;
-     await tx`INSERT INTO ycm_supply_movements(location_id,item_id,movement_type,quantity_delta,unit_cost_paise,transfer_id,created_by) VALUES(${t.destination_location_id},${line.item_id},'transfer_in',${line.quantity},${line.unit_cost_paise},${b.transferId},${s.userId||null})`;}
-    await tx`UPDATE ycm_supply_transfers SET status='received',received_by=${s.userId||null},received_at=NOW() WHERE transfer_id=${b.transferId}`;return {receivedLines:lines.length};
+     await tx`INSERT INTO ycm_supply_movements(location_id,item_id,movement_type,quantity_delta,unit_cost_paise,transfer_id,created_by) VALUES(${t.destination_location_id},${line.item_id},'transfer_in',${line.quantity},${line.unit_cost_paise},${b.transferId},${s.sub||null})`;}
+    await tx`UPDATE ycm_supply_transfers SET status='received',received_by=${s.sub||null},received_at=NOW() WHERE transfer_id=${b.transferId}`;return {receivedLines:lines.length};
    });return NextResponse.json({success:true,...result,status:'received'});
   }
   return NextResponse.json({success:false,code:'SUPPLY_ACTION_INVALID'},{status:400});
