@@ -92,6 +92,7 @@ const PUBLIC_API_PATHS = [
   '/api/auth/session',
   '/api/auth/logout',
   '/api/health',
+  '/api/ready',
   '/api/impact-proof/health',
   '/api/integrations/eko/aeps/callback',
   '/api/aeps/transactions',
