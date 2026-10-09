@@ -83,7 +83,8 @@
     "test:employee-master": "node scripts/test-employee-master.mjs",
     "test:universal-journey": "node scripts/test-universal-journey.mjs",
     "test:voice-ivr": "node scripts/test-voice-ivr.mjs",
-    "test:document-intelligence-authz": "node scripts/test-document-intelligence-authz.mjs"
+    "test:document-intelligence-authz": "node scripts/test-document-intelligence-authz.mjs",
+    "test:supply-inventory": "node scripts/test-supply-inventory.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
