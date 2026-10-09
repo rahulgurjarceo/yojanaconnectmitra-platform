@@ -19,6 +19,8 @@ export async function GET() {
     otp_provider: getCustomerFamilyOtpProvider() ? 'ready' : 'not_ready',
     session_revocation: 'not_ready',
     security_audit: 'not_ready',
+    otp_rate_limit_schema: 'not_ready',
+    otp_verification_attempt_schema: 'not_ready',
   };
 
   let sql: ReturnType<typeof postgres> | undefined;
@@ -27,10 +29,14 @@ export async function GET() {
       sql = postgres(databaseUrl, { max: 1, prepare: false, connect_timeout: 3, idle_timeout: 1 });
       const rows = await sql`SELECT 1 AS connected,
         to_regclass('public.ycm_revoked_sessions') IS NOT NULL AS session_revocation,
-        to_regclass('public.ycm_security_audit_events') IS NOT NULL AS security_audit`;
+        to_regclass('public.ycm_security_audit_events') IS NOT NULL AS security_audit,
+        to_regclass('public.ycm_family_otp_rate_limits') IS NOT NULL AS otp_rate_limit_schema,
+        EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'ycm_family_otp_challenges' AND column_name = 'verification_attempts') AS otp_verification_attempt_schema`;
       checks.database = rows[0]?.connected === 1 ? 'ready' : 'not_ready';
       checks.session_revocation = rows[0]?.session_revocation === true ? 'ready' : 'not_ready';
       checks.security_audit = rows[0]?.security_audit === true ? 'ready' : 'not_ready';
+      checks.otp_rate_limit_schema = rows[0]?.otp_rate_limit_schema === true ? 'ready' : 'not_ready';
+      checks.otp_verification_attempt_schema = rows[0]?.otp_verification_attempt_schema === true ? 'ready' : 'not_ready';
     } catch {
       checks.database = 'not_ready';
       checks.session_revocation = 'not_ready';
