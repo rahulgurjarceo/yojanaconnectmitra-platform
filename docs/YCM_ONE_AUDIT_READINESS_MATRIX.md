@@ -49,6 +49,10 @@ Status definitions:
 
 Before live launch require: CI/build/tests green; database migration rehearsal and evidence; security test evidence; provider UAT evidence; backup/restore evidence; privileged-access review; incident/DR readiness; production secrets review; and final human security/compliance review.
 
+## Deployment instructions
+
+See [Hostinger Test Deployment Checklist](HOSTINGER_TEST_DEPLOYMENT_CHECKLIST.md) for a staging-first deployment sequence. It is a checklist, not evidence that deployment has already occurred.
+
 ## Owner-dependent prerequisites
 
 These items require account access, credentials, or decisions from the company owner and cannot be safely fabricated in code:
