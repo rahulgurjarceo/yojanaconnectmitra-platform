@@ -11,6 +11,7 @@ const prefixes = migrationFiles.map((file) => file.match(/^(\d+)_/)?.[1]).filter
 assert.equal(new Set(migrationFiles).size, migrationFiles.length, "Migration filenames must be unique");
 assert.ok(migrationFiles.includes("035_eko_aeps_retailer_transactions.sql"));
 assert.ok(migrationFiles.includes("036_ycm_packages_entitlements_kyc.sql"));
+assert.ok(migrationFiles.includes("061_customer_family_otp_rate_limits.sql"));
 
 assert.match(script, /DATABASE_URL \|\| process\.env\.POSTGRES_URL/);
 assert.match(script, /ycm_schema_migrations/);
@@ -26,6 +27,7 @@ assert.match(readme, /012_ceo_growth_insights\.sql/);
 assert.match(readme, /013_employee_productivity_telemetry\.sql/);
 assert.match(readme, /014_employee_compensation_targets\.sql/);
 assert.match(readme, /npm run db:migrate/);
+assert.match(readme, /061_customer_family_otp_rate_limits\.sql/);
 console.log("CONTRACT_TEST_PASS");
 
 assert.match(readme, /015_organization_hierarchy_team_lead\.sql/);
