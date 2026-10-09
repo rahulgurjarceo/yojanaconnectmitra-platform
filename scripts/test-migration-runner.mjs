@@ -12,6 +12,7 @@ assert.equal(new Set(migrationFiles).size, migrationFiles.length, "Migration fil
 assert.ok(migrationFiles.includes("035_eko_aeps_retailer_transactions.sql"));
 assert.ok(migrationFiles.includes("036_ycm_packages_entitlements_kyc.sql"));
 assert.ok(migrationFiles.includes("061_customer_family_otp_rate_limits.sql"));
+assert.ok(migrationFiles.includes("062_customer_family_otp_verification_attempts.sql"));
 
 assert.match(script, /DATABASE_URL \|\| process\.env\.POSTGRES_URL/);
 assert.match(script, /ycm_schema_migrations/);
