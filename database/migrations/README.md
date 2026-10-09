@@ -63,6 +63,7 @@ Run in numeric order:
 58. 059_universal_journey_context.sql
 59. 060_supply_inventory_management.sql
 60. 061_customer_family_otp_rate_limits.sql
+61. 062_customer_family_otp_verification_attempts.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
 
