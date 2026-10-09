@@ -32,5 +32,7 @@ assert.match(readiness,/sessionSecret\.length >= 32/);
 assert.match(readiness,/getCustomerFamilyOtpProvider\(\)/);
 assert.match(readiness,/status: ready \? 200 : 503/);
 assert.match(readiness,/Cache-Control.*no-store/);
+const access=await fs.readFile('app/lib/ycm-access-control.ts','utf8');
+assert.match(access,/'\/api\/ready'/,'Readiness probes must not require an authenticated session');
 
 console.log('RELEASE_AUDIT_CONTRACT: PASS');
