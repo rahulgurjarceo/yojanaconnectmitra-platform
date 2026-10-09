@@ -22,6 +22,9 @@ for (const token of [
 ]) {
   if (!provider.includes(token)) throw new Error('OTP provider safety contract missing: ' + token);
 }
+for (const token of ['otp_rate_limit_schema', 'otp_verification_attempt_schema', 'ycm_family_otp_rate_limits', 'verification_attempts']) {
+  if (!readiness.includes(token)) throw new Error('Readiness must check OTP security schema: ' + token);
+}
 if (!readiness.includes('getCustomerFamilyOtpProvider()')) {
   throw new Error('Readiness must continue to require a configured OTP provider');
 }
