@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { enabledPaymentProviders, paymentEnvironment } from './payment/unified-payment';
 
 const RAZORPAY_API = 'https://api.razorpay.com/v1';
@@ -11,9 +11,14 @@ export type PaymentOrder = {
   status: 'created';
 };
 
+export type CustomerFamilyPaymentVerification = {
+  verified: boolean;
+  reason?: 'signature_invalid' | 'payment_not_captured_or_mismatch';
+};
+
 export interface CustomerFamilyPaymentProvider {
   createOrder(input: { familyId: string; amount: number; currency: 'INR' }): Promise<PaymentOrder>;
-  verifyPayment(input: { orderId: string; paymentId: string; signature: string; amountPaise: number }): Promise<{ verified: boolean }>;
+  verifyPayment(input: { orderId: string; paymentId: string; signature: string; amountPaise: number }): Promise<CustomerFamilyPaymentVerification>;
 }
 
 /** Verify the standard Razorpay Checkout order_id|payment_id HMAC without a timing leak. */
@@ -78,7 +83,7 @@ export function getCustomerFamilyPaymentProvider(): CustomerFamilyPaymentProvide
         body: JSON.stringify({
           amount: amountPaise,
           currency: 'INR',
-          receipt: input.familyId.slice(0, 40),
+          receipt: 'YCMF-' + randomUUID(),
           notes: { family_id: input.familyId },
         }),
         cache: 'no-store',
@@ -103,7 +108,7 @@ export function getCustomerFamilyPaymentProvider(): CustomerFamilyPaymentProvide
         paymentId: input.paymentId,
         signature: input.signature,
         secret: credentials.keySecret,
-      })) return { verified: false };
+      })) return { verified: false, reason: 'signature_invalid' };
 
       const response = await fetch(RAZORPAY_API + '/payments/' + encodeURIComponent(input.paymentId), {
         method: 'GET',
@@ -115,14 +120,15 @@ export function getCustomerFamilyPaymentProvider(): CustomerFamilyPaymentProvide
         signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
       });
       const payment = await providerJson(response);
-      return {
-        verified:
-          payment.order_id === input.orderId &&
-          Number(payment.amount) === input.amountPaise &&
-          payment.currency === 'INR' &&
-          payment.status === 'captured' &&
-          payment.captured === true,
-      };
+      const verified =
+        payment.order_id === input.orderId &&
+        Number(payment.amount) === input.amountPaise &&
+        payment.currency === 'INR' &&
+        payment.status === 'captured' &&
+        payment.captured === true;
+      return verified
+        ? { verified: true }
+        : { verified: false, reason: 'payment_not_captured_or_mismatch' };
     },
   };
 }
