@@ -22,7 +22,7 @@ export function hasServicePermission(role: string, permission: YcmServicePermiss
 
 export function canTransitionServiceStatus(role: string, from: YcmServiceStatus, to: YcmServiceStatus) {
   if (to === 'pending_approval') return hasServicePermission(role, 'service:submit') && (from === 'draft' || from === 'paused');
-  if (to === 'published') return hasServicePermission(role, 'service:publish') && (from === 'pending_approval' || from === 'paused');
+  if (to === 'published') return hasServicePermission(role, 'service:publish') && from === 'pending_approval';
   if (to === 'paused') return hasServicePermission(role, 'service:pause') && from === 'published';
   if (to === 'archived') return hasServicePermission(role, 'service:archive') && from !== 'archived';
   return false;
