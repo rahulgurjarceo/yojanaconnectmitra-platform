@@ -14,6 +14,11 @@ assert.doesNotMatch(policy,/employee:\s*\[[^\]]*service:archive/s);
 assert.match(api,/canManage\(s\.role\)/);
 assert.match(api,/export async function POST/);
 assert.match(api,/export async function PATCH/);
+// Published service edits must pause the service, and publishing must follow approval.
+assert.match(api,/PUBLISHED_SERVICE_MUST_BE_PAUSED_BEFORE_EDIT/);
+assert.match(api,/String\(current\.status\)==='published'&&contentChangeRequested&&b\.status!=='paused'/);
+assert.match(policy,/to === 'published'.*from === 'pending_approval'/);
+assert.doesNotMatch(policy,/to === 'published'.*from === 'pending_approval' \|\| from === 'paused'/);
 assert.match(ui,/\/api\/service-master\?includeAll=true/);
 assert.match(ui,/Add service/);
 assert.match(ui,/Edit service/);
