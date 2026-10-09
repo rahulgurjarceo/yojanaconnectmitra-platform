@@ -28,7 +28,7 @@ if (!readiness.includes('getCustomerFamilyOtpProvider()')) {
 for (const [name, source, tokens] of [
   ['OTP rate limit migration', rateLimitMigration, ['ycm_family_otp_rate_limits', 'mobile_hash', 'request_count', 'last_requested_at']],
   ['OTP repository', repository, ['reserveOtpSend(mobile: string)', 'createHmac', "INTERVAL '1 hour'", "INTERVAL '60 seconds'", 'current_limit.request_count < 5', 'OTP_RATE_LIMIT_SECRET_NOT_CONFIGURED']],
-  ['OTP repository interface', repositoryTypes, ['reserveOtpSend(mobile: string): Promise<boolean>']],
+  ['OTP repository interface', repositoryTypes, ['reserveOtpSend(mobile: string): Promise<boolean>', 'reserveOtpVerification(challengeId: string): Promise<boolean>']],
   ['OTP send route', otpRoute, ['repository.reserveOtpSend(mobile)', 'OTP_RATE_LIMITED', "'Retry-After': '60'", 'OTP_RATE_LIMIT_CHECK_FAILED']],
   ['OTP verification migration', verificationMigration, ['verification_attempts INTEGER NOT NULL DEFAULT 0', 'CHECK (verification_attempts >= 0)']],
   ['OTP verification repository', repository, ['reserveOtpVerification(challengeId: string)', 'verification_attempts < 5']],
