@@ -33,7 +33,8 @@ export async function POST(request:NextRequest){
   const caseId=crypto.randomUUID();
   await sql`INSERT INTO ycm_family_cases(case_id,family_id,member_id,case_category_id,case_category_name,sub_service,status,need_text,location_id,next_action)
     VALUES(${caseId},${familyId},${memberId||null},${domain},${String(domainRow.name)},${serviceCode||null},'new',${needText},${locationId||null},'discover_service')`;
-  const services=await sql`SELECT service_code,service_name,service_type,requires_documents,requires_provider,channel FROM ycm_service_master WHERE status='active' AND business_domain_code=${domain} ${serviceCode?sql\`AND service_code=${serviceCode}\`:sql\`\`} ORDER BY service_name LIMIT 20`;
+  const serviceFilter = serviceCode ? sql`AND service_code=${serviceCode}` : sql``;
+  const services=await sql`SELECT service_code,service_name,service_type,requires_documents,requires_provider,channel FROM ycm_service_master WHERE status='active' AND business_domain_code=${domain} ${serviceFilter} ORDER BY service_name LIMIT 20`;
   const selectedService=serviceCode?service:(services[0] as Record<string,unknown>|undefined);
   const selectedCode=String(selectedService?.service_code||'');
   const requirements=selectedCode?await sql`SELECT requirement_type,document_type,condition,member_condition,priority,source_name,source_url FROM ycm_requirement_rules WHERE status='active' AND service_code=${selectedCode} AND (state_code IS NULL OR state_code=${String(family.state_code||'')}) ORDER BY priority,requirement_type,document_type`:[];
