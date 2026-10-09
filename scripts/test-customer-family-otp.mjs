@@ -6,6 +6,8 @@ const repository = fs.readFileSync('app/lib/customer-family-postgres.ts', 'utf8'
 const repositoryTypes = fs.readFileSync('app/lib/customer-family-db.ts', 'utf8');
 const otpRoute = fs.readFileSync('app/api/customer-family/otp/route.ts', 'utf8');
 const rateLimitMigration = fs.readFileSync('database/migrations/061_customer_family_otp_rate_limits.sql', 'utf8');
+const verifyRoute = fs.readFileSync('app/api/customer-family/otp/verify/route.ts', 'utf8');
+const verificationMigration = fs.readFileSync('database/migrations/062_customer_family_otp_verification_attempts.sql', 'utf8');
 
 for (const token of [
   'YCM_OTP_API_URL',
@@ -28,6 +30,9 @@ for (const [name, source, tokens] of [
   ['OTP repository', repository, ['reserveOtpSend(mobile: string)', 'createHmac', "INTERVAL '1 hour'", "INTERVAL '60 seconds'", 'current_limit.request_count < 5', 'OTP_RATE_LIMIT_SECRET_NOT_CONFIGURED']],
   ['OTP repository interface', repositoryTypes, ['reserveOtpSend(mobile: string): Promise<boolean>']],
   ['OTP send route', otpRoute, ['repository.reserveOtpSend(mobile)', 'OTP_RATE_LIMITED', "'Retry-After': '60'", 'OTP_RATE_LIMIT_CHECK_FAILED']],
+  ['OTP verification migration', verificationMigration, ['verification_attempts INTEGER NOT NULL DEFAULT 0', 'CHECK (verification_attempts >= 0)']],
+  ['OTP verification repository', repository, ['reserveOtpVerification(challengeId: string)', 'verification_attempts < 5']],
+  ['OTP verification route', verifyRoute, ['repository.reserveOtpVerification(body.challengeId)', 'OTP_ATTEMPTS_EXCEEDED', 'Validate the challenge\'s family binding before spending a provider verification attempt']],
 ]) {
   for (const token of tokens) {
     if (!source.includes(token)) throw new Error(name + ': missing ' + token);
