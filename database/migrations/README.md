@@ -38,6 +38,31 @@ Run in numeric order:
 33. 034_service_geography_scope.sql
 34. 035_eko_aeps_retailer_transactions.sql
 35. 036_ycm_packages_entitlements_kyc.sql
+36. 037_government_contacts_grievance.sql
+37. 038_government_manager_scopes.sql
+38. 039_service_lifecycle_document_rules.sql
+39. 040_verified_login_identifiers.sql
+40. 041_ration_passport_service_master.sql
+41. 042_family_case_application_link.sql
+42. 043_family_case_operations.sql
+43. 044_case_cri.sql
+44. 045_case_human_mitra_operations.sql
+45. 046_default_case_escalation_rules.sql
+46. 047_case_routing.sql
+47. 048_family_operating_geography.sql
+48. 049_document_validity_kyc_compliance.sql
+49. 050_service_application_compliance_intelligence.sql
+50. 051_customer_profile_opportunities_notes_sharing.sql
+51. 052_employee_verification_vetting.sql
+52. 053_enterprise_lead_routing_cross_sell.sql
+53. 054_lead_call_outcomes_daily_distribution.sql
+54. 055_employee_master_performance_followups_projects.sql
+55. 056_employee_contribution_slabs_visibility.sql
+56. 057_voice_form_fields.sql
+57. 058_village_opportunity_intelligence.sql
+58. 059_universal_journey_context.sql
+59. 060_supply_inventory_management.sql
+60. 061_customer_family_otp_rate_limits.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
 
@@ -49,7 +74,7 @@ Migration runner:
 
 Production prerequisites:
 - DATABASE_URL or POSTGRES_URL
-- YCM_SESSION_SECRET
+- YCM_SESSION_SECRET (at least 32 characters)
 - OTP provider configuration
 - Payment provider configuration
 - Provider API credentials must be stored in deployment secrets/secret manager, never in PostgreSQL service configuration.
