@@ -29,6 +29,7 @@ assert.match(readme, /013_employee_productivity_telemetry\.sql/);
 assert.match(readme, /014_employee_compensation_targets\.sql/);
 assert.match(readme, /npm run db:migrate/);
 assert.match(readme, /061_customer_family_otp_rate_limits\.sql/);
+assert.match(readme, /062_customer_family_otp_verification_attempts\.sql/);
 console.log("CONTRACT_TEST_PASS");
 
 assert.match(readme, /015_organization_hierarchy_team_lead\.sql/);
