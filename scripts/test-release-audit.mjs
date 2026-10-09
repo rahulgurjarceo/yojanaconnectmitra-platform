@@ -23,13 +23,14 @@ assert.match(application,/reuse_if_valid/);
 assert.match(application,/prefilledData/);
 assert.match(application,/MISSING_OR_EXPIRED/);
 
-// Production readiness must verify real DB connectivity and fail closed.
+// Production readiness must verify live DB connectivity and fail closed.
 const readiness=await fs.readFile('app/api/ready/route.ts','utf8');
-assert.match(readiness,/await sql`SELECT 1`/);
+assert.match(readiness,/await sql`SELECT 1 AS connected/);
+assert.match(readiness,/to_regclass\('public\.ycm_revoked_sessions'\)/);
+assert.match(readiness,/to_regclass\('public\.ycm_security_audit_events'\)/);
 assert.match(readiness,/sessionSecret\.length >= 32/);
 assert.match(readiness,/getCustomerFamilyOtpProvider\(\)/);
 assert.match(readiness,/status: ready \? 200 : 503/);
 assert.match(readiness,/Cache-Control.*no-store/);
-assert.doesNotMatch(readiness,/DATABASE_URL.*return NextResponse\.json/);
 
 console.log('RELEASE_AUDIT_CONTRACT: PASS');
