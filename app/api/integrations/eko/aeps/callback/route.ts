@@ -35,16 +35,22 @@ export async function POST(r:NextRequest){
   const providerStatus=String(data.tx_status??'');const status=finalStatus(providerStatus);const amount=Number(data.amount??0);
   if(tx.amount_paise!==Math.round(amount*100)&&tx.transaction_type==='cash_withdrawal')return NextResponse.json({success:false,code:'EKO_CALLBACK_AMOUNT_MISMATCH'},{status:409});
   const existingStatus=String(tx.status??'');
-  if(['success','failed','reversed'].includes(existingStatus))return NextResponse.json({success:true,status:existingStatus,idempotent:true,transaction:tx});
+  const applyLedgerForTerminalStatus=async(terminalStatus:string,transaction:typeof tx)=>{
+   if(terminalStatus==='success')await recordSuccessfulFinancialTransaction({externalReference:'aeps:'+clientRef,transactionType:'aeps',serviceCode:'FIN_AEPS',agentUserId:transaction.user_id,providerCode:'EKO',providerTransactionId:data.tid?String(data.tid):undefined,grossAmountPaise:transaction.amount_paise});
+   if(terminalStatus==='reversed')await reverseFinancialTransaction('aeps:'+clientRef).catch(e=>{if(!(e instanceof Error)||e.message!=='TRANSACTION_NOT_FOUND')throw e;});
+  };
+  if(['success','failed','reversed'].includes(existingStatus)){
+   await applyLedgerForTerminalStatus(existingStatus,tx);
+   return NextResponse.json({success:true,status:existingStatus,idempotent:true,transaction:tx});
+  }
   const saved=(await sql.unsafe(`UPDATE ycm_eko_aeps_transactions SET status=CASE WHEN status IN ('success','failed','reversed') AND status<>$1 THEN status ELSE $1 END,eko_tid=COALESCE($2,eko_tid),bank_reference=COALESCE($3,bank_reference),provider_message=$4,provider_payload=provider_payload || $5::jsonb,final_at=CASE WHEN status IN ('success','failed','reversed') THEN final_at WHEN $1 IN ('success','failed','reversed') THEN NOW() ELSE final_at END,updated_at=NOW() WHERE eko_transaction_id=$6 RETURNING *`,[status,data.tid??null,data.bank_ref_num??null,String(detail?.response?.message??data.reason??''),JSON.stringify({ekoResponse:body}),tx.eko_transaction_id]))[0];
   // Concurrent callbacks can race after the initial read. Only the state persisted by the
   // guarded UPDATE is authoritative for ledger side effects.
   const persistedStatus=String(saved?.status??'');
-  if(['success','failed','reversed'].includes(persistedStatus)&&persistedStatus!==status){
-   return NextResponse.json({success:true,status:persistedStatus,idempotent:true,transaction:saved});
+  if(['success','failed','reversed'].includes(persistedStatus)){
+   await applyLedgerForTerminalStatus(persistedStatus,saved);
+   if(persistedStatus!==status)return NextResponse.json({success:true,status:persistedStatus,idempotent:true,transaction:saved});
   }
-  if(persistedStatus==='success')await recordSuccessfulFinancialTransaction({externalReference:'aeps:'+clientRef,transactionType:'aeps',serviceCode:'FIN_AEPS',agentUserId:tx.user_id,providerCode:'EKO',providerTransactionId:data.tid?String(data.tid):undefined,grossAmountPaise:tx.amount_paise});
-  if(persistedStatus==='reversed')await reverseFinancialTransaction('aeps:'+clientRef).catch(()=>null);
   return NextResponse.json({success:true,status:persistedStatus||status,transaction:saved});
  }catch(e){return NextResponse.json({success:false,code:e instanceof Error?e.message:'EKO_CALLBACK_FAILED'},{status:400});}finally{await sql.end({timeout:3});}
 }
