@@ -30,6 +30,18 @@ export async function POST(r:NextRequest){
   // The database's persisted state wins if a callback and inquiry race.
   const persistedStatus=String(saved?.status??'');
   await applyLedgerForPersistedStatus(persistedStatus,saved,result);
-  return NextResponse.json({success:true,status:persistedStatus||requestedStatus,idempotent:persistedStatus!==requestedStatus,transaction:saved});
+  // Return an allowlisted DTO only; never expose the full database row or raw provider payload.
+  const transaction={
+   clientRefId:String(saved.client_ref_id),
+   status:persistedStatus||requestedStatus,
+   amountPaise:Number(saved.amount_paise),
+   providerReference:saved.eko_tid??result.providerReference??null,
+   bankReference:saved.bank_reference??result.bankReference??null,
+   message:saved.provider_message??null,
+   lastInquiredAt:saved.last_inquired_at??null,
+   finalAt:saved.final_at??null,
+   updatedAt:saved.updated_at??null,
+  };
+  return NextResponse.json({success:true,status:persistedStatus||requestedStatus,idempotent:persistedStatus!==requestedStatus,transaction});
  }catch(e){return NextResponse.json({success:false,code:e instanceof Error?e.message:'EKO_INQUIRY_FAILED'},{status:400});}finally{await sql.end({timeout:3});}
 }
