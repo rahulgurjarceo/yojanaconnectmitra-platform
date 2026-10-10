@@ -126,7 +126,7 @@ export async function PATCH(r:NextRequest){
   const contentChangeRequested=contentFields.some((field)=>Object.prototype.hasOwnProperty.call(b,field));
   // Published catalogue entries cannot be silently edited. Pause them first; after edits,
   // the service must be submitted for approval again before it can be published.
-  if(String(current.status)==='published'&&contentChangeRequested&&b.status!=='paused'){
+  if(String(current.status)==='published'&&contentChangeRequested){
    return NextResponse.json({success:false,code:'PUBLISHED_SERVICE_MUST_BE_PAUSED_BEFORE_EDIT'},{status:409});
   }
   if(b.status!==undefined){
