@@ -8,6 +8,7 @@ export type YcmAepsTransactionType =
 export type YcmAepsTransactionState =
   | 'initiated'
   | 'provider_processing'
+  | 'inquiry_required'
   | 'success'
   | 'failed'
   | 'reversed'
