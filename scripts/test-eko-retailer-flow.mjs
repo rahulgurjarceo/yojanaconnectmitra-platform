@@ -22,3 +22,7 @@ for(const f of files){const c=fs.readFileSync(f,'utf8');if(/f74c50a1|4CKAzpT/.te
 console.log('Eko AePS retailer/inquiry/callback contract checks passed');
 const retailer=fs.readFileSync('app/api/management/eko/retailers/route.ts','utf8');
 for(const token of ['EKO_DAILY_AUTH_DATE_INVALID','EKO_DATE_INVALID','ON CONFLICT(user_id)','INSERT INTO ycm_eko_retailer_accounts'])if(!retailer.includes(token))throw new Error('MISSING_RETAILER_HARDENING_'+token);
+const inquiryRoute=fs.readFileSync('app/api/aeps/eko/inquiry/route.ts','utf8');
+for(const token of ["status IN ('success','failed','reversed') AND status<>$1","const persistedStatus=String(saved?.status??'')","applyLedgerForPersistedStatus(persistedStatus,saved,result)","last_inquired_at=NOW()","TRANSACTION_NOT_FOUND"])if(!inquiryRoute.includes(token))throw new Error('MISSING_INQUIRY_REPLAY_GUARD_'+token);
+if(inquiryRoute.includes("reverseFinancialTransaction('aeps:'+tx.client_ref_id).catch(()=>null)"))throw new Error('INQUIRY_REVERSAL_ERRORS_MUST_NOT_BE_SILENTLY_SWALLOWED');
+console.log('Eko inquiry terminal-state and ledger-replay checks passed');
