@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 const route=await fs.readFile('app/api/integrations/eko/aeps/callback/route.ts','utf8');
 assert.match(route,/existingStatus=String\(tx\.status/);
+assert.match(route,/v==='2'\|\|v==='5'\?'provider_processing'/,'EKO in-progress provider statuses must not be treated as unknown');
 const amountGuard=route.indexOf("EKO_CALLBACK_AMOUNT_MISMATCH");
 const replayGuard=route.indexOf("includes(existingStatus)");
 assert.ok(amountGuard>=0&&replayGuard>=0&&amountGuard<replayGuard,'amount validation must precede terminal replay shortcut');
