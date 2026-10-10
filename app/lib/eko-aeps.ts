@@ -22,9 +22,8 @@ function mapState(txStatus:string|number|undefined):YcmAepsResult['state']{
  const v=String(txStatus??'');
  if(v==='0')return 'success';
  if(v==='1')return 'failed';
- if(v==='2'||v==='5')return 'provider_processing';
- if(v==='3'||v==='4')return 'reversed';
- return 'provider_processing';
+ if(v==='2')return 'inquiry_required';
+ return 'inquiry_required';
 }
 
 export type EkoAepsInput=YcmAepsRequest&{
