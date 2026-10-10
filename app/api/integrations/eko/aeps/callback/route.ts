@@ -6,7 +6,7 @@ import {recordSuccessfulFinancialTransaction,reverseFinancialTransaction} from '
 export const runtime='nodejs';
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:8,prepare:false,connect_timeout:10,idle_timeout:20}):null};
 type Detail={client_ref_id?:string;request_hash_params?:string[];data?:Record<string,unknown>;response?:{data?:Record<string,unknown>;message?:string}};
-const finalStatus=(v:string)=>v==='0'?'success':v==='1'?'failed':v==='3'||v==='4'?'reversed':'inquiry_required';
+const finalStatus=(v:string)=>v==='0'?'success':v==='1'?'failed':v==='2'||v==='5'?'provider_processing':v==='3'||v==='4'?'reversed':'inquiry_required';
 export async function OPTIONS(){return new NextResponse(null,{status:204,headers:{'Access-Control-Allow-Origin':'https://stagegateway.eko.in','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'}});}
 const callbackAuthorized=(r:NextRequest)=>{const configured=process.env.EKO_CALLBACK_SHARED_SECRET||'';const supplied=r.headers.get('x-eko-callback-secret')||'';return !!configured&&supplied.length===configured.length&&timingSafeEqual(Buffer.from(supplied),Buffer.from(configured));};
 export async function POST(r:NextRequest){
