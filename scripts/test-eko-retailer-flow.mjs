@@ -26,3 +26,7 @@ const inquiryRoute=fs.readFileSync('app/api/aeps/eko/inquiry/route.ts','utf8');
 for(const token of ["status IN ('success','failed','reversed') AND status<>$1","const persistedStatus=String(saved?.status??'')","applyLedgerForPersistedStatus(persistedStatus,saved,result)","last_inquired_at=NOW()","TRANSACTION_NOT_FOUND"])if(!inquiryRoute.includes(token))throw new Error('MISSING_INQUIRY_REPLAY_GUARD_'+token);
 if(inquiryRoute.includes("reverseFinancialTransaction('aeps:'+tx.client_ref_id).catch(()=>null)"))throw new Error('INQUIRY_REVERSAL_ERRORS_MUST_NOT_BE_SILENTLY_SWALLOWED');
 console.log('Eko inquiry terminal-state and ledger-replay checks passed');
+const initiationRoute=fs.readFileSync('app/api/aeps/eko/transactions/route.ts','utf8');
+for(const token of ["status=result.state==='success'?'success'","result.state==='inquiry_required'?'inquiry_required'","EKO_INITIATION_OUTCOME_UNCERTAIN","INQUIRE_BEFORE_RETRY","status IN ('success','failed','reversed') THEN status ELSE 'inquiry_required'"])if(!initiationRoute.includes(token))throw new Error('MISSING_UNCERTAIN_INITIATION_GUARD_'+token);
+if(!initiationRoute.includes('clientRefId:clientRef'))throw new Error('UNCERTAIN_INITIATION_MUST_RETURN_REFERENCE_FOR_INQUIRY');
+
