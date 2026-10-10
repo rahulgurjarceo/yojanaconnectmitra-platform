@@ -5,7 +5,7 @@ import {inquireEkoAepsTransaction} from '../../../../lib/eko-transaction-inquiry
 import {recordSuccessfulFinancialTransaction,reverseFinancialTransaction} from '../../../../lib/ycm-financial-ledger';
 export const runtime='nodejs';
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:8,prepare:false,connect_timeout:10,idle_timeout:20}):null};
-const map=(s:string)=>s==='0'?'success':s==='1'?'failed':s==='3'||s==='4'?'reversed':'inquiry_required';
+const map=(s:string)=>s==='0'?'success':s==='1'?'failed':'inquiry_required';
 const applyLedgerForPersistedStatus=async(status:string,tx:Record<string,unknown>,result:{providerReference?:string})=>{
  if(status==='success')await recordSuccessfulFinancialTransaction({externalReference:'aeps:'+String(tx.client_ref_id),transactionType:'aeps',serviceCode:'FIN_AEPS',agentUserId:String(tx.user_id),providerCode:'EKO',providerTransactionId:result.providerReference,grossAmountPaise:Number(tx.amount_paise)});
  if(status==='reversed')await reverseFinancialTransaction('aeps:'+String(tx.client_ref_id)).catch(e=>{if(!(e instanceof Error)||e.message!=='TRANSACTION_NOT_FOUND')throw e;});
