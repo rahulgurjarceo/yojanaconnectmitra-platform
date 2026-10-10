@@ -34,3 +34,5 @@ if(!initiationRoute.includes('clientRefId:clientRef'))throw new Error('UNCERTAIN
 if(inquiryRoute.includes('transaction:saved'))throw new Error('INQUIRY_ROUTE_MUST_NOT_RETURN_RAW_DATABASE_ROW');
 for(const token of ['clientRefId:String(saved.client_ref_id)','amountPaise:Number(saved.amount_paise)','lastInquiredAt:saved.last_inquired_at'])if(!inquiryRoute.includes(token))throw new Error('MISSING_INQUIRY_SAFE_RESPONSE_FIELD_'+token);
 console.log('Eko inquiry response allowlist checks passed');
+
+if(!inquiryRoute.includes('EKO_INQUIRY_REFERENCE_MISMATCH'))throw new Error('INQUIRY_MUST_REJECT_MISMATCHED_LOCAL_AND_PROVIDER_REFERENCES');
