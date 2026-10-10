@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
   const counts = {
     total: YCM_MODULES.length,
-    foundation: YCM_MODULES.filter(m => m.status === 'foundation').length,
+    live: YCM_MODULES.filter(m => m.status === 'live').length,
     partial: YCM_MODULES.filter(m => m.status === 'partial').length,
     planned: YCM_MODULES.filter(m => m.status === 'planned').length,
   };

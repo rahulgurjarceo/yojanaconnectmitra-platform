@@ -1,0 +1,13 @@
+'use client';
+import {useEffect,useRef,useState} from 'react';
+type Field={field_key:string;field_label:string;voice_prompt_hi?:string;voice_prompt_en?:string;field_type:string;required:boolean;sequence_no:number;options:any[]};
+export default function VoiceForm({serviceCode}:{serviceCode:string}){
+ const [fields,setFields]=useState<Field[]>([]),[values,setValues]=useState<Record<string,string>>({}),[index,setIndex]=useState(0),[listening,setListening]=useState(false);
+ const rec=useRef<any>(null);
+ useEffect(()=>{fetch('/api/ai-mitra/form-fields?serviceCode='+encodeURIComponent(serviceCode)).then(r=>r.json()).then(j=>setFields(j.fields||[])).catch(()=>{})},[serviceCode]);
+ const speak=(f?:Field)=>{if(!f||!('speechSynthesis' in window))return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(f.voice_prompt_hi||('कृपया अपना '+f.field_label+' बताइए'));u.lang='hi-IN';window.speechSynthesis.speak(u)};
+ useEffect(()=>{if(fields[index])speak(fields[index])},[index,fields]);
+ const listen=()=>{const SR=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;if(!SR)return;const r=new SR();r.lang='hi-IN';r.interimResults=false;r.onstart=()=>setListening(true);r.onend=()=>setListening(false);r.onresult=(e:any)=>{const v=e.results?.[0]?.[0]?.transcript||'';const f=fields[index];if(!f)return;setValues(x=>({...x,[f.field_key]:v}));if(index<fields.length-1)setIndex(index+1)};rec.current=r;r.start()};
+ if(!fields.length)return null;const f=fields[index];
+ return <section className="rounded-3xl border bg-white p-5 shadow-sm"><div className="text-xs font-black text-slate-500">VOICE FORM • {index+1}/{fields.length}</div><label className="mt-2 block text-xl font-black">{f.field_label}{f.required?' *':''}</label><div className="mt-3 flex gap-2"><input value={values[f.field_key]||''} onChange={e=>setValues(x=>({...x,[f.field_key]:e.target.value}))} className="flex-1 rounded-2xl border px-4 py-3" placeholder={f.field_label}/><button type="button" onClick={listen} className="rounded-2xl bg-slate-900 px-5 text-2xl text-white" aria-label="Speak">🎙️</button></div><p className="mt-3 text-sm text-slate-500">{listening?'सुन रहा हूँ…':'मैं यह field बोलकर भी समझा सकता हूँ।'}</p><div className="mt-4 flex gap-2"><button type="button" disabled={index===0} onClick={()=>setIndex(index-1)} className="rounded-xl border px-4 py-2 text-sm">पिछला</button><button type="button" onClick={()=>{if(index<fields.length-1)setIndex(index+1)}} className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-black text-white">{index===fields.length-1?'पूरा':'अगला'}</button></div></section>;
+}

@@ -20,6 +20,7 @@ export const YCM_INTEGRATION_REGISTRY = [
   { code: 'state-services', tier: 'P1', name: 'State / e-District Services', env: 'YCM_STATE_SERVICES' },
   { code: 'grievance', tier: 'P2', name: 'Government Grievance', env: 'YCM_GRIEVANCE' },
   { code: 'rnfi', tier: 'P2', name: 'AEPS / DMT / BBPS', env: 'YCM_RNFI' },
+  { code: 'aeps', tier: 'P2', name: 'AePS Provider Adapter', env: 'YCM_AEPS' },
   { code: 'insurance', tier: 'P2', name: 'Insurance', env: 'YCM_INSURANCE' },
   { code: 'loans', tier: 'P2', name: 'Loans / Finance', env: 'YCM_LOANS' },
   { code: 'jobs', tier: 'P2', name: 'Jobs', env: 'YCM_JOBS' },

@@ -1,0 +1,18 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import assert from "node:assert/strict";
+const root=process.cwd();
+const migration=await fs.readFile(path.join(root,"database/migrations/022_unified_lead_intake.sql"),"utf8");
+const api=await fs.readFile(path.join(root,"app/api/crm/leads/route.ts"),"utf8");
+for(const token of ["ycm_leads","ycm_lead_service_matches","ycm_lead_events","service_code"]) assert.match(migration,new RegExp(token));
+assert.match(migration,/ycm_service_master/);
+assert.match(migration,/converted/);
+assert.match(api,/export async function PATCH/);
+assert.match(api,/convertToCase/);
+assert.match(api,/FAMILY_REQUIRED_FOR_CASE_CONVERSION/);
+assert.match(api,/SERVICE_REQUIRED_FOR_CASE_CONVERSION/);
+assert.match(api,/INSERT INTO ycm_family_cases/);
+assert.match(api,/converted_to_case/);
+assert.match(api,/const serviceCode=/);
+console.log("UNIFIED_LEAD_INTAKE_CONTRACT_TEST: PASS");
+console.log("Checks: canonical lead schema, service matching, lifecycle PATCH, lead-to-case conversion, service validation, audit event, lint-safe service variable.");

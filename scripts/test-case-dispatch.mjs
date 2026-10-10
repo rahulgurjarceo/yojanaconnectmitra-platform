@@ -1,0 +1,35 @@
+import fs from 'node:fs/promises';
+import assert from 'node:assert/strict';
+
+const migration = await fs.readFile('database/migrations/047_case_routing.sql','utf8');
+const geographyMigration = await fs.readFile('database/migrations/048_family_operating_geography.sql','utf8');
+const route = await fs.readFile('app/api/operations/case-dispatch/route.ts','utf8');
+const service = await fs.readFile('app/lib/case-dispatch.ts','utf8');
+const resources = await fs.readFile('app/api/customer-family/resources/route.ts','utf8');
+
+assert.match(migration,/CREATE TABLE IF NOT EXISTS ycm_case_routing_rules/);
+assert.match(migration,/sla_minutes INTEGER NOT NULL DEFAULT 1440/);
+assert.match(migration,/team_id UUID NOT NULL REFERENCES ycm_teams/);
+assert.match(migration,/CHECK \(service_code IS NOT NULL OR business_domain_code IS NOT NULL\)/);
+assert.match(geographyMigration,/ADD COLUMN IF NOT EXISTS state_code VARCHAR\(32\)/);
+assert.match(geographyMigration,/ADD COLUMN IF NOT EXISTS district_code VARCHAR\(32\)/);
+assert.match(geographyMigration,/ADD COLUMN IF NOT EXISTS block_code VARCHAR\(32\)/);
+assert.match(service,/LEFT JOIN ycm_service_applications a ON a.application_id=c.application_id/);
+assert.match(service,/a\.service_code AS application_service_code/);
+assert.doesNotMatch(service,/\bc\.service_code\b/);
+assert.match(service,/ycm_case_routing_rules/);
+assert.match(service,/state_code/);
+assert.match(service,/district_code/);
+assert.match(service,/block_code/);
+assert.match(service,/ORDER BY CASE WHEN r\.service_code IS NOT NULL AND r\.service_code=\$\{serviceCode\} THEN 0 ELSE 1 END,[\s\S]*CASE WHEN r\.block_code IS NOT NULL AND r\.block_code=\$\{blockCode\} THEN 0[\s\S]*WHEN r\.district_code IS NOT NULL AND r\.district_code=\$\{districtCode\} THEN 1[\s\S]*WHEN r\.state_code IS NOT NULL AND r\.state_code=\$\{stateCode\} THEN 2 ELSE 3 END/);
+assert.match(service,/r\.priority DESC,r\.team_id,r\.rule_id/);
+assert.match(service,/loadDelta/);
+assert.match(service,/candidatesByTeam/);
+assert.doesNotMatch(service,/LIMIT 20`/);
+assert.match(service,/open_count/);
+assert.match(service,/NO_ROUTING_TEAM/);
+assert.match(service,/ycm_case_timeline/);
+assert.match(route,/dispatchCase/);
+assert.match(resources,/dispatchCase/);
+assert.match(resources,/dispatchPending/);
+console.log('CASE_DISPATCH_ROUTING_CONTRACT_TEST: PASS');

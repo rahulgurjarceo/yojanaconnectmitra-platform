@@ -1,12 +1,28 @@
-import fs from 'node:fs';
+import fs from 'node:fs/promises';
+import assert from 'node:assert/strict';
 
-const path='app/api/integrations/eko/aeps/callback/route.ts';
-const source=fs.readFileSync(path,'utf8');
-
-if(!source.includes("status IN ('success','failed','reversed') AND status<>$1")) {
-  throw new Error('EKO callback must not downgrade a terminal transaction state');
-}
-if(!source.includes("WHERE eko_transaction_id=$6 RETURNING *")) {
-  throw new Error('EKO callback must update by immutable provider transaction id');
-}
-console.log('EKO callback terminal-state replay contract: PASS');
+const route=await fs.readFile('app/api/integrations/eko/aeps/callback/route.ts','utf8');
+assert.match(route,/existingStatus=String\(tx\.status/);
+assert.match(route,/const finalStatus=\(v:string\)=>v==='0'\?'success':v==='1'\?'failed':'inquiry_required'/,'Only documented EKO AePS success/failure statuses may become terminal');
+const amountGuard=route.indexOf("EKO_CALLBACK_AMOUNT_MISMATCH");
+const replayGuard=route.indexOf("includes(existingStatus)");
+assert.ok(amountGuard>=0&&replayGuard>=0&&amountGuard<replayGuard,'amount validation must precede terminal replay shortcut');
+assert.match(route,/\['success','failed','reversed'\]\.includes\(existingStatus\)/);
+assert.match(route,/idempotent:true/);
+assert.match(route,/recordSuccessfulFinancialTransaction/);
+assert.match(route,/reverseFinancialTransaction/);
+assert.match(route,/client_ref_id=\$1 LIMIT 1/);
+assert.match(route,/status IN/);
+assert.match(route,/'success','failed','reversed'/);
+assert.match(route,/status<>/);
+assert.match(route,/persistedStatus=String\(saved\?\.status\?\?''\)/);
+assert.match(route,/if\(terminalStatus==='success'\)await recordSuccessfulFinancialTransaction/);
+assert.match(route,/if\(terminalStatus==='reversed'\)await reverseFinancialTransaction/);
+assert.match(route,/if\(terminalStatus==='success'\)await recordSuccessfulFinancialTransaction/,'replayed success must retry idempotent ledger credit');
+assert.match(route,/if\(terminalStatus==='reversed'\)await reverseFinancialTransaction/,'replayed reversal must retry ledger reversal');
+assert.match(route,/await applyLedgerForTerminalStatus\(existingStatus,tx\)/,'terminal replay must reconcile ledger side effects');
+assert.match(route,/await applyLedgerForTerminalStatus\(persistedStatus,saved\)/,'race-lost callback must reconcile ledger side effects for persisted status');
+assert.match(route,/persistedStatus!==status/);
+assert.match(route,/\$1/);
+assert.match(route,/WHERE eko_transaction_id=\$6 RETURNING \*/);
+console.log('AEPS_CALLBACK_REPLAY_CONTRACT_TEST: PASS');

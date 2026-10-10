@@ -20,8 +20,10 @@ export async function GET(request: NextRequest) {
   const serviceCode = url.searchParams.get('serviceCode');
   if (!familyId || !serviceCode) return NextResponse.json({ success: false, code: 'FAMILY_ID_AND_SERVICE_CODE_REQUIRED' }, { status: 400 });
 
-  const privileged = ['ceo', 'admin', 'management', 'employee', 'partner', 'referral'].includes(session.role);
-  if (!privileged && session.familyId !== familyId) {
+  // Only platform leadership may inspect an arbitrary family's requirements.
+  // Employees/partners/referrals need an explicit assignment contract before cross-family access.
+  const managementRoles = ['ceo', 'admin', 'management'];
+  if (!managementRoles.includes(session.role) && session.familyId !== familyId) {
     return NextResponse.json({ success: false, code: 'FAMILY_ACCESS_DENIED' }, { status: 403 });
   }
 

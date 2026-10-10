@@ -1,0 +1,75 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import assert from "node:assert/strict";
+
+const ui = await fs.readFile(path.join(process.cwd(), "app/command-center/page.tsx"), "utf8");
+assert.match(ui, /\/api\/impact-proof\/health/);
+assert.match(ui, /health\?\.ready/);
+assert.match(ui, /databaseConfigured/);
+assert.match(ui, /DATABASE_NOT_CONFIGURED/);
+assert.match(ui, /All Impact tables detected/);
+assert.match(ui, /YCM_LIFECYCLE/);
+assert.match(ui, /Impact & Proof/);
+assert.match(ui, /State.*District.*Block/);
+assert.match(ui, /selectedState/);
+assert.match(ui, /selectedDistrict/);
+assert.match(ui, /Refresh live data/);
+assert.match(ui, /loadCommandCenter/);
+assert.match(ui, /Last refreshed/);
+assert.match(ui, /\/impact-proof\/packet\?district=/);
+assert.match(ui, /\/api\/ceo\/entity-kpi/);
+assert.match(ui, /EntityKpiPanel/);
+assert.match(ui, /Revenue/);
+assert.match(ui, /Commission/);
+assert.match(ui, /completed_transactions/);
+assert.match(ui, /GrowthAdvisor/);
+assert.match(ui, /Personal Advisor/);
+assert.match(ui, /Business Health/);
+assert.match(ui, /\/api\/ceo\/growth-advisor/);
+console.log("CONTRACT_TEST_PASS");
+
+assert.match(ui, /EmployeeKpiPanel/);
+assert.match(ui, /\/api\/ceo\/employee-kpi/);
+assert.match(ui, /Login h/);
+assert.match(ui, /Calls in/);
+assert.match(ui, /Calls out/);
+assert.match(ui, /Disconnected/);
+assert.match(ui, /Messages sent/);
+assert.match(ui, /Leave/);
+
+assert.match(ui, /\/api\/ceo\/employee-compensation/);
+assert.match(ui, /Salary.*Target.*Commission.*Attendance/);
+assert.match(ui, /Earned commission/);
+assert.match(ui, /Paid commission/);
+const telemetry = await fs.readFile(path.join(process.cwd(), "app/api/integrations/employee-telemetry/route.ts"), "utf8");
+assert.match(telemetry, /YCM_TELEMETRY_WEBHOOK_SECRET/);
+assert.match(telemetry, /WEBHOOK_UNAUTHORIZED/);
+assert.match(telemetry, /providerCallId/);
+assert.match(telemetry, /providerMessageId/);
+assert.match(telemetry, /ON CONFLICT/);
+console.log("CONTRACT_TEST_PASS");
+
+const compensationApi = await fs.readFile(path.join(process.cwd(), "app/api/ceo/employee-compensation/route.ts"), "utf8");
+assert.match(compensationApi, /target_achievement_pct/);
+assert.match(compensationApi, /task_completion_pct/);
+assert.match(compensationApi, /attendance_pct/);
+assert.match(compensationApi, /worked_hours/);
+assert.match(ui, /Target %/);
+assert.match(ui, /Task %/);
+assert.match(ui, /Attendance %/);
+console.log("CONTRACT_TEST_PASS");
+
+const pageSource = await fs.readFile(path.join(process.cwd(), "app/command-center/page.tsx"), "utf8");
+assert.equal((pageSource.match(/<EmployeeKpiPanel\/>/g)||[]).length, 1);
+assert.doesNotMatch(pageSource, /<EmployeeCompensationPanel\/>/);
+assert.match(pageSource, /Single Matrix/);
+assert.match(pageSource, /Salary/);
+assert.match(pageSource, /Target %/);
+assert.match(pageSource, /Attendance %/);
+console.log("CONTRACT_TEST_PASS");
+
+const accessControl = await fs.readFile(path.join(process.cwd(), "app/lib/ycm-access-control.ts"), "utf8");
+assert.match(accessControl, /team_lead/);
+assert.match(accessControl, /attendance:team/);
+assert.match(accessControl, /work:team/);
+console.log("ORG_RBAC_CONTRACT_TEST: PASS");

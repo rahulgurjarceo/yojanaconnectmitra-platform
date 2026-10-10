@@ -75,9 +75,12 @@ export async function POST(request: NextRequest) {
   }
 
   const managementRoles = ['ceo', 'admin', 'management'];
-  const serviceRoles = ['employee', 'partner', 'referral'];
 
-  if (!managementRoles.includes(session.role) && !serviceRoles.includes(session.role) && session.familyId !== body.familyId) {
+  // Sensitive family/member/document data must never be exposed by role alone.
+  // Non-management sessions may evaluate only their own authenticated family.
+  // Partner/employee/referral scoping will be re-enabled only after an explicit
+  // assignment/scope contract exists for this endpoint.
+  if (!managementRoles.includes(session.role) && session.familyId !== body.familyId) {
     return NextResponse.json({ success: false, code: 'FAMILY_ACCESS_DENIED' }, { status: 403 });
   }
 

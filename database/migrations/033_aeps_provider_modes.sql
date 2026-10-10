@@ -1,0 +1,19 @@
+-- YCM One AEPS provider/device/authentication capability layer.
+CREATE TABLE IF NOT EXISTS ycm_aeps_provider_configs (
+ provider_code TEXT PRIMARY KEY, display_name TEXT NOT NULL, enabled BOOLEAN NOT NULL DEFAULT FALSE, environment TEXT NOT NULL DEFAULT 'production',
+ cash_withdrawal BOOLEAN NOT NULL DEFAULT TRUE, cash_deposit BOOLEAN NOT NULL DEFAULT FALSE, balance_enquiry BOOLEAN NOT NULL DEFAULT TRUE, mini_statement BOOLEAN NOT NULL DEFAULT TRUE,
+ fingerprint BOOLEAN NOT NULL DEFAULT FALSE, face BOOLEAN NOT NULL DEFAULT FALSE, iris BOOLEAN NOT NULL DEFAULT FALSE, api_configured BOOLEAN NOT NULL DEFAULT FALSE,
+ metadata JSONB NOT NULL DEFAULT '{}'::jsonb, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+INSERT INTO ycm_aeps_provider_configs(provider_code,display_name,enabled,environment,fingerprint,face,iris,api_configured,metadata) VALUES
+('SPICE_MONEY','Spice Money',TRUE,'production',TRUE,TRUE,TRUE,FALSE,'{"source":"provider-capability-config","face_requires_provider_enablement":true}'::jsonb),
+('EKO','Eko',FALSE,'uat',TRUE,FALSE,FALSE,FALSE,'{"source":"future-provider-adapter"}'::jsonb)
+ON CONFLICT (provider_code) DO UPDATE SET display_name=EXCLUDED.display_name,enabled=EXCLUDED.enabled,environment=EXCLUDED.environment,fingerprint=EXCLUDED.fingerprint,face=EXCLUDED.face,iris=EXCLUDED.iris,updated_at=NOW();
+CREATE TABLE IF NOT EXISTS ycm_aeps_devices (device_id BIGSERIAL PRIMARY KEY,user_id UUID NOT NULL REFERENCES ycm_users(id) ON DELETE CASCADE,device_type TEXT NOT NULL CHECK (device_type IN ('mantra','morpho','startek','secugen','other')),provider_code TEXT NOT NULL REFERENCES ycm_aeps_provider_configs(provider_code),rd_service_name TEXT,device_identifier_hash TEXT,status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','active','suspended','revoked')),last_tested_at TIMESTAMPTZ,metadata JSONB NOT NULL DEFAULT '{}'::jsonb,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),UNIQUE(user_id,provider_code,device_identifier_hash));
+CREATE INDEX IF NOT EXISTS idx_ycm_aeps_devices_user ON ycm_aeps_devices(user_id,status);
+CREATE TABLE IF NOT EXISTS ycm_aeps_auth_attempts (auth_attempt_id BIGSERIAL PRIMARY KEY,user_id UUID NOT NULL REFERENCES ycm_users(id) ON DELETE CASCADE,provider_code TEXT NOT NULL REFERENCES ycm_aeps_provider_configs(provider_code),authentication_mode TEXT NOT NULL CHECK (authentication_mode IN ('fingerprint','face','iris')),transaction_id TEXT,status TEXT NOT NULL CHECK (status IN ('initiated','submitted','success','failed','unsupported','expired')),provider_reference TEXT,failure_code TEXT,metadata JSONB NOT NULL DEFAULT '{}'::jsonb,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),completed_at TIMESTAMPTZ);
+CREATE INDEX IF NOT EXISTS idx_ycm_aeps_auth_attempts_user ON ycm_aeps_auth_attempts(user_id,created_at DESC);
+CREATE TABLE IF NOT EXISTS ycm_aeps_provider_routes (route_id BIGSERIAL PRIMARY KEY,provider_code TEXT NOT NULL REFERENCES ycm_aeps_provider_configs(provider_code),authentication_mode TEXT NOT NULL CHECK (authentication_mode IN ('fingerprint','face','iris')),transaction_type TEXT NOT NULL CHECK (transaction_type IN ('cash_withdrawal','cash_deposit','balance_enquiry','mini_statement','aadhaar_to_aadhaar_transfer')),enabled BOOLEAN NOT NULL DEFAULT TRUE,priority INTEGER NOT NULL DEFAULT 100,UNIQUE(provider_code,authentication_mode,transaction_type));
+INSERT INTO ycm_aeps_provider_routes(provider_code,authentication_mode,transaction_type,enabled,priority) VALUES
+('SPICE_MONEY','fingerprint','cash_withdrawal',TRUE,10),('SPICE_MONEY','face','cash_withdrawal',TRUE,20),('SPICE_MONEY','iris','cash_withdrawal',TRUE,30),
+('SPICE_MONEY','fingerprint','balance_enquiry',TRUE,10),('SPICE_MONEY','face','balance_enquiry',TRUE,20),('SPICE_MONEY','iris','balance_enquiry',TRUE,30),
+('SPICE_MONEY','fingerprint','mini_statement',TRUE,10),('SPICE_MONEY','face','mini_statement',TRUE,20),('SPICE_MONEY','iris','mini_statement',TRUE,30) ON CONFLICT DO NOTHING;
