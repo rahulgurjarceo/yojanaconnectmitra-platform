@@ -16,7 +16,7 @@ assert.match(route,/status IN/);
 assert.match(route,/'success','failed','reversed'/);
 assert.match(route,/status<>/);
 assert.match(route,/persistedStatus=String\(saved\?\.status\?\?''\)/);
-assert.match(route,/if\(persistedStatus==='success'\)await recordSuccessfulFinancialTransaction/);
+assert.match(route,/if\(terminalStatus==='success'\)await recordSuccessfulFinancialTransaction/);
 assert.match(route,/if\(terminalStatus==='reversed'\)await reverseFinancialTransaction/);
 assert.match(route,/if\(terminalStatus==='success'\)await recordSuccessfulFinancialTransaction/,'replayed success must retry idempotent ledger credit');
 assert.match(route,/if\(terminalStatus==='reversed'\)await reverseFinancialTransaction/,'replayed reversal must retry ledger reversal');
