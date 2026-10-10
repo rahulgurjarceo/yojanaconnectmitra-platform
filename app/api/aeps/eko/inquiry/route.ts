@@ -18,6 +18,7 @@ export async function POST(r:NextRequest){
   const user=(await sql.unsafe('SELECT id FROM ycm_users WHERE user_id=$1 LIMIT 1',[s.sub]))[0];if(!user)return NextResponse.json({success:false,code:'USER_NOT_FOUND'},{status:404});
   const tx=(await sql.unsafe('SELECT * FROM ycm_eko_aeps_transactions WHERE '+(b.clientRefId?'client_ref_id=$1':'eko_tid=$1')+' AND user_id=$2 LIMIT 1',[b.clientRefId??b.tid,user.id]))[0];
   if(!tx)return NextResponse.json({success:false,code:'EKO_TRANSACTION_NOT_FOUND'},{status:404});
+  if(b.clientRefId&&b.tid&&String(tx.eko_tid??'')!==b.tid)return NextResponse.json({success:false,code:'EKO_INQUIRY_REFERENCE_MISMATCH'},{status:400});
   const result=await inquireEkoAepsTransaction({clientRefId:b.clientRefId,tid:b.tid??tx.eko_tid,ekoUserCode:tx.eko_user_code});
   const requestedStatus=map(result.txStatus);
   const saved=(await sql.unsafe(`UPDATE ycm_eko_aeps_transactions
