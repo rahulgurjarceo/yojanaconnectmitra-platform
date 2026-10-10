@@ -36,3 +36,8 @@ for(const token of ['clientRefId:String(saved.client_ref_id)','amountPaise:Numbe
 console.log('Eko inquiry response allowlist checks passed');
 
 if(!inquiryRoute.includes('EKO_INQUIRY_REFERENCE_MISMATCH'))throw new Error('INQUIRY_MUST_REJECT_MISMATCHED_LOCAL_AND_PROVIDER_REFERENCES');
+
+const legacyCallback=fs.readFileSync('app/api/aeps/eko/callback/route.ts','utf8');
+if(!legacyCallback.includes("return 'inquiry_required';"))throw new Error('LEGACY_EKO_CALLBACK_UNKNOWN_STATUS_MUST_REQUIRE_INQUIRY');
+if(legacyCallback.includes("v==='3'||v==='4'||v==='reversed')return 'reversed'"))throw new Error('LEGACY_EKO_CALLBACK_MUST_NOT_INFER_REVERSAL_FROM_UNVERIFIED_STATUS');
+console.log('Legacy EKO callback conservative-status checks passed');
