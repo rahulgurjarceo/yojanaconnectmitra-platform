@@ -30,3 +30,7 @@ const initiationRoute=fs.readFileSync('app/api/aeps/eko/transactions/route.ts','
 for(const token of ["status=result.state==='success'?'success'","result.state==='inquiry_required'?'inquiry_required'","EKO_INITIATION_OUTCOME_UNCERTAIN","INQUIRE_BEFORE_RETRY","status IN ('success','failed','reversed') THEN status ELSE 'inquiry_required'"])if(!initiationRoute.includes(token))throw new Error('MISSING_UNCERTAIN_INITIATION_GUARD_'+token);
 if(!initiationRoute.includes('clientRefId:clientRef'))throw new Error('UNCERTAIN_INITIATION_MUST_RETURN_REFERENCE_FOR_INQUIRY');
 
+
+if(inquiryRoute.includes('transaction:saved'))throw new Error('INQUIRY_ROUTE_MUST_NOT_RETURN_RAW_DATABASE_ROW');
+for(const token of ['clientRefId:String(saved.client_ref_id)','amountPaise:Number(saved.amount_paise)','lastInquiredAt:saved.last_inquired_at'])if(!inquiryRoute.includes(token))throw new Error('MISSING_INQUIRY_SAFE_RESPONSE_FIELD_'+token);
+console.log('Eko inquiry response allowlist checks passed');
