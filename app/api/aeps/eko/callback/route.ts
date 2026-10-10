@@ -7,7 +7,7 @@ export const runtime='nodejs';
 function db(){const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:4,prepare:false,connect_timeout:10,idle_timeout:20}):null;}
 function signature(raw:string){const secret=process.env.EKO_CALLBACK_SECRET;if(!secret)throw new Error('EKO_CALLBACK_SECRET_NOT_CONFIGURED');return createHmac('sha256',secret).update(raw).digest('hex');}
 function validSignature(raw:string,provided:string){const expected=signature(raw);const a=Buffer.from(expected,'utf8');const b=Buffer.from(provided,'utf8');return a.length===b.length&&timingSafeEqual(a,b);}
-function mapStatus(v:string){if(v==='0'||v==='success')return 'success';if(v==='1'||v==='failed')return 'failed';if(v==='3'||v==='4'||v==='reversed')return 'reversed';return 'provider_processing';}
+function mapStatus(v:string){if(v==='0'||v==='success')return 'success';if(v==='1'||v==='failed')return 'failed';return 'inquiry_required';}
 const terminal=new Set(['success','failed','reversed']);
 
 export async function POST(request:NextRequest){
