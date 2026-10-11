@@ -16,3 +16,11 @@ if(!c.includes("const hashValues=[input.aadhaarForRequestHash,amount,userCode]")
 if(!c.includes("EKO_AADHAAR_HASH_VALUE_INVALID"))throw new Error('EKO_REQUEST_HASH_MUST_VALIDATE_TRANSIENT_AADHAAR');
 if(!read('app/api/aeps/eko/transactions/route.ts').includes('aadhaarForRequestHash:b.aadhaarForRequestHash!'))throw new Error('EKO_INITIATION_MUST_PASS_TRANSIENT_AADHAAR_HASH_VALUE');
 console.log('EKO documented request-hash sequence checks passed.');
+
+if(c.includes('aadhaar_to_aadhaar_transfer:5'))throw new Error('EKO_SERVICE_TYPE_5_MUST_NOT_BE_MISLABELED_AS_AADHAAR_TO_AADHAAR_TRANSFER');
+if(!c.includes("input.transactionType==='balance_enquiry'||input.transactionType==='mini_statement'?'0'"))throw new Error('EKO_NON_CASH_SERVICE_AMOUNT_MUST_BE_ZERO');
+const initiationRoute=read('app/api/aeps/eko/transactions/route.ts');
+if(!initiationRoute.includes('EKO_AEPS_TRANSACTION_TYPE_UNSUPPORTED'))throw new Error('UNSUPPORTED_EKO_AEPS_TRANSACTION_TYPE_MUST_BE_REJECTED');
+if(!initiationRoute.includes('AEPS_NON_CASH_AMOUNT_MUST_BE_ZERO'))throw new Error('NON_CASH_AEPS_AMOUNT_MUST_BE_ZERO');
+if(!/^\\d{12}$/.test('123456789012'))throw new Error('TEST_RUNTIME_REGEX_SANITY_FAILED');
+console.log('EKO service-type and non-cash amount checks passed.');
