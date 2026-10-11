@@ -50,3 +50,7 @@ const callbackDto=callback.slice(callback.indexOf('const callbackTransactionDto'
 if(!callbackDto.includes('clientRefId:String(tx.client_ref_id??\'\')')||callback.includes('transaction:saved')||callback.includes('transaction:tx'))throw new Error('EKO_CALLBACK_MUST_RETURN_ALLOWLISTED_TRANSACTION_FIELDS');
 if(callback.includes("code:e instanceof Error?e.message"))throw new Error('EKO_CALLBACK_MUST_NOT_EXPOSE_RAW_ERROR_MESSAGES');
 console.log('Eko callback response/error allowlist checks passed');
+
+if(initiationRoute.includes('transaction:saved'))throw new Error('EKO_INITIATION_MUST_NOT_RETURN_RAW_DATABASE_ROW');
+for(const token of ['clientRefId:String(saved.client_ref_id)','amountPaise:Number(saved.amount_paise)','providerReference:saved.eko_tid'])if(!initiationRoute.includes(token))throw new Error('MISSING_INITIATION_RESPONSE_ALLOWLIST_'+token);
+console.log('Eko initiation response allowlist checks passed');
