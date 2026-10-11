@@ -1,4 +1,5 @@
 import {createHmac} from 'node:crypto';
+import postgres from 'postgres';
 import type {YcmAepsProvider,YcmAepsRequest,YcmAepsResult,YcmAepsTransactionType} from './ycm-aeps';
 
 const SERVICE_TYPE:Partial<Record<YcmAepsTransactionType,number>>={cash_withdrawal:2,balance_enquiry:3,mini_statement:4,aadhaar_to_aadhaar_transfer:5};
@@ -72,6 +73,29 @@ export class EkoAepsProvider implements YcmAepsProvider{
 
  async status(transactionId:string):Promise<YcmAepsResult>{
   if(!transactionId)throw new Error('EKO_TRANSACTION_ID_REQUIRED');
-  throw new Error('EKO_AEPS_STATUS_REQUIRES_TRANSACTION_INQUIRY_ADAPTER');
+  const databaseUrl=process.env.DATABASE_URL||process.env.POSTGRES_URL;
+  if(!databaseUrl)throw new Error('DATABASE_NOT_CONFIGURED');
+  const sql=postgres(databaseUrl,{max:1,prepare:false,connect_timeout:10,idle_timeout:5});
+  try{
+   const row=(await sql.unsafe(
+    'SELECT client_ref_id,eko_tid,eko_user_code FROM ycm_eko_aeps_transactions WHERE client_ref_id=$1 OR eko_tid=$1 LIMIT 1',
+    [transactionId]
+   ))[0];
+   if(!row)throw new Error('EKO_TRANSACTION_NOT_FOUND');
+   if(!row.eko_user_code)throw new Error('EKO_RETAILER_USER_CODE_REQUIRED');
+   // Load lazily to avoid a module-initialization cycle: the inquiry adapter uses
+   // ekoSecurityHeaders from this module.
+   const {inquireEkoAepsTransaction}=await import('./eko-transaction-inquiry');
+   const result=await inquireEkoAepsTransaction({
+    ...(String(row.eko_tid??'')===transactionId?{tid:transactionId}:{clientRefId:String(row.client_ref_id)}),
+    ekoUserCode:String(row.eko_user_code)
+   });
+   return {
+    state:mapState(result.txStatus),
+    providerReference:result.providerReference||result.bankReference,
+    message:result.message,
+    metadata:{txStatus:result.txStatus,bankReference:result.bankReference}
+   };
+  }finally{await sql.end({timeout:3});}
  }
 }
