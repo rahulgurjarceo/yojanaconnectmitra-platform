@@ -60,7 +60,7 @@ export class EkoAepsProvider implements YcmAepsProvider{
    latlong:input.latLong,
    source_ip:input.sourceIp,
   };
-  if(!/^\\d{12}$/.test(input.aadhaarForRequestHash))throw new Error('EKO_AADHAAR_HASH_VALUE_INVALID');
+  if(!/^\d{12}$/.test(input.aadhaarForRequestHash))throw new Error('EKO_AADHAAR_HASH_VALUE_INVALID');
   // EKO's documented AePS request_hash sequence is timestamp + plaintext Aadhaar + amount + user_code.
   // This value is transient and is deliberately excluded from the provider body and all persistence.
   const hashValues=[input.aadhaarForRequestHash,amount,userCode];
