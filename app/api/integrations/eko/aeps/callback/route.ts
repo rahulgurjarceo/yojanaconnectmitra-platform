@@ -7,6 +7,12 @@ export const runtime='nodejs';
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:8,prepare:false,connect_timeout:10,idle_timeout:20}):null};
 type Detail={client_ref_id?:string;request_hash_params?:string[];data?:Record<string,unknown>;response?:{data?:Record<string,unknown>;message?:string}};
 const finalStatus=(v:string)=>v==='0'?'success':v==='1'?'failed':'inquiry_required';
+const callbackTransactionDto=(tx:Record<string,unknown>)=>({
+ clientRefId:String(tx.client_ref_id??''),
+ status:String(tx.status??''),
+ providerReference:tx.eko_tid??null,
+ bankReference:tx.bank_reference??null,
+});
 export async function OPTIONS(){return new NextResponse(null,{status:204,headers:{'Access-Control-Allow-Origin':'https://stagegateway.eko.in','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'}});}
 const callbackAuthorized=(r:NextRequest)=>{const configured=process.env.EKO_CALLBACK_SHARED_SECRET||'';const supplied=r.headers.get('x-eko-callback-secret')||'';return !!configured&&supplied.length===configured.length&&timingSafeEqual(Buffer.from(supplied),Buffer.from(configured));};
 export async function POST(r:NextRequest){
@@ -41,7 +47,7 @@ export async function POST(r:NextRequest){
   };
   if(['success','failed','reversed'].includes(existingStatus)){
    await applyLedgerForTerminalStatus(existingStatus,tx);
-   return NextResponse.json({success:true,status:existingStatus,idempotent:true,transaction:tx});
+   return NextResponse.json({success:true,status:existingStatus,idempotent:true,transaction:callbackTransactionDto(tx)});
   }
   const saved=(await sql.unsafe(`UPDATE ycm_eko_aeps_transactions SET status=CASE WHEN status IN ('success','failed','reversed') AND status<>$1 THEN status ELSE $1 END,eko_tid=COALESCE($2,eko_tid),bank_reference=COALESCE($3,bank_reference),provider_message=$4,provider_payload=provider_payload || $5::jsonb,final_at=CASE WHEN status IN ('success','failed','reversed') THEN final_at WHEN $1 IN ('success','failed','reversed') THEN NOW() ELSE final_at END,updated_at=NOW() WHERE eko_transaction_id=$6 RETURNING *`,[status,data.tid??null,data.bank_ref_num??null,String(detail?.response?.message??data.reason??''),JSON.stringify({ekoResponse:body}),tx.eko_transaction_id]))[0];
   // Concurrent callbacks can race after the initial read. Only the state persisted by the
@@ -49,8 +55,13 @@ export async function POST(r:NextRequest){
   const persistedStatus=String(saved?.status??'');
   if(['success','failed','reversed'].includes(persistedStatus)){
    await applyLedgerForTerminalStatus(persistedStatus,saved);
-   if(persistedStatus!==status)return NextResponse.json({success:true,status:persistedStatus,idempotent:true,transaction:saved});
+   if(persistedStatus!==status)return NextResponse.json({success:true,status:persistedStatus,idempotent:true,transaction:callbackTransactionDto(saved)});
   }
-  return NextResponse.json({success:true,status:persistedStatus||status,transaction:saved});
- }catch(e){return NextResponse.json({success:false,code:e instanceof Error?e.message:'EKO_CALLBACK_FAILED'},{status:400});}finally{await sql.end({timeout:3});}
+  return NextResponse.json({success:true,status:persistedStatus||status,transaction:callbackTransactionDto(saved)});
+ }catch(e){
+  const message=e instanceof Error?e.message:'';
+  const knownCodes=new Set(['DATABASE_NOT_CONFIGURED','EKO_CALLBACK_ACTION_UNSUPPORTED','EKO_CLIENT_REF_REQUIRED','EKO_TRANSACTION_NOT_FOUND','EKO_RETAILER_BINDING_INVALID','EKO_CALLBACK_AMOUNT_MISMATCH','EKO_ACCESS_KEY_NOT_CONFIGURED','EKO_INITIATOR_ID_NOT_CONFIGURED','EKO_BASE_URL_NOT_CONFIGURED','EKO_DEVELOPER_KEY_NOT_CONFIGURED']);
+  const code=knownCodes.has(message)?message:'EKO_CALLBACK_FAILED';
+  return NextResponse.json({success:false,code},{status:500});
+ }finally{await sql.end({timeout:3});}
 }
