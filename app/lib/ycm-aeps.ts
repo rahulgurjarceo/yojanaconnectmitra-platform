@@ -23,6 +23,8 @@ export type YcmAepsRequest = {
   metadata?: Record<string, unknown>;
   /** Provider-specific AEPS payload fields; required by EKO when used. */
   aadhaarEncrypted?: string;
+  /** Transient plaintext Aadhaar used only to generate EKO request_hash; never persist or log. */
+  aadhaarForRequestHash?: string;
   pidData?: string;
   bankCode?: string;
   customerMobile?: string;
