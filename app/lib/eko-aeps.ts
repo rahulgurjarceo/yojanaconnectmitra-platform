@@ -29,6 +29,7 @@ function mapState(txStatus:string|number|undefined):YcmAepsResult['state']{
 
 export type EkoAepsInput=YcmAepsRequest&{
  aadhaarEncrypted:string;
+ aadhaarForRequestHash:string;
  pidData:string;
  bankCode:string;
  customerMobile:string;
@@ -59,7 +60,10 @@ export class EkoAepsProvider implements YcmAepsProvider{
    latlong:input.latLong,
    source_ip:input.sourceIp,
   };
-  const hashValues=input.transactionType==='cash_withdrawal'?[input.customerMobile,amount,userCode]:[input.customerMobile,userCode];
+  if(!/^\\d{12}$/.test(input.aadhaarForRequestHash))throw new Error('EKO_AADHAAR_HASH_VALUE_INVALID');
+  // EKO's documented AePS request_hash sequence is timestamp + plaintext Aadhaar + amount + user_code.
+  // This value is transient and is deliberately excluded from the provider body and all persistence.
+  const hashValues=[input.aadhaarForRequestHash,amount,userCode];
   const requestHash=ekoRequestHash(timestamp,hashValues);
   const response=await fetch(env('EKO_BASE_URL')+'/ekoapi/v2/aeps',{
    method:'POST',
