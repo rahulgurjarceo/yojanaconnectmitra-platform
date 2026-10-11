@@ -11,6 +11,8 @@ export async function POST(r:NextRequest){
  const s=verifySession(r.cookies.get(sessionCookieName())?.value);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
  const b=await r.json().catch(()=>null) as {transactionType?:'cash_withdrawal'|'balance_enquiry'|'mini_statement'|'aadhaar_to_aadhaar_transfer';amountPaise?:number;customerMobile?:string;bankCode?:string;aadhaarEncrypted?:string;aadhaarForRequestHash?:string;pidData?:string;latLong?:string;sourceIp?:string;notifyCustomer?:0|1}|null;
  const amountPaise=b?.amountPaise;
+ if(b?.transactionType==='aadhaar_to_aadhaar_transfer')return NextResponse.json({success:false,code:'EKO_AEPS_TRANSACTION_TYPE_UNSUPPORTED'},{status:400});
+ if((b?.transactionType==='balance_enquiry'||b?.transactionType==='mini_statement')&&amountPaise!==0)return NextResponse.json({success:false,code:'AEPS_NON_CASH_AMOUNT_MUST_BE_ZERO'},{status:400});
  if(!b?.transactionType||typeof amountPaise!=='number'||!Number.isInteger(amountPaise)||amountPaise<0||!b.customerMobile||!b.bankCode||!b.aadhaarEncrypted||!/^\d{12}$/.test(b.aadhaarForRequestHash??'')||!b.pidData||!b.latLong||!b.sourceIp)return NextResponse.json({success:false,code:'EKO_AEPS_FIELDS_REQUIRED'},{status:400});
  if(b.transactionType==='cash_withdrawal'&&(amountPaise<5000||amountPaise%5000!==0))return NextResponse.json({success:false,code:'AEPS_AMOUNT_MUST_BE_MULTIPLE_OF_50'},{status:400});
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
