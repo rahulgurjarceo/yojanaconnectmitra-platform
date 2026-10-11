@@ -29,7 +29,17 @@ export async function POST(r:NextRequest){
   const saved=(await sql.unsafe('UPDATE ycm_eko_aeps_transactions SET status=$1,eko_tid=$2,provider_message=$3,provider_payload=$4::jsonb,final_at=CASE WHEN $1 IN (\'success\',\'failed\',\'reversed\') THEN NOW() ELSE final_at END WHERE eko_transaction_id=$5 RETURNING *',[status,result.providerReference??null,result.message??null,JSON.stringify(result.metadata??{}),tx.eko_transaction_id]))[0];
   if(status==='success')await recordSuccessfulFinancialTransaction({externalReference:'aeps:'+clientRef,transactionType:'aeps',serviceCode:'FIN_AEPS',agentUserId:s.sub,providerCode:'EKO',providerTransactionId:result.providerReference,grossAmountPaise:amountPaise});
   if(status==='reversed')await reverseFinancialTransaction('aeps:'+clientRef).catch(()=>null);
-  return NextResponse.json({success:true,transaction:saved,providerState:result.state});
+  const transaction={
+   clientRefId:String(saved.client_ref_id),
+   status:String(saved.status),
+   amountPaise:Number(saved.amount_paise),
+   providerReference:saved.eko_tid??null,
+   bankReference:saved.bank_reference??null,
+   message:saved.provider_message??null,
+   createdAt:saved.created_at??null,
+   updatedAt:saved.updated_at??null,
+  };
+  return NextResponse.json({success:true,transaction,providerState:result.state});
  }catch(e){
   // A timeout/error after dispatch can mean EKO accepted the request but its response was lost.
   // Never tell the client to initiate again with a new reference; preserve this transaction for inquiry.
