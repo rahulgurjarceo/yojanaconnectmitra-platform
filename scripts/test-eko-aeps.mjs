@@ -7,3 +7,7 @@ if(!read('app/lib/ycm-aeps.ts').includes("| 'inquiry_required'"))throw new Error
 if(!c.includes("if(v==='2')return 'inquiry_required';"))throw new Error('EKO_CONTRACT_FAILED:status 2 must require inquiry');
 if(c.includes("if(v==='3'||v==='4')return 'reversed';"))throw new Error('EKO_CONTRACT_FAILED:unknown statuses must not reverse ledger');
 console.log('Eko AePS contract checks passed.');
+
+if(!c.includes("await import('./eko-transaction-inquiry')"))throw new Error('EKO_STATUS_MUST_USE_TRANSACTION_INQUIRY_ADAPTER');
+for(const token of ['EKO_TRANSACTION_NOT_FOUND','EKO_RETAILER_USER_CODE_REQUIRED','client_ref_id=$1 OR eko_tid=$1','state:mapState(result.txStatus)'])if(!c.includes(token))throw new Error('MISSING_EKO_STATUS_INTEGRATION_'+token);
+console.log('EKO provider status/inquiry adapter contract checks passed.');
