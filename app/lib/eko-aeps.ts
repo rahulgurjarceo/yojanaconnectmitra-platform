@@ -2,7 +2,7 @@ import {createHmac} from 'node:crypto';
 import postgres from 'postgres';
 import type {YcmAepsProvider,YcmAepsRequest,YcmAepsResult,YcmAepsTransactionType} from './ycm-aeps';
 
-const SERVICE_TYPE:Partial<Record<YcmAepsTransactionType,number>>={cash_withdrawal:2,balance_enquiry:3,mini_statement:4,aadhaar_to_aadhaar_transfer:5};
+const SERVICE_TYPE:Partial<Record<YcmAepsTransactionType,number>>={cash_withdrawal:2,balance_enquiry:3,mini_statement:4};
 
 function env(name:string){const value=process.env[name];if(!value)throw new Error(name+'_NOT_CONFIGURED');return value;}
 
@@ -43,7 +43,7 @@ export class EkoAepsProvider implements YcmAepsProvider{
   const input=request as EkoAepsInput;
   const timestamp=Date.now().toString();
   const security=ekoSecurityHeaders(timestamp);
-  const amount=String(Math.round((input.amountPaise??0)/100));
+  const amount=input.transactionType==='balance_enquiry'||input.transactionType==='mini_statement'?'0':String(Math.round((input.amountPaise??0)/100));
   const userCode=String(input.metadata?.ekoUserCode??'');if(!userCode)throw new Error('EKO_RETAILER_USER_CODE_REQUIRED');
   const body={
    service_type:SERVICE_TYPE[input.transactionType]??(()=>{throw new Error('EKO_AEPS_TRANSACTION_TYPE_UNSUPPORTED');})(),
