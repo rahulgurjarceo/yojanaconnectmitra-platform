@@ -44,5 +44,17 @@ export async function POST(r:NextRequest){
    updatedAt:saved.updated_at??null,
   };
   return NextResponse.json({success:true,status:persistedStatus||requestedStatus,idempotent:persistedStatus!==requestedStatus,transaction});
- }catch(e){return NextResponse.json({success:false,code:e instanceof Error?e.message:'EKO_INQUIRY_FAILED'},{status:400});}finally{await sql.end({timeout:3});}
+ }catch(e){
+  const message=e instanceof Error?e.message:'';
+  const knownCodes=new Set([
+   'EKO_INQUIRY_REFERENCE_REQUIRED','EKO_RETAILER_USER_CODE_REQUIRED',
+   'EKO_ACCESS_KEY_NOT_CONFIGURED','EKO_INITIATOR_ID_NOT_CONFIGURED',
+   'EKO_BASE_URL_NOT_CONFIGURED','EKO_DEVELOPER_KEY_NOT_CONFIGURED',
+   'EKO_INQUIRY_FAILED','EKO_INQUIRY_REFERENCE_MISMATCH'
+  ]);
+  const providerHttp=message.match(/^EKO_INQUIRY_HTTP_(\\d{3})$/);
+  const code=knownCodes.has(message)?message:providerHttp?message:'EKO_INQUIRY_FAILED';
+  const status=providerHttp?502:code==='EKO_INQUIRY_REFERENCE_REQUIRED'||code==='EKO_INQUIRY_REFERENCE_MISMATCH'?400:500;
+  return NextResponse.json({success:false,code},{status});
+ }finally{await sql.end({timeout:3});}
 }
