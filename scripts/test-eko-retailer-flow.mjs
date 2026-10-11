@@ -45,3 +45,8 @@ console.log('Legacy EKO callback conservative-status checks passed');
 if(inquiryRoute.includes("code:e instanceof Error?e.message"))throw new Error('INQUIRY_ROUTE_MUST_NOT_EXPOSE_RAW_ERROR_MESSAGES');
 for(const token of ['knownCodes=new Set','EKO_INQUIRY_FAILED','EKO_INQUIRY_HTTP_'])if(!inquiryRoute.includes(token))throw new Error('MISSING_INQUIRY_ERROR_SANITIZATION_'+token);
 console.log('Eko inquiry error sanitization checks passed');
+
+const callbackDto=callback.slice(callback.indexOf('const callbackTransactionDto'),callback.indexOf('export async function OPTIONS'));
+if(!callbackDto.includes('clientRefId:String(tx.client_ref_id??\'\')')||callback.includes('transaction:saved')||callback.includes('transaction:tx'))throw new Error('EKO_CALLBACK_MUST_RETURN_ALLOWLISTED_TRANSACTION_FIELDS');
+if(callback.includes("code:e instanceof Error?e.message"))throw new Error('EKO_CALLBACK_MUST_NOT_EXPOSE_RAW_ERROR_MESSAGES');
+console.log('Eko callback response/error allowlist checks passed');
