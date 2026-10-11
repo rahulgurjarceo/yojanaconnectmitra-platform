@@ -22,5 +22,4 @@ if(!c.includes("input.transactionType==='balance_enquiry'||input.transactionType
 const initiationRoute=read('app/api/aeps/eko/transactions/route.ts');
 if(!initiationRoute.includes('EKO_AEPS_TRANSACTION_TYPE_UNSUPPORTED'))throw new Error('UNSUPPORTED_EKO_AEPS_TRANSACTION_TYPE_MUST_BE_REJECTED');
 if(!initiationRoute.includes('AEPS_NON_CASH_AMOUNT_MUST_BE_ZERO'))throw new Error('NON_CASH_AEPS_AMOUNT_MUST_BE_ZERO');
-if(!/^\\d{12}$/.test('123456789012'))throw new Error('TEST_RUNTIME_REGEX_SANITY_FAILED');
 console.log('EKO service-type and non-cash amount checks passed.');
