@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 
 const route=await fs.readFile('app/api/integrations/eko/aeps/callback/route.ts','utf8');
 assert.match(route,/existingStatus=String\(tx\.status/);
-assert.match(route,/const finalStatus=\(v:string\)=>v==='0'\?'success':v==='1'\?'failed':'inquiry_required'/,'Only documented EKO AePS success/failure statuses may become terminal');
+assert.match(route,/const finalStatus=\(v:string\)=>v==='0'\?'success':v==='1'\?'failed':v==='4'\?'reversed':'inquiry_required'/,'Only documented EKO success/failure/refund statuses may become terminal');
+assert.match(route,/v==='4'\?'reversed'/,'Confirmed EKO refunded status must trigger ledger reversal');
 const amountGuard=route.indexOf("EKO_CALLBACK_AMOUNT_MISMATCH");
 const replayGuard=route.indexOf("includes(existingStatus)");
 assert.ok(amountGuard>=0&&replayGuard>=0&&amountGuard<replayGuard,'amount validation must precede terminal replay shortcut');
