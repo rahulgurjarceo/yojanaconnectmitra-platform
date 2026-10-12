@@ -9,7 +9,8 @@ if(c.includes("if(v==='3'||v==='4')return 'reversed';"))throw new Error('EKO_CON
 console.log('Eko AePS contract checks passed.');
 
 if(!c.includes("await import('./eko-transaction-inquiry')"))throw new Error('EKO_STATUS_MUST_USE_TRANSACTION_INQUIRY_ADAPTER');
-for(const token of ['EKO_TRANSACTION_NOT_FOUND','EKO_RETAILER_USER_CODE_REQUIRED','client_ref_id=$1 OR eko_tid=$1','state:mapState(result.txStatus)'])if(!c.includes(token))throw new Error('MISSING_EKO_STATUS_INTEGRATION_'+token);
+for(const token of ['EKO_TRANSACTION_NOT_FOUND','EKO_RETAILER_USER_CODE_REQUIRED','client_ref_id=$1 OR eko_tid=$1 OR eko_transaction_id::text=$1','state:mapState(result.txStatus)'])if(!c.includes(token))throw new Error('MISSING_EKO_STATUS_INTEGRATION_'+token);
+if(!c.includes("...(row.eko_tid?{tid:String(row.eko_tid)}:{clientRefId:String(row.client_ref_id)})"))throw new Error('EKO_STATUS_MUST_PREFER_PROVIDER_TID_WHEN_AVAILABLE');
 console.log('EKO provider status/inquiry adapter contract checks passed.');
 
 if(!c.includes("const hashValues=[input.aadhaarForRequestHash,amount,userCode]"))throw new Error('EKO_REQUEST_HASH_MUST_USE_DOCUMENTED_AADHAAR_AMOUNT_USER_CODE_SEQUENCE');
