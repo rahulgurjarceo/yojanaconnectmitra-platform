@@ -82,7 +82,7 @@ export class EkoAepsProvider implements YcmAepsProvider{
   const sql=postgres(databaseUrl,{max:1,prepare:false,connect_timeout:10,idle_timeout:5});
   try{
    const row=(await sql.unsafe(
-    'SELECT client_ref_id,eko_tid,eko_user_code FROM ycm_eko_aeps_transactions WHERE client_ref_id=$1 OR eko_tid=$1 LIMIT 1',
+    'SELECT client_ref_id,eko_tid,eko_user_code FROM ycm_eko_aeps_transactions WHERE client_ref_id=$1 OR eko_tid=$1 OR eko_transaction_id::text=$1 LIMIT 1',
     [transactionId]
    ))[0];
    if(!row)throw new Error('EKO_TRANSACTION_NOT_FOUND');
@@ -91,7 +91,7 @@ export class EkoAepsProvider implements YcmAepsProvider{
    // ekoSecurityHeaders from this module.
    const {inquireEkoAepsTransaction}=await import('./eko-transaction-inquiry');
    const result=await inquireEkoAepsTransaction({
-    ...(String(row.eko_tid??'')===transactionId?{tid:transactionId}:{clientRefId:String(row.client_ref_id)}),
+    ...(row.eko_tid?{tid:String(row.eko_tid)}:{clientRefId:String(row.client_ref_id)}),
     ekoUserCode:String(row.eko_user_code)
    });
    return {
