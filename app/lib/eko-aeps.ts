@@ -23,6 +23,7 @@ function mapState(txStatus:string|number|undefined):YcmAepsResult['state']{
  const v=String(txStatus??'');
  if(v==='0')return 'success';
  if(v==='1')return 'failed';
+ if(v==='4')return 'reversed';
  if(v==='2')return 'inquiry_required';
  return 'inquiry_required';
 }
