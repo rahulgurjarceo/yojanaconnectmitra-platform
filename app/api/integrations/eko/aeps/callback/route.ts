@@ -6,7 +6,7 @@ import {recordSuccessfulFinancialTransaction,reverseFinancialTransaction} from '
 export const runtime='nodejs';
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:8,prepare:false,connect_timeout:10,idle_timeout:20}):null};
 type Detail={client_ref_id?:string;request_hash_params?:string[];data?:Record<string,unknown>;response?:{data?:Record<string,unknown>;message?:string}};
-const finalStatus=(v:string)=>v==='0'?'success':v==='1'?'failed':'inquiry_required';
+const finalStatus=(v:string)=>v==='0'?'success':v==='1'?'failed':v==='4'?'reversed':'inquiry_required';
 const callbackTransactionDto=(tx:Record<string,unknown>)=>({
  clientRefId:String(tx.client_ref_id??''),
  status:String(tx.status??''),
