@@ -35,11 +35,17 @@ assert.match(alternateRoute,/terminal\.has\(existingStatus\)/,'alternate callbac
 assert.match(alternateRoute,/await applyLedgerForTerminalStatus\(existingStatus,tx\)/,'duplicate terminal callback must reconcile ledger side effects');
 assert.match(alternateRoute,/await applyLedgerForTerminalStatus\(persistedStatus,saved\)/,'race-lost callback must reconcile persisted ledger status');
 assert.match(alternateRoute,/WHERE eko_transaction_id=\$6 RETURNING \*/,'alternate callback must read back the authoritative persisted status');
+// A confirmed provider reversal may follow an earlier success; it must not be swallowed as a duplicate.
+assert.match(route,/existingStatus==='success'&&status==='reversed'/,'canonical callback must permit success-to-reversed transition');
+assert.match(route,/NOT \(status='success' AND \$1='reversed'\)/,'canonical callback SQL must persist a confirmed success reversal');
+assert.match(alternateRoute,/existingStatus==='success'&&nextStatus==='reversed'/,'alternate callback must permit success-to-reversed transition');
+assert.match(alternateRoute,/NOT \(status='success' AND \$1='reversed'\)/,'alternate callback SQL must persist a confirmed success reversal');
 // Inquiry reconciliation must recognize both provider codes and textual terminal labels.
 const inquiryRoute=await fs.readFile('app/api/aeps/eko/inquiry/route.ts','utf8');
 assert.match(inquiryRoute,/v==='0'\|\|v==='success'\?'success'/,'inquiry success labels must normalize consistently');
 assert.match(inquiryRoute,/v==='1'\|\|v==='failed'\?'failed'/,'inquiry failure labels must normalize consistently');
 assert.match(inquiryRoute,/v==='4'\|\|v==='reversed'\?'reversed'/,'inquiry reversal labels must normalize consistently');
+assert.match(inquiryRoute,/NOT \(status='success' AND \$1='reversed'\)/,'inquiry must persist a confirmed success reversal');
 assert.match(inquiryRoute,/await applyLedgerForPersistedStatus\(persistedStatus,saved,result\)/,'inquiry must reconcile the authoritative persisted status');
 assert.match(inquiryRoute,/recordSuccessfulFinancialTransaction/,'inquiry-confirmed success must reconcile ledger credit');
 assert.match(inquiryRoute,/reverseFinancialTransaction/,'inquiry-confirmed reversal must reconcile ledger reversal');
