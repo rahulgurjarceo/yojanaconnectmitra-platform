@@ -22,10 +22,10 @@ export async function POST(r:NextRequest){
   const result=await inquireEkoAepsTransaction({clientRefId:b.clientRefId,tid:b.tid??tx.eko_tid,ekoUserCode:tx.eko_user_code});
   const requestedStatus=map(result.txStatus);
   const saved=(await sql.unsafe(`UPDATE ycm_eko_aeps_transactions
-    SET status=CASE WHEN status IN ('success','failed','reversed') AND status<>$1 THEN status ELSE $1 END,
+    SET status=CASE WHEN status IN ('success','failed','reversed') AND NOT (status='success' AND $1='reversed') AND status<>$1 THEN status ELSE $1 END,
       eko_tid=COALESCE($2,eko_tid),bank_reference=COALESCE($3,bank_reference),provider_message=$4,
       provider_payload=provider_payload || $5::jsonb,last_inquired_at=NOW(),
-      final_at=CASE WHEN status IN ('success','failed','reversed') THEN final_at WHEN $1 IN ('success','failed','reversed') THEN NOW() ELSE final_at END,
+      final_at=CASE WHEN status='success' AND $1='reversed' THEN NOW() WHEN status IN ('success','failed','reversed') THEN final_at WHEN $1 IN ('success','failed','reversed') THEN NOW() ELSE final_at END,
       updated_at=NOW()
     WHERE eko_transaction_id=$6 RETURNING *`,[requestedStatus,result.providerReference??null,result.bankReference??null,result.message??null,JSON.stringify({inquiry:result.raw}),tx.eko_transaction_id]))[0];
   // The database's persisted state wins if a callback and inquiry race.
