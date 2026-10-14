@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
 const route=await fs.readFile('app/api/integrations/eko/aeps/callback/route.ts','utf8');
+const alternateRoute=await fs.readFile('app/api/aeps/eko/callback/route.ts','utf8');
 assert.match(route,/existingStatus=String\(tx\.status/);
 assert.match(route,/const finalStatus=\(v:string\)=>v==='0'\?'success':v==='1'\?'failed':v==='4'\?'reversed':'inquiry_required'/,'Only documented EKO success/failure/refund statuses may become terminal');
 assert.match(route,/v==='4'\?'reversed'/,'Confirmed EKO refunded status must trigger ledger reversal');
@@ -26,4 +27,12 @@ assert.match(route,/await applyLedgerForTerminalStatus\(persistedStatus,saved\)/
 assert.match(route,/persistedStatus!==status/);
 assert.match(route,/\$1/);
 assert.match(route,/WHERE eko_transaction_id=\$6 RETURNING \*/);
+// The alternate EKO callback route must share the ledger reconciliation guarantees.
+assert.match(alternateRoute,/recordSuccessfulFinancialTransaction/,'alternate callback must credit the ledger on confirmed success');
+assert.match(alternateRoute,/reverseFinancialTransaction/,'alternate callback must reverse ledger entries on confirmed reversal');
+assert.match(alternateRoute,/v==='4'\|\|v==='reversed'/,'alternate callback must recognize EKO reversal status');
+assert.match(alternateRoute,/terminal\.has\(existingStatus\)/,'alternate callback must handle duplicate terminal callbacks');
+assert.match(alternateRoute,/await applyLedgerForTerminalStatus\(existingStatus,tx\)/,'duplicate terminal callback must reconcile ledger side effects');
+assert.match(alternateRoute,/await applyLedgerForTerminalStatus\(persistedStatus,saved\)/,'race-lost callback must reconcile persisted ledger status');
+assert.match(alternateRoute,/WHERE eko_transaction_id=\$6 RETURNING \*/,'alternate callback must read back the authoritative persisted status');
 console.log('AEPS_CALLBACK_REPLAY_CONTRACT_TEST: PASS');
