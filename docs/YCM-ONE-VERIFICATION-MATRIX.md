@@ -74,3 +74,17 @@ Still required: verify the actual UI/secure device flow supplies the correct tra
 Reason: CI and the recorded security-release workflow pass, but the available evidence does not establish live deployment, completed production DB migration, real provider sandbox success, or full end-to-end financial reconciliation.
 
 Release sign-off requires dated evidence for each P0 checkbox, tied to the exact release commit. Never mark a gate complete based only on a code-presence or contract test.
+
+
+## 6. Follow-up checkpoint — 2026-10-14
+
+- PR #6 remains open and unmerged; the current PR head inspected is `5acf7f242fb992da0a085058b451d4dcb00feeb9`, targeting `main` at `f14906953a46f217fd83de572e636e220f8fa5ca`.
+- A YCM One CI run for the current PR head is recorded as completed/success: run #1751, ID `38250011434`. The connector exposes the run status but not per-job logs here; inspect the GitHub Actions run for job-level details.
+- The tested callback replay contract targets `app/api/integrations/eko/aeps/callback/route.ts`. A separate route exists at `app/api/aeps/eko/callback/route.ts`; code inspection shows it updates the AEPS transaction status but does not invoke the financial-ledger success/reversal functions. This may be an unused or legacy endpoint, but its intended use and provider callback URL must be confirmed before release. Do not configure EKO to use it until ledger reconciliation behavior is verified or corrected.
+- The separate audit branch is not suitable for a PR/merge as-is: comparison reports it 1,045 commits ahead of `main`. Keep it isolated; do not merge it into `main`. The two audit documents are evidence/runbook additions, not application changes.
+
+### New release checks
+
+- [ ] Confirm which EKO callback URL is configured with the provider; document one canonical callback route.
+- [ ] Either retire the unused duplicate callback route or bring it under the same authenticated, idempotent ledger reconciliation contract and add a focused test.
+- [ ] Inspect run #1751 job-level output and retain exact-SHA evidence for the release candidate.
