@@ -7,7 +7,7 @@ assert.match(route,/existingStatus=String\(tx\.status/);
 assert.match(route,/v==='0'\|\|v==='success'\?'success'/,'canonical callback must normalize numeric and textual success statuses');
 assert.match(route,/v==='1'\|\|v==='failed'\?'failed'/,'canonical callback must normalize numeric and textual failure statuses');
 assert.match(route,/v==='4'\|\|v==='reversed'\?'reversed'/,'canonical callback must normalize numeric and textual reversal statuses');
-assert.match(route,/v==='4'\?'reversed'/,'Confirmed EKO refunded status must trigger ledger reversal');
+assert.match(route,/v==='4'\|\|v==='reversed'\?'reversed'/,'Confirmed EKO refunded status must trigger ledger reversal');
 const amountGuard=route.indexOf("EKO_CALLBACK_AMOUNT_MISMATCH");
 const replayGuard=route.indexOf("includes(existingStatus)");
 assert.ok(amountGuard>=0&&replayGuard>=0&&amountGuard<replayGuard,'amount validation must precede terminal replay shortcut');
