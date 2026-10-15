@@ -67,7 +67,7 @@ export async function GET(r:NextRequest){
   const serviceCode=u.searchParams.get('serviceCode');
   if(serviceCode){
    const details=(await sql`SELECT service_code,service_name,validity_days,expiry_warning_days,renewal_allowed,renewal_window_days,prefill_fields
-     FROM ycm_service_master WHERE service_code=${serviceCode} LIMIT 1`)[0];
+     FROM ycm_service_master WHERE service_code=${serviceCode} AND (${includeAll} OR status='active') LIMIT 1`)[0];
    if(!details)return NextResponse.json({success:false,code:'SERVICE_NOT_FOUND'},{status:404});
    const documents=await sql`SELECT document_code,document_name,required,required_for_application,validation_mode,validity_days,expiry_warning_days,reuse_if_valid,reupload_on_expiry,prefill_fields,source_name,source_url,valid_from,valid_until,metadata
      FROM ycm_service_documents WHERE service_code=${serviceCode} ORDER BY document_name`;
