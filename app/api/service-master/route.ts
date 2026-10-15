@@ -66,6 +66,8 @@ export async function GET(r:NextRequest){
   `;
   const serviceCode=u.searchParams.get('serviceCode');
   if(serviceCode){
+   // Reuse the already-filtered catalogue as the visibility boundary so detail reads cannot bypass status or geography scope.
+   if(!rows.some((row)=>row.service_code===serviceCode))return NextResponse.json({success:false,code:'SERVICE_NOT_FOUND'},{status:404});
    const details=(await sql`SELECT service_code,service_name,validity_days,expiry_warning_days,renewal_allowed,renewal_window_days,prefill_fields
      FROM ycm_service_master WHERE service_code=${serviceCode} AND (${includeAll} OR status='active') LIMIT 1`)[0];
    if(!details)return NextResponse.json({success:false,code:'SERVICE_NOT_FOUND'},{status:404});
