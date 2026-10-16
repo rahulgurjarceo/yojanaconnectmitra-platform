@@ -24,8 +24,8 @@ for (const role of ['management', 'employee']) {
   assert.doesNotMatch(rolePermissions(role), /service:approve|service:publish|service:archive/);
 }
 assert.match(governance, /to === 'published'.*service:publish.*from === 'pending_approval'/);
-const aepsState = aeps.match(/export type YcmAepsTransactionState =([\\s\\S]*?);/);
+const aepsState = aeps.match(/export type YcmAepsTransactionState =([\s\S]*?);/);
 assert.ok(aepsState, 'missing AEPS transaction state type');
 assert.match(aepsState[1], /'reconciled'/);
-assert.match(aeps, /state:\\s*YcmAepsTransactionState/);
+assert.match(aeps, /state:\s*YcmAepsTransactionState/);
 console.log('UNIFIED_SERVICE_MASTER_CONTRACT_TEST: PASS');
