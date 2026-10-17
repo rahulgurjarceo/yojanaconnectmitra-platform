@@ -1,4 +1,5 @@
 import postgres from 'postgres';
+import { createHmac } from 'node:crypto';
 import type { CustomerFamilyRepository, FamilyActivationState, FamilyOtpChallenge, FamilyPayment, FamilyRecord } from './customer-family-db';
 
 function getClient() {
@@ -7,7 +8,7 @@ function getClient() {
   return postgres(url, { max: 5, prepare: false, connect_timeout: 10, idle_timeout: 20 });
 }
 function mapRow(row: Record<string, unknown>): FamilyRecord {
-  return { familyId: String(row.family_id), status: row.status as FamilyRecord['status'], fullName: String(row.full_name), mobile: String(row.mobile), country: String(row.country), createdAt: new Date(String(row.created_at)).toISOString(), updatedAt: new Date(String(row.updated_at)).toISOString() };
+  return { familyId: String(row.family_id), status: row.status as FamilyRecord['status'], fullName: String(row.full_name), mobile: String(row.mobile), country: String(row.country), stateCode: row.state_code == null ? undefined : String(row.state_code), districtCode: row.district_code == null ? undefined : String(row.district_code), blockCode: row.block_code == null ? undefined : String(row.block_code), gramPanchayatCode: row.gram_panchayat_code == null ? undefined : String(row.gram_panchayat_code), villageCode: row.village_code == null ? undefined : String(row.village_code), createdAt: new Date(String(row.created_at)).toISOString(), updatedAt: new Date(String(row.updated_at)).toISOString() };
 }
 function mapOtpRow(row: Record<string, unknown>): FamilyOtpChallenge {
   return { familyId: row.family_id == null ? null : String(row.family_id), mobile: String(row.mobile), status: row.status as FamilyOtpChallenge['status'], expiresAt: new Date(String(row.expires_at)).toISOString() };
@@ -20,17 +21,17 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
   isConfigured(): boolean { return this.sql !== null; }
   async create(input: Omit<FamilyRecord, 'createdAt' | 'updatedAt'>): Promise<FamilyRecord> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
-    const rows = await this.sql`INSERT INTO ycm_families (family_id, plan_name, amount_paise, currency, validity_years, status, full_name, mobile, country) VALUES (${input.familyId}, 'Family Registration', 9900, 'INR', 2, ${input.status}, ${input.fullName}, ${input.mobile}, ${input.country}) RETURNING family_id, status, full_name, mobile, country, created_at, updated_at`;
+    const rows = await this.sql`INSERT INTO ycm_families (family_id, plan_name, amount_paise, currency, validity_years, status, full_name, mobile, country, state_code, district_code, block_code, gram_panchayat_code, village_code) VALUES (${input.familyId}, 'Family Registration', 9900, 'INR', 2, ${input.status}, ${input.fullName}, ${input.mobile}, ${input.country}, ${input.stateCode || null}, ${input.districtCode || null}, ${input.blockCode || null}, ${input.gramPanchayatCode || null}, ${input.villageCode || null}) RETURNING family_id, status, full_name, mobile, country, state_code, district_code, block_code, gram_panchayat_code, village_code, created_at, updated_at`;
     return mapRow(rows[0] as unknown as Record<string, unknown>);
   }
   async findById(familyId: string): Promise<FamilyRecord | null> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
-    const rows = await this.sql`SELECT family_id, status, full_name, mobile, country, created_at, updated_at FROM ycm_families WHERE family_id = ${familyId} LIMIT 1`;
+    const rows = await this.sql`SELECT family_id, status, full_name, mobile, country, state_code, district_code, block_code, gram_panchayat_code, village_code, created_at, updated_at FROM ycm_families WHERE family_id = ${familyId} LIMIT 1`;
     return rows.length ? mapRow(rows[0] as unknown as Record<string, unknown>) : null;
   }
   async updateStatus(familyId: string, status: FamilyRecord['status']): Promise<FamilyRecord | null> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
-    const rows = await this.sql`UPDATE ycm_families SET status = ${status}, updated_at = NOW() WHERE family_id = ${familyId} RETURNING family_id, status, full_name, mobile, country, created_at, updated_at`;
+    const rows = await this.sql`UPDATE ycm_families SET status = ${status}, updated_at = NOW() WHERE family_id = ${familyId} RETURNING family_id, status, full_name, mobile, country, state_code, district_code, block_code, gram_panchayat_code, village_code, created_at, updated_at`;
     return rows.length ? mapRow(rows[0] as unknown as Record<string, unknown>) : null;
   }
   async getActivationState(familyId: string): Promise<FamilyActivationState> {
@@ -41,6 +42,37 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
     const otpRows = await this.sql`SELECT 1 FROM ycm_family_otp_challenges WHERE family_id = ${familyId} AND mobile = ${mobile} AND status = 'verified' ORDER BY verified_at DESC NULLS LAST, created_at DESC LIMIT 1`;
     const paymentRows = await this.sql`SELECT 1 FROM ycm_family_payments WHERE family_id = ${familyId} AND amount_paise = 9900 AND currency = 'INR' AND status = 'success' AND signature_verified = TRUE ORDER BY created_at DESC LIMIT 1`;
     return { otpVerified: otpRows.length > 0, paymentVerified: paymentRows.length > 0 };
+  }
+  async reserveOtpSend(mobile: string): Promise<boolean> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    const secret = process.env.YCM_SESSION_SECRET?.trim();
+    if (!secret || secret.length < 32) throw new Error('OTP_RATE_LIMIT_SECRET_NOT_CONFIGURED');
+    const mobileHash = createHmac('sha256', secret).update(mobile).digest('hex');
+    // Atomic per-mobile gate: one send per minute and at most five sends per hour.
+    // A failed provider attempt still consumes a slot to prevent abuse/cost spikes.
+    const rows = await this.sql`INSERT INTO ycm_family_otp_rate_limits AS current_limit
+      (mobile_hash, window_started_at, request_count, last_requested_at)
+      VALUES (${mobileHash}, NOW(), 1, NOW())
+      ON CONFLICT (mobile_hash) DO UPDATE SET
+        window_started_at = CASE WHEN current_limit.window_started_at <= NOW() - INTERVAL '1 hour' THEN NOW() ELSE current_limit.window_started_at END,
+        request_count = CASE WHEN current_limit.window_started_at <= NOW() - INTERVAL '1 hour' THEN 1 ELSE current_limit.request_count + 1 END,
+        last_requested_at = NOW(),
+        updated_at = NOW()
+      WHERE (current_limit.window_started_at <= NOW() - INTERVAL '1 hour' OR current_limit.request_count < 5)
+        AND current_limit.last_requested_at <= NOW() - INTERVAL '60 seconds'
+      RETURNING request_count`;
+    return rows.length > 0;
+  }
+  async reserveOtpVerification(challengeId: string): Promise<boolean> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    const rows = await this.sql`UPDATE ycm_family_otp_challenges
+      SET verification_attempts = verification_attempts + 1
+      WHERE challenge_id = ${challengeId}
+        AND status IN ('created','sent')
+        AND expires_at > NOW()
+        AND verification_attempts < 5
+      RETURNING challenge_id`;
+    return rows.length > 0;
   }
   async createOtpChallenge(input: { challengeId: string; familyId?: string; mobile: string; provider: string; expiresAt: string }): Promise<void> {
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
@@ -69,6 +101,38 @@ export class PostgresCustomerFamilyRepository implements CustomerFamilyRepositor
     if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
     const rows = await this.sql`UPDATE ycm_family_payments SET status = 'success', signature_verified = TRUE, provider_payment_id = ${providerPaymentId} WHERE provider_reference = ${orderId} AND amount_paise = 9900 AND currency = 'INR' AND status IN ('created','pending') RETURNING payment_id`;
     return rows.length > 0;
+  }
+  async createMember(input: { memberId: string; familyId: string; fullName: string; relation: string; mobile?: string; email?: string; dateOfBirth?: string }): Promise<void> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    await this.sql`INSERT INTO ycm_family_members (member_id, family_id, full_name, relation, mobile, email, date_of_birth) VALUES (${input.memberId}, ${input.familyId}, ${input.fullName}, ${input.relation}, ${input.mobile || null}, ${input.email || null}, ${input.dateOfBirth || null})`;
+  }
+  async createConsent(input: { consentId: string; familyId: string; memberId?: string; consentType: string; granted: boolean; policyVersion: string }): Promise<void> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    await this.sql`INSERT INTO ycm_family_consents (consent_id, family_id, member_id, consent_type, granted, policy_version, granted_at) VALUES (${input.consentId}, ${input.familyId}, ${input.memberId || null}, ${input.consentType}, ${input.granted}, ${input.policyVersion}, CASE WHEN ${input.granted} THEN NOW() ELSE NULL END)`;
+  }
+  async createDocument(input: { documentId: string; familyId: string; memberId?: string; documentType: string; storageRef?: string }): Promise<void> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    await this.sql`INSERT INTO ycm_family_documents (document_id, family_id, member_id, document_type, storage_ref, status, uploaded_at) VALUES (${input.documentId}, ${input.familyId}, ${input.memberId || null}, ${input.documentType}, ${input.storageRef || null}, 'pending', CASE WHEN ${input.storageRef || null} IS NULL THEN NULL ELSE NOW() END)`;
+  }
+  async createCase(input: { caseId: string; familyId: string; memberId?: string; caseCategoryId: string; caseCategoryName: string; subService?: string; applicationId?: string }): Promise<void> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    await this.sql`INSERT INTO ycm_family_cases (case_id, family_id, member_id, case_category_id, case_category_name, sub_service, status, application_id) VALUES (${input.caseId}, ${input.familyId}, ${input.memberId || null}, ${input.caseCategoryId}, ${input.caseCategoryName}, ${input.subService || null}, 'new', ${input.applicationId || null})`;
+  }
+  async updateCase(input: { caseId: string; familyId: string; status?: string; priority?: string; dueAt?: string; assignedTo?: string; escalated?: boolean; outcomeCode?: string; outcomeNotes?: string; csatScore?: number; csatComment?: string }): Promise<void> {
+    if (!this.sql) throw new Error('DATABASE_NOT_CONFIGURED');
+    await this.sql`UPDATE ycm_family_cases SET
+      status=COALESCE(${input.status || null}, status),
+      priority=COALESCE(${input.priority || null}, priority),
+      due_at=COALESCE(${input.dueAt || null}, due_at),
+      assigned_to=COALESCE(${input.assignedTo || null}, assigned_to),
+      escalated_at=CASE WHEN ${input.escalated === true} THEN COALESCE(escalated_at,NOW()) ELSE escalated_at END,
+      outcome_code=COALESCE(${input.outcomeCode || null}, outcome_code),
+      outcome_notes=COALESCE(${input.outcomeNotes || null}, outcome_notes),
+      outcome_at=CASE WHEN ${input.outcomeCode || null} IS NOT NULL THEN COALESCE(outcome_at,NOW()) ELSE outcome_at END,
+      csat_score=COALESCE(${input.csatScore ?? null}, csat_score),
+      csat_comment=COALESCE(${input.csatComment || null}, csat_comment),
+      updated_at=NOW()
+      WHERE case_id=${input.caseId} AND family_id=${input.familyId}`;
   }
   async close(): Promise<void> { if (this.sql) await this.sql.end({ timeout: 5 }); }
 }

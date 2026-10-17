@@ -1,20 +1,85 @@
 import { NextResponse } from 'next/server';
+import {
+  FAMILY_360_LIFECYCLE,
+  FAMILY_REGISTRATION_PLAN,
+  buildFamilyId,
+  validateFamilyRegistrationPayload,
+} from '../../customer-family';
+import { getPostgresCustomerFamilyRepository } from '../../lib/customer-family-postgres';
 
-export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({}));
-  const familyId = `YCM-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
-  return NextResponse.json({
-    success: true,
-    familyId,
-    plan: 'Family Registration',
-    amount: 99,
-    validityYears: 2,
-    status: 'created-demo',
-    received: body,
-    next: 'Connect OTP, payment signature verification and persistent database before production use.',
-  }, { status: 201 });
-}
+export const runtime = 'nodejs';
 
 export async function GET() {
-  return NextResponse.json({ service: 'family-registration', planAmount: 99, validityYears: 2, status: 'demo-api' });
+  const repository = getPostgresCustomerFamilyRepository();
+  return NextResponse.json({
+    success: true,
+    service: 'family-registration',
+    plan: FAMILY_REGISTRATION_PLAN,
+    lifecycle: FAMILY_360_LIFECYCLE,
+    storage: { mode: repository ? 'postgres' : 'database-not-configured', productionReady: repository !== null },
+    authentication: { mode: 'otp-adapter-required', productionReady: false },
+    payment: { mode: 'gateway-signature-verification-required', productionReady: false },
+    security: {
+      pii: 'minimum-necessary',
+      aadhaar: 'do-not-store-raw',
+      consent: 'required-before-service-processing',
+    },
+  });
+}
+
+export async function POST(request: Request) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ success: false, code: 'INVALID_JSON', message: 'Request body must be valid JSON.' }, { status: 400 });
+  }
+
+  const validation = validateFamilyRegistrationPayload(body);
+  if (!validation.valid) {
+    return NextResponse.json({ success: false, code: 'VALIDATION_ERROR', errors: validation.errors }, { status: 400 });
+  }
+
+  const repository = getPostgresCustomerFamilyRepository();
+  if (!repository) {
+    return NextResponse.json({
+      success: false,
+      code: 'DATABASE_NOT_CONFIGURED',
+      message: 'Family account was not created. Configure DATABASE_URL or POSTGRES_URL and run the customer-family migration before production use.',
+      productionReady: false,
+    }, { status: 503 });
+  }
+
+  const familyId = buildFamilyId();
+  try {
+    const record = await repository.create({
+      familyId,
+      status: 'pending_payment',
+      fullName: validation.data.fullName,
+      mobile: validation.data.mobile,
+      country: validation.data.country,
+      stateCode: validation.data.stateCode,
+      districtCode: validation.data.districtCode,
+      blockCode: validation.data.blockCode,
+      gramPanchayatCode: validation.data.gramPanchayatCode,
+      villageCode: validation.data.villageCode,
+    });
+
+    return NextResponse.json({
+      success: true,
+      status: 'registration_request_created',
+      family: record,
+      plan: FAMILY_REGISTRATION_PLAN,
+      message: 'Family registration request persisted. OTP verification and payment authorization are required before activation.',
+      next: ['OTP verification', 'Payment gateway signature verification', 'Family activation'],
+      productionReady: false,
+    }, { status: 201, headers: { 'Cache-Control': 'private,no-store' } });
+  } catch (error) {
+    console.error('family registration create failed', error);
+    return NextResponse.json({
+      success: false,
+      code: 'DATABASE_WRITE_FAILED',
+      message: 'Family registration could not be persisted.',
+    }, { status: 500 });
+  }
 }

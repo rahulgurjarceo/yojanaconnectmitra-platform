@@ -2,29 +2,218 @@ name: YCM One CI
 
 on:
   push:
-    branches: ["main", "master", "test/legal-mitra-ci"]
+    branches: ["**"]
   pull_request:
-    branches: ["main", "master"]
+    branches: ["main"]
 
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: "24.x"
           cache: npm
       - name: Install dependencies
         run: npm ci
       - name: Lint
         run: npm run lint
+      - name: Dependency security audit
+        run: npm audit --audit-level=high
+      - name: Impact Proof contract test
+        run: npm run test:impact-proof
+      - name: Migration runner contract test
+        run: npm run test:migration
+      - name: Command Center contract test
+        run: npm run test:command-center
+      - name: Work control contract test
+        run: npm run test:work-control
+      - name: Business domain/team contract test
+        run: npm run test:business-domains
+      - name: Unified service master contract test
+        run: npm run test:service-master
+      - name: Service lifecycle contract test
+        run: npm run test:service-lifecycle
+      - name: Service application reuse/prefill contract test
+        run: npm run test:service-application
+      - name: Service application compliance intelligence contract test
+        run: npm run test:document-validity-kyc
+      - name: Document intelligence family authorization contract test
+        run: npm run test:document-intelligence-authz
+      - name: Customer profile CRM security contract test
+        run: npm run test:customer-profile-security
+      - name: Employee verification contract test
+        run: npm run test:employee-verification
+      - name: Employee verification enforcement contract test
+        run: npm run test:employee-verification-enforcement
+      - name: Dynamic service operating layer contract test
+        run: npm run test:dynamic-service-layer
+      - name: Provider workflow contract test
+        run: npm run test:provider-workflow
+      - name: Unified lead intake contract test
+        run: npm run test:unified-lead-intake
+      - name: Enterprise lead routing contract test
+        run: npm run test:enterprise-lead-routing
+      - name: Enterprise lead cross-sell contract test
+        run: npm run test:enterprise-lead-cross-sell
+      - name: Lead call + daily distribution contract
+        run: npm run test:lead-call-daily-distribution
+      - name: Individual and family membership contract test
+        run: npm run test:membership
+      - name: Service governance UI contract test
+        run: npm run test:service-governance-ui
+      - name: Membership review contract test
+        run: npm run test:membership-review
+      - name: Financial ledger contract test
+        run: npm run test:financial-ledger
+      - name: Eko AePS contract test
+        run: npm run test:eko-aeps
+      - name: T+1 settlement contract test
+        run: npm run test:settlement
+      - name: Eko retailer flow contract test
+        run: npm run test:eko-retailer-flow
+      - name: YCM package and KYC contract test
+        run: npm run test:ycm-package-kyc
+      - name: AEPS provider mode contract test
+        run: npm run test:aeps-provider-modes
+      - name: Auth login security contract test
+        run: npm run test:auth-login-security
+      - name: Jan Aadhaar crypto contract test
+        run: npm run test:jan-aadhaar-crypto
+      - name: Jan Aadhaar integration contract test
+        run: npm run test:jan-aadhaar-integration
+      - name: Company financial control contract test
+        run: npm run test:company-financial-control
+      - name: Security primitives contract test
+        run: npm run test:security-primitives
+      - name: API request policy contract test
+        run: npm run test:api-request-policy
+      - name: Company asset control contract test
+        run: npm run test:company-asset-control
+      - name: Company expense approval contract test
+        run: npm run test:company-expense-approval
+      - name: Company finance reports contract test
+        run: npm run test:company-finance-reports
+      - name: Finance reconciliation contract test
+        run: npm run test:finance-reconciliation
+      - name: DigiLocker integration contract test
+        run: npm run test:digilocker
+      - name: Service geography scope contract test
+        run: npm run test:service-geography-scope
+      - name: Employee KPI security contract test
+        run: npm run test:employee-kpi-security
+      - name: Financial webhook security contract test
+        run: npm run test:financial-webhook-security
+      - name: AEPS webhook security contract test
+        run: npm run test:aeps-webhook-security
+      - name: Aggregate security contract suite
+        run: npm run test:security-contracts
+      - name: CRM and telemetry security contract test
+        run: npm run test:crm-telemetry-security
+      - name: Payout destination security contract test
+        run: npm run test:payout-destination-security
+      - name: Government grievance contract test
+        run: npm run test:government-grievance
+      - name: Family requirements authorization contract test
+        run: npm run test:family-requirements-authz
+      - name: Identity login contract test
+        run: npm run test:identity-login
+      - name: Identity login UI contract test
+        run: npm run test:identity-login-ui
+      - name: Session cookie security contract test
+        run: npm run test:session-cookie-security
+      - name: Service application authorization contract test
+        run: npm run test:service-application-authz
+      - name: AEPS callback replay contract test
+        run: npm run test:aeps-callback-replay
+      - name: Government RBAC contract test
+        run: npm run test:government-rbac
+      - name: Family payment and activation contract test
+        run: npm run test:family-payment-flow
+      - name: Family resources contract test
+        run: npm run test:family-resources
+      - name: Case CRI contract test
+        run: npm run test:case-cri
+      - name: Case operations contract test
+        run: npm run test:case-operations
+      - name: Case dispatch routing contract test
+        run: npm run test:case-dispatch
+      - name: Case escalation runner contract test
+        run: npm run test:case-escalation-runner
+      - name: Case escalation scheduler contract test
+        run: npm run test:case-escalation-scheduler
+      - name: Default case escalation rules contract test
+        run: npm run test:case-escalation-rules
+      - name: Government RBAC scope contract test
+        run: npm run test:government-rbac-scope
+      - name: Release audit contract test
+        run: npm run test:release-audit
+      - name: YCM ONE completion contract test
+        run: npm run test:ycm-one-completion
+      - name: Village opportunity intelligence contract test
+        run: npm run test:village-opportunity-intelligence
+      - name: Integration readiness contract test
+        run: npm run test:integration-readiness
+      - name: Voice Mitra contract test
+        run: npm run test:voice-mitra
+      - name: Universal 35-domain journey contract test
+        run: npm run test:universal-journey
+      - name: Voice IVR adapter contract test
+        run: npm run test:voice-ivr
+      - name: Voice form assistant contract test
+        run: npm run test:voice-form-assistant
+      - name: Supply inventory contract test
+        run: npm run test:supply-inventory
+      - name: Customer family OTP gateway security contract test
+        run: npm run test:customer-family-otp
+      - name: Customer family Razorpay payment contract test
+        run: npm run test:customer-family-payment
       - name: Production build
         run: npm run build
 
-# CI verification checkpoint
-# Final lint/build verification
+# CI verification trigger: keep this workflow intentionally explicit and auditable.
 
-# dependency-path verification
+  security-release-audit:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audited commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24.x"
+          cache: npm
+      - name: Install exact lockfile
+        run: npm ci
+      - name: Dependency security audit
+        run: npm audit --audit-level=high
+      - name: Release audit contract
+        run: npm run test:release-audit
+      - name: Production build
+        run: npm run build
+      - name: Portable Docker build
+        run: docker build --pull -t ycm-one-release-audit:${{ github.sha }} .
+      - name: Emit security release audit evidence
+        run: |
+          mkdir -p audit-artifact
+          cat > audit-artifact/release-audit.txt <<EOF
+          YCM ONE SECURITY RELEASE AUDIT
+          audited_sha=${{ github.event.pull_request.head.sha || github.sha }}
+          ci_sha=${{ github.sha }}
+          security_gate=PASS
+          dependency_audit=PASS
+          release_contract=PASS
+          production_build=PASS
+          portable_docker_build=PASS
+          EOF
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ycm-security-release-audit-${{ github.event.pull_request.head.sha || github.sha }}
+          path: audit-artifact/release-audit.txt

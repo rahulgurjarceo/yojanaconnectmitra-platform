@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { getPostgresCustomerFamilyRepository } from '../../lib/customer-family-postgres';
 import { getPostgresYcmSessionRevocationStore } from '../../lib/ycm-postgres-session-revocation';
 import { getPostgresYcmAuditStore } from '../../lib/ycm-postgres-audit-store';
 import { getCustomerFamilyOtpProvider } from '../../lib/customer-family-otp';
@@ -7,7 +6,7 @@ import { getCustomerFamilyOtpProvider } from '../../lib/customer-family-otp';
 export const runtime = 'nodejs';
 
 export async function GET() {
-  const database = getPostgresCustomerFamilyRepository() !== null;
+  const database = Boolean(process.env.DATABASE_URL || process.env.POSTGRES_URL);
   const otp = getCustomerFamilyOtpProvider() !== null;
   const sessionRevocation = getPostgresYcmSessionRevocationStore() !== null;
   const securityAudit = getPostgresYcmAuditStore() !== null;

@@ -1,5 +1,5 @@
 import postgres from 'postgres';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomBytes } from 'node:crypto';
 import { hashPassword, hashResetToken } from './ycm-password';
 import type { YcmRole } from './ycm-access-control';
 
@@ -9,10 +9,75 @@ const sql = process.env.DATABASE_URL || process.env.POSTGRES_URL
 
 export function authDb() { if (!sql) throw new Error('DATABASE_NOT_CONFIGURED'); return sql; }
 
-export async function findUser(identifier:string) {
+export const YCM_LOGIN_IDENTIFIER_TYPES = ['aadhaar','jan_aadhaar','pan','voter_id','ration_card','passport','driving_license'] as const;
+export type YcmLoginIdentifierType = (typeof YCM_LOGIN_IDENTIFIER_TYPES)[number];
+
+function normalizeIdentityIdentifier(type:YcmLoginIdentifierType, value:string) {
+  const compact=value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if (!compact) throw new Error('IDENTIFIER_REQUIRED');
+  if (type === 'aadhaar' && !/^\d{12}$/.test(compact)) throw new Error('AADHAAR_IDENTIFIER_INVALID');
+  if (type === 'jan_aadhaar' && !/^\d{8,20}$/.test(compact)) throw new Error('JAN_AADHAAR_IDENTIFIER_INVALID');
+  if (type === 'pan' && !/^[A-Z]{5}\d{4}[A-Z]$/.test(compact)) throw new Error('PAN_IDENTIFIER_INVALID');
+  if (type === 'ration_card' && compact.length < 6) throw new Error('RATION_CARD_IDENTIFIER_INVALID');
+  if (type === 'passport' && !/^[A-Z0-9]{6,12}$/.test(compact)) throw new Error('PASSPORT_IDENTIFIER_INVALID');
+  if (type === 'voter_id' && compact.length < 6) throw new Error('VOTER_ID_IDENTIFIER_INVALID');
+  if (type === 'driving_license' && compact.length < 8) throw new Error('DRIVING_LICENSE_IDENTIFIER_INVALID');
+  return compact;
+}
+
+function identityHashSecret() {
+  const secret = process.env.YCM_IDENTITY_HASH_SECRET?.trim();
+  if (!secret && process.env.NODE_ENV === 'production') throw new Error('IDENTITY_HASH_SECRET_NOT_CONFIGURED');
+  return secret;
+}
+
+function legacyHashLoginIdentifier(type:YcmLoginIdentifierType, value:string) {
+  return createHash('sha256').update(type+':'+normalizeIdentityIdentifier(type,value)).digest('hex');
+}
+
+export function hashLoginIdentifier(type:YcmLoginIdentifierType, value:string) {
+  const normalized = normalizeIdentityIdentifier(type,value);
+  const secret = identityHashSecret();
+  if (!secret) return legacyHashLoginIdentifier(type, normalized);
+  return createHmac('sha256', secret).update(type+':'+normalized).digest('hex');
+}
+
+export function maskLoginIdentifier(type:YcmLoginIdentifierType, value:string) {
+  const normalized=normalizeIdentityIdentifier(type,value);
+  if (normalized.length <= 4) return '****';
+  return normalized.slice(0,2)+'*'.repeat(Math.max(2,normalized.length-4))+normalized.slice(-2);
+}
+
+export async function findUser(identifier:string, identifierType?:YcmLoginIdentifierType) {
   const value=identifier.trim().toLowerCase();
   const rows=await authDb()`SELECT id,user_id,full_name,email,mobile,password_hash,role,status,auth_version FROM ycm_users WHERE LOWER(user_id)=${value} OR LOWER(email)=${value} OR mobile=${identifier.trim()} LIMIT 1`;
-  return rows[0] ?? null;
+  if (rows[0]) return rows[0];
+  const compact=identifier.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if (!compact) return null;
+  const types=identifierType ? [identifierType] : YCM_LOGIN_IDENTIFIER_TYPES;
+  const secret = identityHashSecret();
+  const hashes=types.map(type=>legacyHashLoginIdentifier(type, compact));
+  const secureHashes=secret ? types.map(type=>createHmac('sha256', secret).update(type+':'+compact).digest('hex')) : [];
+  const allHashes=[...new Set([...secureHashes,...hashes])];
+  const identityRows=await authDb()`SELECT u.id,u.user_id,u.full_name,u.email,u.mobile,u.password_hash,u.role,u.status,u.auth_version
+    FROM ycm_login_identifiers i JOIN ycm_users u ON u.id=i.user_id
+    WHERE i.identifier_hash=ANY(${allHashes}) AND i.verification_status='verified'
+    ORDER BY CASE WHEN i.identifier_hash=ANY(${secureHashes}) THEN 0 ELSE 1 END, i.verified_at DESC NULLS LAST LIMIT 1`;
+  return identityRows[0] ?? null;
+}
+
+export async function linkVerifiedLoginIdentifier(input:{userId:string;identifierType:YcmLoginIdentifierType;identifier:string;verificationSource:string}) {
+  const db=authDb();
+  const hash=hashLoginIdentifier(input.identifierType,input.identifier);
+  const masked=maskLoginIdentifier(input.identifierType,input.identifier);
+  const user=await db`SELECT id FROM ycm_users WHERE user_id=${input.userId} LIMIT 1`;
+  if(!user[0]) throw new Error('USER_NOT_FOUND');
+  const rows=await db`INSERT INTO ycm_login_identifiers
+    (user_id,identifier_type,identifier_hash,masked_value,verification_status,verification_source,verified_at,hash_algorithm)
+    VALUES (${user[0].id},${input.identifierType},${hash},${masked},'verified',${input.verificationSource},NOW(),${identityHashSecret() ? 'hmac_sha256' : 'sha256'})
+    ON CONFLICT(identifier_type,identifier_hash) DO UPDATE SET user_id=EXCLUDED.user_id,masked_value=EXCLUDED.masked_value,verification_status='verified',verification_source=EXCLUDED.verification_source,verified_at=NOW(),hash_algorithm=EXCLUDED.hash_algorithm,updated_at=NOW()
+    RETURNING identifier_id,identifier_type,masked_value,verification_status,verified_at`;
+  return rows[0];
 }
 
 export async function getUserAuthVersion(userId:string) {
@@ -57,4 +122,41 @@ export async function resetPassword(rawToken:string,newPassword:string) {
     await tx`UPDATE ycm_password_reset_tokens SET used_at=NOW() WHERE id=${token.id}`;
   });
   return token.user_id as string;
+}
+
+
+export type YcmMembershipType = 'individual'|'family';
+export type YcmMembershipSegment = 'standard'|'defense_family'|'widow_household';
+
+export async function createMembership(input:{userId:string;membershipType:YcmMembershipType;membershipSegment:YcmMembershipSegment}) {
+  const db=authDb();
+  const isSpecial=input.membershipSegment !== 'standard';
+  if(isSpecial && input.membershipType !== 'family') throw new Error('SPECIAL_MEMBERSHIP_REQUIRES_FAMILY');
+  const validityYears=1;
+  const planCode='YCM_99_1Y';
+  const reviewStatus=isSpecial ? 'pending' : 'not_required';
+  const rows=await db`INSERT INTO ycm_memberships
+    (user_id,membership_type,membership_segment,plan_code,amount_paise,currency,validity_years,status,review_status,review_type)
+    VALUES
+    (${input.userId},${input.membershipType},${input.membershipSegment},${planCode},9900,'INR',${validityYears},'pending_payment',${reviewStatus},${isSpecial ? input.membershipSegment : null})
+    ON CONFLICT (user_id,membership_type) WHERE status='pending_payment'
+    DO UPDATE SET
+      membership_segment=EXCLUDED.membership_segment,
+      plan_code=EXCLUDED.plan_code,
+      validity_years=EXCLUDED.validity_years,
+      review_status=EXCLUDED.review_status,
+      review_type=EXCLUDED.review_type,
+      updated_at=NOW()
+    RETURNING membership_id,membership_type,membership_segment,plan_code,amount_paise,currency,validity_years,status,review_status,review_type,family_id`;
+  return rows[0];
+}
+
+export async function getUserPrimaryMembership(userId:string) {
+  const rows=await authDb()`SELECT membership_id,membership_type,plan_code,amount_paise,currency,validity_years,status,family_id
+    FROM ycm_memberships
+    WHERE user_id=(SELECT id FROM ycm_users WHERE user_id=${userId} LIMIT 1)
+      AND status IN ('active','pending_payment')
+    ORDER BY CASE WHEN status='active' THEN 0 ELSE 1 END, created_at DESC
+    LIMIT 1`;
+  return rows[0] ?? null;
 }

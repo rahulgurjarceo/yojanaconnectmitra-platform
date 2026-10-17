@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const route=fs.readFileSync('app/api/ai-mitra/voice/route.ts','utf8');
+const page=fs.readFileSync('app/mitra/page.tsx','utf8');
+assert.match(route,/ycm_service_master/);
+assert.match(route,/ycm_service_documents/);
+assert.match(route,/ycm_service_pricing/);
+assert.match(route,/business loan/);
+assert.match(route,/scholarship/);
+assert.match(page,/SpeechRecognition/);
+assert.match(page,/api\/ai-mitra\/voice/);
+console.log('VOICE_MITRA_CONTRACT: PASS');

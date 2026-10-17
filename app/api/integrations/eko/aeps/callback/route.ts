@@ -1,0 +1,67 @@
+import postgres from 'postgres';
+import {timingSafeEqual} from 'node:crypto';
+import {NextRequest,NextResponse} from 'next/server';
+import {ekoRequestHash,ekoSecurityHeaders} from '../../../../../lib/eko-aeps';
+import {recordSuccessfulFinancialTransaction,reverseFinancialTransaction} from '../../../../../lib/ycm-financial-ledger';
+export const runtime='nodejs';
+const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:8,prepare:false,connect_timeout:10,idle_timeout:20}):null};
+type Detail={client_ref_id?:string;request_hash_params?:string[];data?:Record<string,unknown>;response?:{data?:Record<string,unknown>;message?:string}};
+const finalStatus=(s:string)=>{const v=s.trim().toLowerCase();return v==='0'||v==='success'?'success':v==='1'||v==='failed'?'failed':v==='4'||v==='reversed'?'reversed':'inquiry_required';};
+const callbackTransactionDto=(tx:Record<string,unknown>)=>({
+ clientRefId:String(tx.client_ref_id??''),
+ status:String(tx.status??''),
+ providerReference:tx.eko_tid??null,
+ bankReference:tx.bank_reference??null,
+});
+export async function OPTIONS(){return new NextResponse(null,{status:204,headers:{'Access-Control-Allow-Origin':'https://stagegateway.eko.in','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'}});}
+const callbackAuthorized=(r:NextRequest)=>{const configured=process.env.EKO_CALLBACK_SHARED_SECRET||'';const supplied=r.headers.get('x-eko-callback-secret')||'';return !!configured&&supplied.length===configured.length&&timingSafeEqual(Buffer.from(supplied),Buffer.from(configured));};
+export async function POST(r:NextRequest){
+ if(!callbackAuthorized(r))return NextResponse.json({success:false,code:'EKO_CALLBACK_AUTHENTICATION_FAILED'},{status:401});
+ const body=await r.json().catch(()=>null) as {action?:string;detail?:Detail}|null;
+ const detail=body?.detail;
+ const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
+ try{
+  if(body?.action==='debit-hook'){
+   const clientRef=String(detail?.client_ref_id??'');const data=detail?.data??{};const userCode=String(data.user_code??'');const amount=Number(data.amount??0);
+   if(!clientRef||!userCode)return NextResponse.json({action:'go',allow:false,message:'Missing transaction reference or retailer'});
+   const account=(await sql.unsafe('SELECT user_id,status FROM ycm_eko_retailer_accounts WHERE eko_user_code=$1 LIMIT 1',[userCode]))[0];
+   const tx=(await sql.unsafe('SELECT eko_transaction_id,user_id,eko_user_code,amount_paise,status FROM ycm_eko_aeps_transactions WHERE client_ref_id=$1 LIMIT 1',[clientRef]))[0];
+   if(!account||account.status!=='active'||!tx||String(tx.user_id)!==String(account.user_id)||String(tx.eko_user_code)!==userCode)return NextResponse.json({action:'go',allow:false,message:'Retailer or transaction is not authorized'});
+   if(tx.amount_paise!==Math.round(amount*100))return NextResponse.json({action:'go',allow:false,message:'Transaction amount mismatch'});
+   const params=(detail?.request_hash_params??[]).map(k=>String(data[k]??''));
+   const timestamp=Date.now().toString();const security=ekoSecurityHeaders(timestamp);const requestHash=ekoRequestHash(timestamp,params);
+   await sql.unsafe('UPDATE ycm_eko_aeps_transactions SET status=CASE WHEN status=\'initiated\' THEN \'provider_processing\' ELSE status END,provider_payload=provider_payload || $1::jsonb,updated_at=NOW() WHERE eko_transaction_id=$2',[JSON.stringify({debitHook:body}),tx.eko_transaction_id]);
+   return NextResponse.json({action:'go',allow:true,secret_key_timestamp:security.secretKeyTimestamp,request_hash:requestHash,secret_key:security.secretKey},{headers:{'Access-Control-Allow-Origin':'https://stagegateway.eko.in'}});
+  }
+  if(body?.action!=='eko-response')return NextResponse.json({success:false,code:'EKO_CALLBACK_ACTION_UNSUPPORTED'},{status:400});
+  const clientRef=String(detail?.client_ref_id??'');const data=detail?.response?.data??{};if(!clientRef)return NextResponse.json({success:false,code:'EKO_CLIENT_REF_REQUIRED'},{status:400});
+  const tx=(await sql.unsafe('SELECT * FROM ycm_eko_aeps_transactions WHERE client_ref_id=$1 LIMIT 1',[clientRef]))[0];if(!tx)return NextResponse.json({success:false,code:'EKO_TRANSACTION_NOT_FOUND'},{status:404});
+  const account=(await sql.unsafe('SELECT status,eko_user_code FROM ycm_eko_retailer_accounts WHERE user_id=$1 LIMIT 1',[tx.user_id]))[0];
+  if(!account||account.eko_user_code!==tx.eko_user_code)return NextResponse.json({success:false,code:'EKO_RETAILER_BINDING_INVALID'},{status:409});
+  const providerStatus=String(data.tx_status??'');const status=finalStatus(providerStatus);const amount=Number(data.amount??0);
+  if(tx.amount_paise!==Math.round(amount*100)&&tx.transaction_type==='cash_withdrawal')return NextResponse.json({success:false,code:'EKO_CALLBACK_AMOUNT_MISMATCH'},{status:409});
+  const existingStatus=String(tx.status??'');
+  const applyLedgerForTerminalStatus=async(terminalStatus:string,transaction:typeof tx)=>{
+   if(terminalStatus==='success')await recordSuccessfulFinancialTransaction({externalReference:'aeps:'+clientRef,transactionType:'aeps',serviceCode:'FIN_AEPS',agentUserId:transaction.user_id,providerCode:'EKO',providerTransactionId:data.tid?String(data.tid):undefined,grossAmountPaise:transaction.amount_paise});
+   if(terminalStatus==='reversed')await reverseFinancialTransaction('aeps:'+clientRef).catch(e=>{if(!(e instanceof Error)||e.message!=='TRANSACTION_NOT_FOUND')throw e;});
+  };
+  if(['success','failed','reversed'].includes(existingStatus)&&!(existingStatus==='success'&&status==='reversed')){
+   await applyLedgerForTerminalStatus(existingStatus,tx);
+   return NextResponse.json({success:true,status:existingStatus,idempotent:true,transaction:callbackTransactionDto(tx)});
+  }
+  const saved=(await sql.unsafe(`UPDATE ycm_eko_aeps_transactions SET status=CASE WHEN status IN ('success','failed','reversed') AND NOT (status='success' AND $1='reversed') AND status<>$1 THEN status ELSE $1 END,eko_tid=COALESCE($2,eko_tid),bank_reference=COALESCE($3,bank_reference),provider_message=$4,provider_payload=provider_payload || $5::jsonb,final_at=CASE WHEN status='success' AND $1='reversed' THEN NOW() WHEN status IN ('success','failed','reversed') THEN final_at WHEN $1 IN ('success','failed','reversed') THEN NOW() ELSE final_at END,updated_at=NOW() WHERE eko_transaction_id=$6 RETURNING *`,[status,data.tid??null,data.bank_ref_num??null,String(detail?.response?.message??data.reason??''),JSON.stringify({ekoResponse:body}),tx.eko_transaction_id]))[0];
+  // Concurrent callbacks can race after the initial read. Only the state persisted by the
+  // guarded UPDATE is authoritative for ledger side effects.
+  const persistedStatus=String(saved?.status??'');
+  if(['success','failed','reversed'].includes(persistedStatus)){
+   await applyLedgerForTerminalStatus(persistedStatus,saved);
+   if(persistedStatus!==status)return NextResponse.json({success:true,status:persistedStatus,idempotent:true,transaction:callbackTransactionDto(saved)});
+  }
+  return NextResponse.json({success:true,status:persistedStatus||status,transaction:callbackTransactionDto(saved)});
+ }catch(e){
+  const message=e instanceof Error?e.message:'';
+  const knownCodes=new Set(['DATABASE_NOT_CONFIGURED','EKO_CALLBACK_ACTION_UNSUPPORTED','EKO_CLIENT_REF_REQUIRED','EKO_TRANSACTION_NOT_FOUND','EKO_RETAILER_BINDING_INVALID','EKO_CALLBACK_AMOUNT_MISMATCH','EKO_ACCESS_KEY_NOT_CONFIGURED','EKO_INITIATOR_ID_NOT_CONFIGURED','EKO_BASE_URL_NOT_CONFIGURED','EKO_DEVELOPER_KEY_NOT_CONFIGURED']);
+  const code=knownCodes.has(message)?message:'EKO_CALLBACK_FAILED';
+  return NextResponse.json({success:false,code},{status:500});
+ }finally{await sql.end({timeout:3});}
+}

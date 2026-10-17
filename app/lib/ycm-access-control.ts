@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-export const YCM_ROLES = ['family', 'farmer', 'lawyer', 'student', 'employee', 'management', 'ceo', 'admin', 'partner', 'referral'] as const;
+export const YCM_ROLES = ['family', 'farmer', 'lawyer', 'student', 'employee', 'team_lead', 'branch_manager', 'management', 'ceo', 'admin', 'partner', 'referral'] as const;
 export type YcmRole = (typeof YCM_ROLES)[number];
 
 export type YcmSession = {
@@ -16,12 +16,13 @@ export type YcmSession = {
 };
 
 const COOKIE = 'ycm_session';
+const PRODUCTION_COOKIE = '__Host-ycm_session';
 const secret = () => process.env.YCM_SESSION_SECRET || '';
 
 function encode(value: string) { return Buffer.from(value).toString('base64url'); }
 function decode(value: string) { return Buffer.from(value, 'base64url').toString('utf8'); }
 
-export function sessionCookieName() { return COOKIE; }
+export function sessionCookieName() { return process.env.NODE_ENV === 'production' ? PRODUCTION_COOKIE : COOKIE; }
 
 export function signSession(session: YcmSession): string {
   if (!secret()) throw new Error('YCM_SESSION_SECRET_NOT_CONFIGURED');
@@ -51,7 +52,9 @@ const ROLE_PERMISSIONS: Record<YcmRole, readonly string[]> = {
   farmer: ['farmer:self', 'scheme:self', 'agri:self', 'market:self', 'document:self'],
   lawyer: ['case:assigned', 'case:lawyer', 'customer:assigned', 'document:assigned', 'legal:all'],
   student: ['education:self', 'scholarship:self', 'document:self', 'career:self'],
-  employee: ['case:assigned', 'customer:assigned', 'document:assigned', 'cri:assigned'],
+  employee: ['case:assigned', 'customer:assigned', 'document:assigned', 'cri:assigned', 'attendance:self', 'work:self'],
+  team_lead: ['case:assigned', 'customer:assigned', 'document:assigned', 'cri:assigned', 'attendance:team', 'work:team', 'team:manage'],
+  branch_manager: ['case:assigned', 'customer:assigned', 'document:assigned', 'cri:assigned', 'government:contacts:read', 'government:contacts:manage', 'government:grievance:manage', 'attendance:team', 'work:team'],
   management: ['case:all', 'customer:all', 'crm:all', 'reports:all', 'cri:all'],
   ceo: ['case:all', 'customer:all', 'crm:all', 'reports:all', 'finance:all', 'hr:all', 'security:all', 'cri:all', 'management:all'],
   admin: ['platform:all', 'security:all', 'user:all'],
@@ -69,18 +72,37 @@ export function permissionsForRole(role: YcmRole) {
 
 export function roleCanAccessPath(role: YcmRole, pathname: string) {
   if (pathname.startsWith('/ceo') || pathname.startsWith('/api/ceo')) return role === 'ceo';
-  if (pathname.startsWith('/management') || pathname.startsWith('/api/management')) return ['management', 'ceo', 'admin'].includes(role);
-  if (pathname.startsWith('/employee') || pathname.startsWith('/api/employee')) return ['employee', 'management', 'ceo', 'admin'].includes(role);
+  if (pathname.startsWith('/management') || pathname.startsWith('/api/management')) return ['team_lead', 'branch_manager', 'management', 'ceo', 'admin'].includes(role);
+  if (pathname.startsWith('/employee') || pathname.startsWith('/api/employee')) return ['employee', 'team_lead', 'branch_manager', 'management', 'ceo', 'admin'].includes(role);
   if (pathname.startsWith('/lawyer') || pathname.startsWith('/api/lawyer')) return ['lawyer', 'management', 'ceo', 'admin'].includes(role);
   if (pathname.startsWith('/farmer') || pathname.startsWith('/api/farmer')) return ['farmer', 'management', 'ceo', 'admin'].includes(role);
   if (pathname.startsWith('/student') || pathname.startsWith('/api/student')) return ['student', 'family', 'management', 'ceo', 'admin'].includes(role);
   if (pathname.startsWith('/crm') || pathname.startsWith('/api/crm')) return ['employee', 'management', 'ceo', 'admin', 'partner', 'referral'].includes(role);
   if (pathname.startsWith('/family-dashboard') || pathname.startsWith('/api/family-dashboard')) return role === 'family';
   if (pathname.startsWith('/command-center') || pathname.startsWith('/api/command-center')) return ['ceo', 'management', 'admin'].includes(role);
+  if (pathname === '/impact-proof' || pathname.startsWith('/impact-proof/') || pathname === '/api/impact-proof' || pathname.startsWith('/api/impact-proof/')) return ['ceo', 'management', 'admin'].includes(role);
   return true;
 }
 
+const PUBLIC_API_PATHS = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/auth/session',
+  '/api/auth/logout',
+  '/api/health',
+  '/api/ready',
+  '/api/impact-proof/health',
+  '/api/integrations/eko/aeps/callback',
+  '/api/aeps/transactions',
+  '/api/settlements/release',
+];
+
 export function isProtectedPath(pathname: string) {
-  return ['/ceo', '/management', '/employee', '/lawyer', '/farmer', '/student', '/crm', '/family-dashboard', '/command-center', '/api/ceo', '/api/management', '/api/employee', '/api/lawyer', '/api/farmer', '/api/student', '/api/crm', '/api/family-dashboard', '/api/command-center']
+  if (pathname.startsWith('/api/')) {
+    return !PUBLIC_API_PATHS.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  }
+  return ['/ceo', '/management', '/employee', '/lawyer', '/farmer', '/student', '/crm', '/family-dashboard', '/command-center', '/impact-proof', '/api/ceo', '/api/management', '/api/employee', '/api/lawyer', '/api/farmer', '/api/student', '/api/crm', '/api/family-dashboard', '/api/command-center', '/api/impact-proof']
     .some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }

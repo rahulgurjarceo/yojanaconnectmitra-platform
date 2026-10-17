@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const migration=fs.readFileSync('database/migrations/033_aeps_provider_modes.sql','utf8');
+const spice=fs.readFileSync('app/lib/spice-money-aeps.ts','utf8');
+const router=fs.readFileSync('app/lib/ycm-aeps-provider.ts','utf8');
+const api=fs.readFileSync('app/api/aeps/providers/route.ts','utf8');
+for(const token of ['ycm_aeps_provider_configs','ycm_aeps_devices','ycm_aeps_auth_attempts','ycm_aeps_provider_routes',"'fingerprint'","'face'","'iris'",'SPICE_MONEY','EKO']) assert.ok(migration.includes(token));
+assert.match(spice,/SpiceMoneyAepsProvider/);
+assert.match(spice,/SPICE_MONEY_API_CONTRACT_REQUIRED/);
+assert.match(router,/SPICE_MONEY/);
+assert.match(router,/EKO/);
+assert.match(api,/ycm_aeps_devices/);
+assert.match(api,/deviceIdentifier/);
+assert.match(api,/authentication_required/i);
+console.log('AEPS provider mode contract checks passed.');
