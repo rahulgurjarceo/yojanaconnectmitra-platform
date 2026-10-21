@@ -35,6 +35,8 @@ jobs:
         run: npm run test:business-domains
       - name: Unified service master contract test
         run: npm run test:service-master
+      - name: Service master CSV import contract test
+        run: npm run test:service-master-csv-import
       - name: Service lifecycle contract test
         run: npm run test:service-lifecycle
       - name: Service application reuse/prefill contract test
