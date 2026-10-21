@@ -5,7 +5,7 @@ import { sessionCookieName, verifySession } from '../../../lib/ycm-access-contro
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const MAX_ROWS = 5000;
 const db = () => {
   const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
@@ -47,15 +47,26 @@ function serviceType(category: string): string {
 }
 function domainCode(category: string): string {
   const c = category.toLowerCase();
-  if (/government schemes|government services|social welfare|family 360|health schemes|housing|labour|ration card|pension/.test(c)) return 'government-services-schemes';
+  if (/government schemes|government services|social welfare|family 360|health schemes/.test(c)) return 'government-services-schemes';
+  if (/ration card|food|nutrition/.test(c)) return 'food-nutrition';
   if (/caste|birth|death|domicile|residence|aadhaar|identity|voter|printing|cyber cafe|document|certificate/.test(c)) return 'documents-certificates';
   if (/education|scholarship|jobs|recruitment|resume|career|skill training|training|digital literacy/.test(c)) return 'education-admission-scholarship';
   if (/loan|credit|insurance|banking|financial inclusion|finance/.test(c)) return 'loans-finance-insurance';
   if (/business|startup|msme|website|e-commerce|digital marketing|franchise|tender/.test(c)) return 'business-startup-msme';
   if (/gst|tax|accounting/.test(c)) return 'tax-gst-accounting';
-  if (/legal|affidavit|passport|travel|transport/.test(c)) return 'legal-documentation';
-  if (/farmer|agriculture/.test(c)) return 'agriculture-fpo-dairy-kirana';
+  if (/legal|affidavit/.test(c)) return 'legal-documentation';
+  if (/passport|travel/.test(c)) return 'travel-passport-visa-immigration';
+  if (/transport/.test(c)) return 'transport-mobility';
+  if (/farmer|agriculture/.test(c)) return 'agriculture-farmer';
+  if (/labour|worker/.test(c)) return 'labour-worker';
+  if (/pension/.test(c)) return 'pension';
   if (/land|property/.test(c)) return 'property-land';
+  if (/health/.test(c)) return 'health-medical-discovery';
+  if (/utility|electricity|water/.test(c)) return 'utility-services';
+  if (/social welfare|women|children|senior/.test(c)) return 'women-children-senior';
+  if (/website|digital marketing|e-commerce|franchise|corporate/.test(c)) return 'corporate-business-services';
+  if (/digital|cyber cafe|printing/.test(c)) return 'digital-services';
+  if (/professional|accounting/.test(c)) return 'professional-services';
   return 'government-services-schemes';
 }
 function bool(s: string, fallback: boolean) {
