@@ -15,7 +15,7 @@ export async function GET(){
      WHERE p.service_code=sm.service_code AND p.status='active'
      ORDER BY p.effective_from DESC LIMIT 1
    ) pricing ON TRUE
-   WHERE sm.status='active' ORDER BY sm.service_name`;
+   WHERE sm.status IN ('active','published') ORDER BY sm.service_name`;
   return NextResponse.json({success:true,services},{headers:{'Cache-Control':'public,max-age=60'}});
  }catch{ return NextResponse.json({success:false,code:'SERVICE_CATALOG_UNAVAILABLE'},{status:503}); }
  finally{await sql.end({timeout:2});}
