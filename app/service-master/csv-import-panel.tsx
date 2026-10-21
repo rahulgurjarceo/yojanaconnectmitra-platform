@@ -51,7 +51,7 @@ export default function ServiceCsvImportPanel({ onImported }: { onImported?: () 
         <h2 className="mt-1 text-xl font-black">Import up to 5,000 services from CSV</h2>
         <p className="mt-1 max-w-3xl text-sm text-slate-600">First validate the file. Import creates draft services and proposed YCM prices; it does not publish them to customers automatically.</p>
       </div>
-      <a className="text-sm font-bold text-blue-800 underline" href="/service-rates">View public rate-list page</a>
+      <a className="text-sm font-bold text-blue-800 underline" href="/services">View public rate-list page</a>
     </div>
     <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
       <input type="file" accept=".csv,text/csv" onChange={e=>{setFile(e.target.files?.[0]||null);setChecked(null);setResult(null);setError('');}} className="block w-full rounded-xl border bg-white p-2 text-sm"/>
