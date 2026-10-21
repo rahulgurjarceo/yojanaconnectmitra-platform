@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { YCM_SERVICE_CATALOG, YCM_SERVICE_MODULES, YCM_SERVICE_STATS } from "../service-catalog";
 
-type DbService={service_code:string;service_name:string;service_type:string;business_domain_code?:string|null;validity_days?:number|null;renewal_allowed?:boolean};
+type DbService={service_code:string;service_name:string;service_type:string;business_domain_code?:string|null;validity_days?:number|null;renewal_allowed?:boolean;customer_price?:number|string|null;metadata?:Record<string,unknown>;pricing_metadata?:Record<string,unknown>};
 export default function ServicesPage() {
   const [query, setQuery] = useState("");
   const [dbServices,setDbServices]=useState<DbService[]>([]);
@@ -40,6 +40,9 @@ export default function ServicesPage() {
           <div className="text-xs font-bold uppercase tracking-wider text-blue-700">Live Service Master • {service.service_type}</div>
           <h2 className="mt-2 font-extrabold">{service.service_name}</h2>
           <p className="mt-2 text-xs text-slate-500">{service.business_domain_code||"YCM One"} • {service.validity_days?("Validity "+service.validity_days+" days"):"Validity authority-defined"}</p>
+          {service.customer_price!=null&&Number(service.customer_price)>0&&<div className="mt-3 rounded-xl bg-emerald-50 p-3"><p className="text-sm font-black text-emerald-800">YCM assistance charge: ₹{Number(service.customer_price).toLocaleString('en-IN')}</p><p className="mt-1 text-[11px] text-slate-600">Official / department fees, if any, are separate.</p></div>}
+          {typeof service.metadata?.stateOrUT==="string"&&<p className="mt-2 text-xs text-slate-500">Applicable region: {service.metadata.stateOrUT}</p>}
+          {typeof service.metadata?.officialPortal==="string"&&/^https:\/\//i.test(service.metadata.officialPortal)&&<a href={service.metadata.officialPortal} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-xs font-bold text-blue-700 underline">Open official portal ↗</a>}
           <div className="mt-4 flex items-center gap-2"><button onClick={async()=>{setApplyMessage("Preparing application…");const r=await fetch("/api/service-applications",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({serviceCode:service.service_code})});const j=await r.json();setApplyMessage(r.ok?(j.nextStep==="review_and_submit"?"Ready — existing documents reused.":"Upload only the missing/expired documents."):(j.code==="AUTHENTICATION_REQUIRED"?"Please login to apply.":j.code||"Application could not be prepared."));}} className="rounded-xl bg-blue-700 px-4 py-2 text-xs font-black text-white">Apply</button><span className="text-[11px] text-slate-500">{service.renewal_allowed!==false?"Renewal supported":"Renewal by authority"}</span></div>
         </article>)}
         {filtered.map((service) => <article key={`${service.module}-${service.id}`} className="rounded-2xl border bg-white p-5 shadow-sm">
