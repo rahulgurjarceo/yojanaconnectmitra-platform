@@ -7,8 +7,15 @@ export async function GET(){
  if(!u)return NextResponse.json({success:true,services:[]},{headers:{'Cache-Control':'public,max-age=60'}});
  const sql=postgres(u,{max:3,prepare:false,connect_timeout:10,idle_timeout:20});
  try{
-  const services=await sql`SELECT service_code,service_name,service_type,business_domain_code,channel,requires_case,requires_documents,requires_provider,status,validity_days,expiry_warning_days,renewal_allowed,renewal_window_days,prefill_fields
-   FROM ycm_service_master WHERE status='active' ORDER BY service_name`;
+  const services=await sql`SELECT sm.service_code,sm.service_name,sm.service_type,sm.business_domain_code,sm.channel,sm.requires_case,sm.requires_documents,sm.requires_provider,sm.status,sm.validity_days,sm.expiry_warning_days,sm.renewal_allowed,sm.renewal_window_days,sm.prefill_fields,sm.metadata,
+   pricing.customer_price,pricing.metadata AS pricing_metadata
+   FROM ycm_service_master sm
+   LEFT JOIN LATERAL (
+     SELECT p.customer_price,p.metadata FROM ycm_service_pricing p
+     WHERE p.service_code=sm.service_code AND p.status='active'
+     ORDER BY p.effective_from DESC LIMIT 1
+   ) pricing ON TRUE
+   WHERE sm.status IN ('active','published') ORDER BY sm.service_name`;
   return NextResponse.json({success:true,services},{headers:{'Cache-Control':'public,max-age=60'}});
  }catch{ return NextResponse.json({success:false,code:'SERVICE_CATALOG_UNAVAILABLE'},{status:503}); }
  finally{await sql.end({timeout:2});}

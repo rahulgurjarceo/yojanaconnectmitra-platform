@@ -7,7 +7,7 @@ const governance=fs.readFileSync('app/lib/ycm-service-governance.ts','utf8');
 const aeps=fs.readFileSync('app/lib/ycm-aeps.ts','utf8');
 for(const x of ['ycm_service_master','GOV_E_GOVERNMENT_ASSISTANCE','DOC_IDENTITY','DOC_OCR_VERIFICATION','TRAVEL_FLIGHT','TRAVEL_HOTEL','TRAVEL_PACKAGE']) if(!migration.includes(x)) throw new Error('missing '+x);
 for(const x of ['ycm_service_master','service_type','business_domain_code']) if(!api.includes(x)) throw new Error('missing api '+x);
-if(!api.includes("AND (${includeAll} OR status='active')")) throw new Error('service detail lookup must hide inactive/draft services from non-managers');
+if(!api.includes("AND (${includeAll} OR status IN ('active','published'))")) throw new Error('service detail lookup must hide inactive/draft services from non-managers');
 if(!api.includes("rows.some((row)=>row.service_code===serviceCode)")) throw new Error('service detail reads must reuse catalogue visibility filters');
 
 const rolePermissions = (role) => {
