@@ -6,6 +6,9 @@ const panel = fs.readFileSync('app/service-master/csv-import-panel.tsx', 'utf8')
 const page = fs.readFileSync('app/service-master/page.tsx', 'utf8');
 const migration = fs.readFileSync('database/migrations/018_business_domains_and_team_mapping.sql', 'utf8');
 const pricingMigration = fs.readFileSync('database/migrations/021_dynamic_service_operating_layer.sql', 'utf8');
+const lifecycleMigration = fs.readFileSync('database/migrations/063_service_master_governance_statuses.sql', 'utf8');
+const publicCatalog = fs.readFileSync('app/api/services/catalog/route.ts', 'utf8');
+const publicServicesPage = fs.readFileSync('app/services/page.tsx', 'utf8');
 
 for (const value of [
   'MAX_ROWS = 5000',
@@ -40,6 +43,9 @@ for (const code of [
 ]) assert.ok(migration.includes("'" + code + "'"), 'expected valid domain code missing: ' + code);
 
 assert.ok(pricingMigration.includes('CREATE TABLE IF NOT EXISTS ycm_service_pricing'), 'pricing table migration missing');
+assert.ok(lifecycleMigration.includes('pending_approval') && lifecycleMigration.includes('published'), 'governance status migration missing');
+assert.ok(publicCatalog.includes('pricing.customer_price') && publicCatalog.includes("sm.status IN ('active','published')"), 'public catalog must expose approved pricing and published services');
+assert.ok(publicServicesPage.includes('YCM assistance charge') && publicServicesPage.includes('officialPortal'), 'public service page must show YCM rate and official portal link');
 assert.ok(panel.includes('/api/service-master/import'), 'import UI must call the import endpoint');
 assert.ok(panel.includes('Validate CSV') && panel.includes('Import as Drafts'), 'UI must validate before import');
 assert.ok(page.includes('ServiceCsvImportPanel'), 'Service Master page must mount CSV import panel');
