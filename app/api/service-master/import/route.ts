@@ -69,11 +69,6 @@ function domainCode(category: string): string {
   if (/professional|accounting/.test(c)) return 'professional-services';
   return 'government-services-schemes';
 }
-function bool(s: string, fallback: boolean) {
-  if (!s.trim()) return fallback;
-  return ['true','yes','1','required','online'].includes(s.trim().toLowerCase());
-}
-
 export async function POST(request: NextRequest) {
   const session = verifySession(request.cookies.get(sessionCookieName())?.value);
   if (!session) return NextResponse.json({ success: false, code: 'AUTHENTICATION_REQUIRED' }, { status: 401 });
