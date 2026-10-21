@@ -29,7 +29,7 @@ export async function GET(r:NextRequest){
             FILTER (WHERE sv.vertical_code IS NOT NULL),'[]'::jsonb) AS verticals
    FROM ycm_service_master sm
    LEFT JOIN ycm_service_verticals sv ON sv.service_code=sm.service_code AND sv.status='active'
-   WHERE (${includeAll} OR sm.status='active')
+   WHERE (${includeAll} OR sm.status IN ('active','published'))
      AND (${type} IS NULL OR sm.service_type=${type})
      AND (${domain} IS NULL OR sm.business_domain_code=${domain})
      AND (${vertical} IS NULL OR EXISTS (
@@ -69,7 +69,7 @@ export async function GET(r:NextRequest){
    // Reuse the already-filtered catalogue as the visibility boundary so detail reads cannot bypass status or geography scope.
    if(!rows.some((row)=>row.service_code===serviceCode))return NextResponse.json({success:false,code:'SERVICE_NOT_FOUND'},{status:404});
    const details=(await sql`SELECT service_code,service_name,validity_days,expiry_warning_days,renewal_allowed,renewal_window_days,prefill_fields
-     FROM ycm_service_master WHERE service_code=${serviceCode} AND (${includeAll} OR status='active') LIMIT 1`)[0];
+     FROM ycm_service_master WHERE service_code=${serviceCode} AND (${includeAll} OR status IN ('active','published')) LIMIT 1`)[0];
    if(!details)return NextResponse.json({success:false,code:'SERVICE_NOT_FOUND'},{status:404});
    const documents=await sql`SELECT document_code,document_name,required,required_for_application,validation_mode,validity_days,expiry_warning_days,reuse_if_valid,reupload_on_expiry,prefill_fields,source_name,source_url,valid_from,valid_until,metadata
      FROM ycm_service_documents WHERE service_code=${serviceCode} ORDER BY document_name`;
