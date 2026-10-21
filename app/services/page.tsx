@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { YCM_SERVICE_CATALOG, YCM_SERVICE_MODULES, YCM_SERVICE_STATS } from "../service-catalog";
 
 type DbService={service_code:string;service_name:string;service_type:string;business_domain_code?:string|null;validity_days?:number|null;renewal_allowed?:boolean};
@@ -22,6 +23,7 @@ export default function ServicesPage() {
     <header className="border-b bg-white"><div className="mx-auto max-w-7xl px-5 py-5">
       <div className="text-2xl font-black text-blue-700">YCM ONE — Service Centre</div>
       <p className="mt-1 text-sm text-slate-500">One platform, many service verticals. Official-source verification is required before application or payment.</p>
+      <div className="mt-4"><Link href="/service-rates" className="inline-flex rounded-xl bg-blue-700 px-4 py-2 text-sm font-black text-white hover:bg-blue-800">View Service Rate List ↗</Link></div>
     </div></header>
     <section className="mx-auto max-w-7xl px-5 py-8">
       <div className="grid gap-3 sm:grid-cols-3">

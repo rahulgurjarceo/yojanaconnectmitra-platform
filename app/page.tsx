@@ -85,6 +85,7 @@ export default function Home() {
 
           <nav className="hidden items-center gap-5 text-sm font-bold xl:flex">
             <button onClick={() => router.push('/services')}>Services</button>
+            <button onClick={() => router.push('/service-rates')}>Rate List</button>
             <button onClick={() => router.push('/education/universities')}>Education</button>
             <button onClick={() => router.push('/legal-mitra')}>Legal</button>
           </nav>
