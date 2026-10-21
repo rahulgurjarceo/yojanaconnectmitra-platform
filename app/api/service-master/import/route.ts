@@ -153,45 +153,40 @@ export async function POST(request: NextRequest) {
   if (!sql) return NextResponse.json({ success: false, code: 'DATABASE_NOT_CONFIGURED' }, { status: 503 });
   let imported = 0, skippedExisting = 0;
   try {
+    // Batch inserts keep a 5,000-row import within serverless execution limits.
     await sql.begin(async tx => {
-      for (const item of data) {
-        const metadata = {
-          source: 'YCM bulk CSV import',
-          sourceCategory: item.category,
-          stateOrUT: item.state,
-          jurisdictionScope: item.state ? 'state_or_ut_specific' : 'all_india',
-          officialPortal: item.portal,
-          responsibleDepartment: item.department,
-          applicationMode: item.mode,
-          proposedStandardAssistanceCharge: item.standard,
-          ycmDiscountPercent: item.discount,
-          ycmDiscountedAssistanceCharge: item.discounted,
-          customerSavings: item.savings,
-          coreServiceScope: item.scope,
-          compliancePricingNote: item.compliance,
-          officialFeePolicy: 'Separate; verify actual official fee before customer payment',
-          importedAt: new Date().toISOString(),
-          publicationReviewRequired: true
-        };
+      const prepared = data.map(item => ({
+        service_code: item.code,
+        service_name: item.name,
+        service_type: serviceType(item.category),
+        business_domain_code: domainCode(item.category),
+        channel: /online/i.test(item.mode) && !/offline/i.test(item.mode) ? 'online' : 'assisted',
+        requires_provider: /loan|insurance|travel|provider/i.test(item.category),
+        metadata: { source: 'YCM bulk CSV import', sourceCategory: item.category, stateOrUT: item.state, jurisdictionScope: item.state ? 'state_or_ut_specific' : 'all_india', officialPortal: item.portal, responsibleDepartment: item.department, applicationMode: item.mode, proposedStandardAssistanceCharge: item.standard, ycmDiscountPercent: item.discount, ycmDiscountedAssistanceCharge: item.discounted, customerSavings: item.savings, coreServiceScope: item.scope, compliancePricingNote: item.compliance, officialFeePolicy: 'Separate; verify actual official fee before customer payment', importedAt: new Date().toISOString(), publicationReviewRequired: true },
+        customer_price: item.discounted,
+        pricing_metadata: { standardAssistanceCharge: item.standard, discountPercent: item.discount, customerSavings: item.savings, officialFeesExcluded: true, reviewRequired: true }
+      }));
+      for (let offset = 0; offset < prepared.length; offset += 100) {
+        const batch = prepared.slice(offset, offset + 100);
+        const serviceRows = batch.map(({service_code,service_name,service_type,business_domain_code,channel,requires_provider,metadata})=>({service_code,service_name,service_type,business_domain_code,channel,requires_provider,metadata}));
         const inserted = await tx`
           INSERT INTO ycm_service_master
             (service_code, service_name, service_type, business_domain_code, channel, requires_case, requires_documents, requires_provider, status, metadata)
-          VALUES
-            (${item.code}, ${item.name}, ${serviceType(item.category)}, ${domainCode(item.category)}, ${/online/i.test(item.mode) && !/offline/i.test(item.mode) ? 'online' : 'assisted'},
-             true, true, ${/loan|insurance|travel|provider/i.test(item.category)}, 'draft', ${JSON.stringify(metadata)}::jsonb)
-          ON CONFLICT (service_code) DO NOTHING
-          RETURNING service_code
+          SELECT x.service_code, x.service_name, x.service_type, x.business_domain_code, x.channel, true, true, x.requires_provider, 'draft', x.metadata
+          FROM jsonb_to_recordset(${JSON.stringify(serviceRows)}::jsonb)
+            AS x(service_code text, service_name text, service_type text, business_domain_code text, channel text, requires_provider boolean, metadata jsonb)
+          ON CONFLICT (service_code) DO NOTHING RETURNING service_code
         `;
-        if (!inserted.length) { skippedExisting++; continue; }
-        await tx`
-          INSERT INTO ycm_service_pricing
-            (service_code, channel, customer_price, provider_cost, commission_rate, currency, status, metadata)
-          VALUES
-            (${item.code}, ${/online/i.test(item.mode) && !/offline/i.test(item.mode) ? 'online' : 'assisted'}, ${item.discounted}, 0, null, 'INR', 'active',
-             ${JSON.stringify({ standardAssistanceCharge: item.standard, discountPercent: item.discount, customerSavings: item.savings, officialFeesExcluded: true, reviewRequired: true })}::jsonb)
+        const insertedCodes = new Set(inserted.map(row => String(row.service_code)));
+        const priceRows = batch.filter(row => insertedCodes.has(row.service_code)).map(row => ({service_code: row.service_code, channel: row.channel, customer_price: row.customer_price, pricing_metadata: row.pricing_metadata}));
+        if (priceRows.length) await tx`
+          INSERT INTO ycm_service_pricing (service_code, channel, customer_price, provider_cost, commission_rate, currency, status, metadata)
+          SELECT x.service_code, x.channel, x.customer_price, 0, null, 'INR', 'active', x.pricing_metadata
+          FROM jsonb_to_recordset(${JSON.stringify(priceRows)}::jsonb) AS x(service_code text, channel text, customer_price numeric, pricing_metadata jsonb)
           ON CONFLICT DO NOTHING
         `;
-        imported++;
+        imported += inserted.length;
+        skippedExisting += batch.length - inserted.length;
       }
     });
     return NextResponse.json({ success: true, imported, skippedExisting, totalRows: data.length, status: 'draft', message: 'Imported as draft; review official links, rates, legal permissions, and state availability before publication.' });
