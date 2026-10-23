@@ -15,7 +15,7 @@ export async function POST(request:NextRequest){
  const raw=await request.text();
  const provided=request.headers.get('x-eko-callback-signature')||'';
  if(!provided)return NextResponse.json({success:false,code:'CALLBACK_SIGNATURE_REQUIRED'},{status:401});
- try{if(!validSignature(raw,provided))return NextResponse.json({success:false,code:'CALLBACK_SIGNATURE_INVALID'},{status:401});}catch(e){return NextResponse.json({success:false,code:e instanceof Error?e.message:'CALLBACK_SECURITY_NOT_CONFIGURED'},{status:503});}
+ try{if(!validSignature(raw,provided))return NextResponse.json({success:false,code:'CALLBACK_SIGNATURE_INVALID'},{status:401});}catch{return NextResponse.json({success:false,code:'CALLBACK_SECURITY_NOT_CONFIGURED'},{status:503});}
  let body:any;try{body=JSON.parse(raw);}catch{return NextResponse.json({success:false,code:'INVALID_JSON'},{status:400});}
  const clientRef=typeof body?.client_ref_id==='string'?body.client_ref_id.trim():'';
  if(!clientRef)return NextResponse.json({success:false,code:'CLIENT_REF_REQUIRED'},{status:400});
