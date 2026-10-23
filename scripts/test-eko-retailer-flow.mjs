@@ -20,6 +20,9 @@ for(const token of ['debit-hook','eko-response','request_hash_params','recordSuc
 const initiate=fs.readFileSync(files[4],'utf8');
 for(const token of ['EKO_RETAILER_NOT_BOUND','EKO_RETAILER_NOT_ACTIVE','ycm_eko_aeps_transactions','FIN_AEPS'])if(!initiate.includes(token))throw new Error('MISSING_INITIATE_TOKEN_'+token);
 for(const f of files){const c=fs.readFileSync(f,'utf8');if(/f74c50a1|4CKAzpT/.test(c))throw new Error('HARDCODED_EKO_SECRET_'+f);}
+
+const inquiryRouteForHttpStatus=fs.readFileSync('app/api/aeps/eko/inquiry/route.ts','utf8');
+if(!inquiryRouteForHttpStatus.includes("message.match(/^EKO_INQUIRY_HTTP_(\\d{3})$/)")) throw new Error('EKO_INQUIRY_HTTP_STATUS_CODE_REGEX_MUST_MATCH_THREE_DIGITS');
 console.log('Eko AePS retailer/inquiry/callback contract checks passed');
 const retailer=fs.readFileSync('app/api/management/eko/retailers/route.ts','utf8');
 for(const token of ['EKO_DAILY_AUTH_DATE_INVALID','EKO_DATE_INVALID','ON CONFLICT(user_id)','INSERT INTO ycm_eko_retailer_accounts'])if(!retailer.includes(token))throw new Error('MISSING_RETAILER_HARDENING_'+token);
