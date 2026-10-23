@@ -9,6 +9,19 @@ type ExpenseBody={category?:string;description?:string;amountPaise?:number;expen
 const db=()=>{const u=process.env.DATABASE_URL||process.env.POSTGRES_URL;return u?postgres(u,{max:4,prepare:false,connect_timeout:10,idle_timeout:20}):null};
 const roles=new Set(['ceo','management','admin']);
 const cats=new Set(['employee','office','marketing','operations','technology','travel','legal_compliance','asset_purchase','bank_payment','other']);
+
+export async function GET(r:NextRequest){
+ const s=verifySession(r.cookies.get(sessionCookieName())?.value);if(!s||!roles.has(s.role))return NextResponse.json({success:false,code:s?'FORBIDDEN':'AUTHENTICATION_REQUIRED'},{status:s?403:401});
+ const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
+ const rawLimit=Number(r.nextUrl.searchParams.get('limit')||100);const limit=Math.min(Math.max(Number.isFinite(rawLimit)?Math.trunc(rawLimit):100,1),250);
+ const status=r.nextUrl.searchParams.get('status');const validStatuses=['draft','approved','posted','cancelled'];
+ try{
+  const expenses=await sql`SELECT expense_id,expense_date,category,subcategory,vendor_name,description,amount_paise,tax_paise,payment_method,reference,status,created_at,updated_at FROM ycm_company_expenses WHERE (${status&&validStatuses.includes(status)?status:null}::text IS NULL OR status=${status&&validStatuses.includes(status)?status:null}) ORDER BY expense_date DESC,created_at DESC LIMIT ${limit}`;
+  const totals=await sql`SELECT COALESCE(SUM(amount_paise) FILTER(WHERE status IN ('posted','approved')),0)::bigint posted_amount_paise,COALESCE(SUM(amount_paise) FILTER(WHERE status='draft'),0)::bigint draft_amount_paise,COUNT(*) FILTER(WHERE status IN ('posted','approved'))::int posted_count,COUNT(*) FILTER(WHERE status='draft')::int draft_count FROM ycm_company_expenses`;
+  return NextResponse.json({success:true,expenses,totals:totals[0]},{headers:{'Cache-Control':'private, no-store'}});
+ }catch{return NextResponse.json({success:false,code:'EXPENSE_LIST_FAILED'},{status:500});}finally{await sql.end({timeout:3});}
+}
+
 export async function POST(r:NextRequest){
  const s=verifySession(r.cookies.get(sessionCookieName())?.value);if(!s||!roles.has(s.role))return NextResponse.json({success:false,code:s?'FORBIDDEN':'AUTHENTICATION_REQUIRED'},{status:s?403:401});
  const b=await r.json().catch(()=>null) as ExpenseBody;

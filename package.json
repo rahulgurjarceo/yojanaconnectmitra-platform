@@ -86,7 +86,8 @@
     "test:document-intelligence-authz": "node scripts/test-document-intelligence-authz.mjs",
     "test:supply-inventory": "node scripts/test-supply-inventory.mjs",
     "test:customer-family-otp": "node scripts/test-customer-family-otp.mjs",
-    "test:customer-family-payment": "node scripts/test-customer-family-payment.mjs"
+    "test:customer-family-payment": "node scripts/test-customer-family-payment.mjs",
+    "test:company-finance-dashboard": "node scripts/test-company-finance-dashboard.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
