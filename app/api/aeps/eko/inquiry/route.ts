@@ -52,7 +52,7 @@ export async function POST(r:NextRequest){
    'EKO_BASE_URL_NOT_CONFIGURED','EKO_DEVELOPER_KEY_NOT_CONFIGURED',
    'EKO_INQUIRY_FAILED','EKO_INQUIRY_REFERENCE_MISMATCH'
   ]);
-  const providerHttp=message.match(/^EKO_INQUIRY_HTTP_(\\d{3})$/);
+  const providerHttp=message.match(/^EKO_INQUIRY_HTTP_(\d{3})$/);
   const code=knownCodes.has(message)?message:providerHttp?message:'EKO_INQUIRY_FAILED';
   const status=providerHttp?502:code==='EKO_INQUIRY_REFERENCE_REQUIRED'||code==='EKO_INQUIRY_REFERENCE_MISMATCH'?400:500;
   return NextResponse.json({success:false,code},{status});
