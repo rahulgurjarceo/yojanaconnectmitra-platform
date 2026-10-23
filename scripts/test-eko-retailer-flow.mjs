@@ -46,6 +46,7 @@ if(!inquiryRoute.includes('EKO_INQUIRY_REFERENCE_MISMATCH'))throw new Error('INQ
 const legacyCallback=fs.readFileSync('app/api/aeps/eko/callback/route.ts','utf8');
 if(!legacyCallback.includes("return 'inquiry_required';"))throw new Error('LEGACY_EKO_CALLBACK_UNKNOWN_STATUS_MUST_REQUIRE_INQUIRY');
 if(legacyCallback.includes("v==='3'||v==='4'||v==='reversed')return 'reversed'"))throw new Error('LEGACY_EKO_CALLBACK_MUST_NOT_INFER_REVERSAL_FROM_UNVERIFIED_STATUS');
+if(legacyCallback.includes("code:e instanceof Error?e.message"))throw new Error('LEGACY_EKO_CALLBACK_MUST_NOT_EXPOSE_RAW_ERROR_MESSAGES');
 console.log('Legacy EKO callback conservative-status checks passed');
 
 if(inquiryRoute.includes("code:e instanceof Error?e.message"))throw new Error('INQUIRY_ROUTE_MUST_NOT_EXPOSE_RAW_ERROR_MESSAGES');
