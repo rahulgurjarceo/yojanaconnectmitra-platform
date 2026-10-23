@@ -43,5 +43,5 @@ export async function POST(request:NextRequest){
    if(persistedStatus!==nextStatus)return NextResponse.json({success:true,idempotent:true,status:persistedStatus});
   }
   return NextResponse.json({success:true,idempotent:false,status:persistedStatus||nextStatus});
- }catch(e){return NextResponse.json({success:false,code:e instanceof Error?e.message:'CALLBACK_PROCESSING_FAILED'},{status:500});}finally{await sql.end({timeout:3});}
+ }catch{return NextResponse.json({success:false,code:'CALLBACK_PROCESSING_FAILED'},{status:500});}finally{await sql.end({timeout:3});}
 }
