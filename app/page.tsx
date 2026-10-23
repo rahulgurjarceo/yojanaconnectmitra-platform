@@ -85,6 +85,7 @@ export default function Home() {
 
           <nav className="hidden items-center gap-5 text-sm font-bold xl:flex">
             <button onClick={() => router.push('/services')}>Services</button>
+            <button onClick={() => router.push('/service-rates')}>Rate List</button>
             <button onClick={() => router.push('/education/universities')}>Education</button>
             <button onClick={() => router.push('/legal-mitra')}>Legal</button>
           </nav>
@@ -186,7 +187,7 @@ export default function Home() {
 
       <footer className="bg-slate-950 text-white">
         <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><b>YOJANA CONNECT MITRA</b><p className="mt-1 text-xs text-slate-500">YCM ONE • Global-ready digital public-service platform</p></div><div className="flex flex-wrap gap-5 text-sm text-slate-400"><button onClick={() => router.push('/services')}>Services</button><button onClick={() => router.push('/login')}>Login</button><button onClick={() => router.push('/legal-mitra')}>Legal Mitra</button><button onClick={() => router.push('/contact')}>Contact / Projects</button></div></div>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><b>YOJANA CONNECT MITRA</b><p className="mt-1 text-xs text-slate-500">YCM ONE • Global-ready digital public-service platform</p></div><div className="flex flex-wrap gap-5 text-sm text-slate-400"><button onClick={() => router.push('/services')}>Services</button><button onClick={() => router.push('/service-rates')}>Service Rate List</button><button onClick={() => router.push('/login')}>Login</button><button onClick={() => router.push('/legal-mitra')}>Legal Mitra</button><button onClick={() => router.push('/contact')}>Contact / Projects</button></div></div>
           <div className="mt-7 border-t border-white/10 pt-5 text-xs text-slate-500">© {new Date().getFullYear()} Yojana Connect Mitra Pvt Ltd. • Country and service availability varies by verified local catalogue.</div>
         </div>
       </footer>
