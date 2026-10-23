@@ -17,6 +17,8 @@ for(const token of ['/ekoapi/v3/tools/reference/transaction','initiator_id','use
 const callback=fs.readFileSync(files[5],'utf8');
 if(!callback.includes("v==='4'||v==='reversed'?'reversed'"))throw new Error('EKO_CONFIRMED_REFUND_CALLBACK_MUST_REVERSE_LEDGER');
 for(const token of ['debit-hook','eko-response','request_hash_params','recordSuccessfulFinancialTransaction','reverseFinancialTransaction','EKO_CALLBACK_SHARED_SECRET','EKO_CALLBACK_AUTHENTICATION_FAILED','timingSafeEqual'])if(!callback.includes(token))throw new Error('MISSING_CALLBACK_TOKEN_'+token);
+if(callback.includes('JSON.stringify({debitHook:body})')||callback.includes('JSON.stringify({ekoResponse:body})'))throw new Error('EKO_CALLBACK_MUST_NOT_PERSIST_UNFILTERED_PROVIDER_PAYLOADS');
+for(const token of ['safeDebitHook','requestHashParamNames','providerReference:data.tid','Number.isFinite(amount)?amount:null'])if(!callback.includes(token))throw new Error('MISSING_EKO_CALLBACK_SAFE_AUDIT_FIELD_'+token);
 const initiate=fs.readFileSync(files[4],'utf8');
 if(!initiate.includes("const supportedTransactionTypes=new Set(['cash_withdrawal','balance_enquiry','mini_statement'])"))throw new Error('UNSUPPORTED_AEPS_TYPES_MUST_BE_REJECTED_BEFORE_INSERT_OR_PROVIDER_CALL');
 for(const token of ['EKO_RETAILER_NOT_BOUND','EKO_RETAILER_NOT_ACTIVE','ycm_eko_aeps_transactions','FIN_AEPS'])if(!initiate.includes(token))throw new Error('MISSING_INITIATE_TOKEN_'+token);
