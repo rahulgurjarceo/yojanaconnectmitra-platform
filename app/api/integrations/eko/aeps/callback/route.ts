@@ -14,7 +14,7 @@ const callbackTransactionDto=(tx:Record<string,unknown>)=>({
  bankReference:tx.bank_reference??null,
 });
 export async function OPTIONS(){return new NextResponse(null,{status:204,headers:{'Access-Control-Allow-Origin':'https://stagegateway.eko.in','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'}});}
-const callbackAuthorized=(r:NextRequest)=>{const configured=process.env.EKO_CALLBACK_SHARED_SECRET||'';const supplied=r.headers.get('x-eko-callback-secret')||'';return !!configured&&supplied.length===configured.length&&timingSafeEqual(Buffer.from(supplied),Buffer.from(configured));};
+const callbackAuthorized=(r:NextRequest)=>{const configured=process.env.EKO_CALLBACK_SHARED_SECRET||'';const supplied=r.headers.get('x-eko-callback-secret')||'';const expectedBytes=Buffer.from(configured,'utf8');const suppliedBytes=Buffer.from(supplied,'utf8');return expectedBytes.length>0&&suppliedBytes.length===expectedBytes.length&&timingSafeEqual(suppliedBytes,expectedBytes);};
 export async function POST(r:NextRequest){
  if(!callbackAuthorized(r))return NextResponse.json({success:false,code:'EKO_CALLBACK_AUTHENTICATION_FAILED'},{status:401});
  const body=await r.json().catch(()=>null) as {action?:string;detail?:Detail}|null;
