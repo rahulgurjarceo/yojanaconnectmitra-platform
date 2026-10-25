@@ -58,6 +58,7 @@ console.log('Eko inquiry error sanitization checks passed');
 const callbackDto=callback.slice(callback.indexOf('const callbackTransactionDto'),callback.indexOf('export async function OPTIONS'));
 if(!callbackDto.includes('clientRefId:String(tx.client_ref_id??\'\')')||callback.includes('transaction:saved')||callback.includes('transaction:tx'))throw new Error('EKO_CALLBACK_MUST_RETURN_ALLOWLISTED_TRANSACTION_FIELDS');
 if(callback.includes("code:e instanceof Error?e.message"))throw new Error('EKO_CALLBACK_MUST_NOT_EXPOSE_RAW_ERROR_MESSAGES');
+if(!callback.includes("const expectedBytes=Buffer.from(configured,'utf8');const suppliedBytes=Buffer.from(supplied,'utf8');return expectedBytes.length>0&&suppliedBytes.length===expectedBytes.length&&timingSafeEqual(suppliedBytes,expectedBytes)"))throw new Error('EKO_CALLBACK_SECRET_MUST_COMPARE_UTF8_BYTE_LENGTHS');
 console.log('Eko callback response/error allowlist checks passed');
 
 if(initiationRoute.includes('transaction:saved'))throw new Error('EKO_INITIATION_MUST_NOT_RETURN_RAW_DATABASE_ROW');
