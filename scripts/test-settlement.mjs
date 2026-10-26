@@ -11,4 +11,5 @@ const release=read('app/api/settlements/release/route.ts');
 if(!release.includes("timingSafeEqual"))throw new Error('SETTLEMENT_CONTRACT_FAILED:constant-time secret check');
 if(!release.includes("x-ycm-settlement-secret"))throw new Error('SETTLEMENT_CONTRACT_FAILED:release secret');
 if(!release.includes("configuredBytes.length===0")||!release.includes("suppliedBytes.length!==configuredBytes.length"))throw new Error('SETTLEMENT_CONTRACT_FAILED:UTF-8 secret byte-length check');
+if(release.includes("code:e instanceof Error?e.message"))throw new Error('SETTLEMENT_CONTRACT_FAILED:internal release errors must be sanitized');
 console.log('T+1 settlement contract checks passed.');
