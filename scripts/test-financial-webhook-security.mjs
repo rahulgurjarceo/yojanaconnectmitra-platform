@@ -4,8 +4,8 @@ import assert from "node:assert/strict";
 const route=await fs.readFile("app/api/financial/transactions/route.ts","utf8");
 
 assert.match(route,/timingSafeEqual/);
-assert.match(route,/Buffer\.from\(providedWebhookSecret\)/);
-assert.match(route,/Buffer\.from\(webhookSecret\)/);
+assert.match(route,/Buffer\.from\(providedWebhookSecret,'utf8'\)/);
+assert.match(route,/Buffer\.from\(webhookSecret,'utf8'\)/);
 assert.match(route,/providedWebhookBytes\.length===webhookSecretBytes\.length/);
 assert.match(route,/Buffer\.from\(providedWebhookSecret,'utf8'\)/);
 assert.match(route,/Buffer\.from\(webhookSecret,'utf8'\)/);
