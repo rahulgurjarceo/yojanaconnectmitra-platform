@@ -40,7 +40,11 @@ export async function POST(request:NextRequest){
   if(!identifier||!password) return NextResponse.json({success:false,code:'INVALID_CREDENTIALS',message:'User ID / mobile / email और password दर्ज करें.'},{status:400});
 
   try{
-    if (await loginRateLimited(identifier, clientKey(request))) {
+    const clientRateLimited=await loginRateLimited(identifier,clientKey(request));
+    // A caller-controlled forwarded IP must not be enough to bypass throttling.
+    // Keep a separate per-identifier ceiling across all client keys.
+    const identifierRateLimited=await loginRateLimited(identifier,'identifier-global',30);
+    if (clientRateLimited || identifierRateLimited) {
       return NextResponse.json(
         {success:false,code:'LOGIN_RATE_LIMITED',message:'बहुत अधिक login attempts हैं. कृपया थोड़ी देर बाद फिर प्रयास करें.'},
         {status:429,headers:{'Retry-After':'60','Cache-Control':'no-store'}}
