@@ -15,7 +15,7 @@ function hashKey(identifier: string, clientKey: string) {
     .digest('hex');
 }
 
-export async function loginRateLimited(identifier: string, clientKey: string): Promise<boolean> {
+export async function loginRateLimited(identifier: string, clientKey: string, maxRequests = MAX_REQUESTS_PER_WINDOW): Promise<boolean> {
   const sql = getClient();
   if (!sql) throw new Error('DATABASE_NOT_CONFIGURED');
 
@@ -41,5 +41,5 @@ export async function loginRateLimited(identifier: string, clientKey: string): P
     return Number(rows[0]?.request_count ?? 1);
   });
 
-  return result > MAX_REQUESTS_PER_WINDOW;
+  return result > maxRequests;
 }
