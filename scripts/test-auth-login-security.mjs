@@ -16,4 +16,11 @@ for (const [label, source, needles] of [
   }
 }
 
+if (!route.includes("loginRateLimited(identifier,'identifier-global',30)") || !route.includes("clientRateLimited || identifierRateLimited")) {
+  throw new Error('Login must rate-limit across client keys as well as per client');
+}
+if (!limiter.includes("maxRequests = MAX_REQUESTS_PER_WINDOW") || !limiter.includes("sql.end({ timeout: 3 })")) {
+  throw new Error('Login rate limiter must support scoped thresholds and close database clients');
+}
+
 console.log('Auth login security contract OK');
