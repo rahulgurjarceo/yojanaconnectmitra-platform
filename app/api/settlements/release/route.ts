@@ -8,5 +8,5 @@ export async function POST(r:NextRequest){
  const configuredBytes=Buffer.from(configured||'','utf8');const suppliedBytes=Buffer.from(supplied||'','utf8');
  if(!configured||!supplied||configuredBytes.length===0||suppliedBytes.length!==configuredBytes.length||!timingSafeEqual(suppliedBytes,configuredBytes))return NextResponse.json({success:false,code:'SETTLEMENT_RELEASE_UNAUTHORIZED'},{status:401});
  try{return NextResponse.json({success:true,policy:'T+1',...(await releaseEligibleSettlements())});}
- catch(e){return NextResponse.json({success:false,code:e instanceof Error?e.message:'SETTLEMENT_RELEASE_FAILED'},{status:500});}
+ catch{return NextResponse.json({success:false,code:'SETTLEMENT_RELEASE_FAILED'},{status:500});}
 }
