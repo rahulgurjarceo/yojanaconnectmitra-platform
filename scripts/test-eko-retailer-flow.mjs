@@ -49,7 +49,9 @@ const legacyCallback=fs.readFileSync('app/api/aeps/eko/callback/route.ts','utf8'
 if(!legacyCallback.includes("return 'inquiry_required';"))throw new Error('LEGACY_EKO_CALLBACK_UNKNOWN_STATUS_MUST_REQUIRE_INQUIRY');
 if(legacyCallback.includes("v==='3'||v==='4'||v==='reversed')return 'reversed'"))throw new Error('LEGACY_EKO_CALLBACK_MUST_NOT_INFER_REVERSAL_FROM_UNVERIFIED_STATUS');
 if(legacyCallback.includes("code:e instanceof Error?e.message"))throw new Error('LEGACY_EKO_CALLBACK_MUST_NOT_EXPOSE_RAW_ERROR_MESSAGES');
-console.log('Legacy EKO callback conservative-status checks passed');
+if(legacyCallback.includes("JSON.stringify({legacyEkoCallback:body})"))throw new Error('LEGACY_EKO_CALLBACK_MUST_NOT_PERSIST_UNFILTERED_PROVIDER_PAYLOADS');
+for(const token of ['safeLegacyCallback','providerReference:','bankReference:','Number.isFinite(callbackAmount)','slice(0,300)'])if(!legacyCallback.includes(token))throw new Error('MISSING_LEGACY_EKO_SAFE_CALLBACK_METADATA_'+token);
+console.log('Legacy EKO callback conservative-status and safe-persistence checks passed');
 
 if(inquiryRoute.includes("code:e instanceof Error?e.message"))throw new Error('INQUIRY_ROUTE_MUST_NOT_EXPOSE_RAW_ERROR_MESSAGES');
 for(const token of ['knownCodes=new Set','EKO_INQUIRY_FAILED','EKO_INQUIRY_HTTP_'])if(!inquiryRoute.includes(token))throw new Error('MISSING_INQUIRY_ERROR_SANITIZATION_'+token);
