@@ -29,7 +29,7 @@ if(!jsonObject(b.metadata)||!jsonSizeOk(b.metadata))return NextResponse.json({su
  if(b.providerFeePaise!==undefined&&(!Number.isInteger(b.providerFeePaise)||b.providerFeePaise<0||b.providerFeePaise>grossAmountPaise))return NextResponse.json({success:false,code:'PROVIDER_FEE_INVALID'},{status:400});
  const webhookSecret=process.env.YCM_FINANCIAL_WEBHOOK_SECRET||'';
  const providedWebhookSecret=r.headers.get('x-ycm-financial-secret')||'';
- const webhookOk=!!webhookSecret&&providedWebhookSecret.length===webhookSecret.length&&timingSafeEqual(Buffer.from(providedWebhookSecret),Buffer.from(webhookSecret));
+ const providedWebhookBytes=Buffer.from(providedWebhookSecret,'utf8');const webhookSecretBytes=Buffer.from(webhookSecret,'utf8');const webhookOk=webhookSecretBytes.length>0&&providedWebhookBytes.length===webhookSecretBytes.length&&timingSafeEqual(providedWebhookBytes,webhookSecretBytes);
  if(!privileged.includes(s.role)&&!webhookOk)return NextResponse.json({success:false,code:'FORBIDDEN'},{status:403});
  try{const result=await recordSuccessfulFinancialTransaction({externalReference:b.externalReference,transactionType:b.transactionType,serviceCode:b.serviceCode,customerUserId:b.customerUserId,agentUserId:b.agentUserId,referralUserId:b.referralUserId,providerCode:b.providerCode,providerTransactionId:b.providerTransactionId,grossAmountPaise,providerFeePaise:Number.isInteger(b.providerFeePaise)?b.providerFeePaise:0,currency:b.currency||'INR',metadata:b.metadata});return NextResponse.json({success:true,...result},{status:201});}catch(e){return NextResponse.json({success:false,code:e instanceof Error?e.message:'FINANCIAL_TRANSACTION_FAILED'},{status:400});}
 }
