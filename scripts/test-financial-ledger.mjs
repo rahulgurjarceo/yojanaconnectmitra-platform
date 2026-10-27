@@ -22,4 +22,5 @@ if(/rule:\s*\{/.test(read('app/api/aeps/transactions/route.ts'))||/rule:\s*\{/.t
 if(!ledger.includes("status='active'")||!ledger.includes("service_code IS NULL")) throw new Error('FINANCIAL_CONTRACT_FAILED: central commission lookup incomplete');
 if(!ledger.includes("existing?.state==='reversed'")||!ledger.includes("TRANSACTION_ALREADY_REVERSED")||!ledger.includes('LIMIT 1 FOR UPDATE')) throw new Error('FINANCIAL_CONTRACT_FAILED: reversed transactions must remain terminal and locked');
 if(!ledger.includes('sp.settlement_released_at')||!ledger.includes('WALLET_WITHDRAWABLE_INSUFFICIENT_FOR_REVERSAL')||!ledger.includes('withdrawable_paise=${nextWithdrawable}')) throw new Error('FINANCIAL_CONTRACT_FAILED: reversal must reconcile settled withdrawable funds');
+if(!ledger.includes('SELECT available_paise,withdrawable_paise FROM ycm_wallet_accounts WHERE wallet_id=${e.wallet_id} FOR UPDATE')) throw new Error('FINANCIAL_CONTRACT_FAILED: reversal must use fresh wallet balances for each entry');
 console.log('Financial ledger contract checks passed.');
