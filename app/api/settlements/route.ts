@@ -28,7 +28,7 @@ export async function POST(r:NextRequest){
  const s=verifySession(r.cookies.get(sessionCookieName())?.value);if(!s)return NextResponse.json({success:false,code:'AUTHENTICATION_REQUIRED'},{status:401});
  const b=await r.json().catch(()=>null) as {amountPaise?:number;destinationId?:string}|null;
  const amountPaise=b?.amountPaise;
- if(!b?.destinationId||typeof amountPaise!=='number'||!Number.isInteger(amountPaise)||amountPaise<=0)return NextResponse.json({success:false,code:'SETTLEMENT_FIELDS_REQUIRED'},{status:400});
+ if(!b?.destinationId||typeof amountPaise!=='number'||!Number.isSafeInteger(amountPaise)||amountPaise<=0)return NextResponse.json({success:false,code:'SETTLEMENT_FIELDS_REQUIRED'},{status:400});
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{return await sql.begin(async tx=>{
   const user=(await tx`SELECT id FROM ycm_users WHERE user_id=\${s.sub} LIMIT 1`)[0];if(!user)throw new Error('USER_NOT_FOUND');
@@ -48,7 +48,7 @@ export async function POST(r:NextRequest){
   await tx`INSERT INTO ycm_settlement_events(event_id,settlement_id,event_type,reference) VALUES(\${randomUUID()},\${settlementId},'requested',\${destination.destination_id})`;
   const audit=getPostgresYcmAuditStore(); if(audit) await audit.append(buildAuditRecord({event:'FINANCIAL_SETTLEMENT_REQUESTED',subject:s.sub,role:s.role,sessionId:s.sessionId,resourceType:'settlement',resourceId:settlementId,success:true})).catch(()=>{});
   return NextResponse.json({success:true,settlementId,status:'requested',method:destination.method,amountPaise:amountPaise},{status:201});
- });}catch(e){return NextResponse.json({success:false,code:e instanceof Error?e.message:'SETTLEMENT_REQUEST_FAILED'},{status:400});}finally{await sql.end({timeout:3});}
+ });}catch(e){const known=new Set(['USER_NOT_FOUND','WALLET_NOT_FOUND','WALLET_FROZEN','SETTLEMENT_NOT_ELIGIBLE_T1','WALLET_BALANCE_INSUFFICIENT','PAYOUT_DESTINATION_INVALID']);const message=e instanceof Error?e.message:'';const code=known.has(message)?message:'SETTLEMENT_REQUEST_FAILED';return NextResponse.json({success:false,code},{status:known.has(message)?400:500,headers:{'Cache-Control':'no-store'}});}finally{await sql.end({timeout:3});}
 }
 
 export async function PATCH(r:NextRequest){
@@ -73,5 +73,5 @@ export async function PATCH(r:NextRequest){
   await tx`INSERT INTO ycm_settlement_events(event_id,settlement_id,event_type,reference) VALUES(\${randomUUID()},\${settlement.settlement_id},\${b.status},\${b.reference??null})`;
   const audit=getPostgresYcmAuditStore(); if(audit) await audit.append(buildAuditRecord({event:'FINANCIAL_SETTLEMENT_STATUS_CHANGED',subject:s.sub,role:s.role,sessionId:s.sessionId,resourceType:'settlement',resourceId:settlement.settlement_id,success:true})).catch(()=>{});
   return NextResponse.json({success:true,settlementId:settlement.settlement_id,status});
- });}catch(e){return NextResponse.json({success:false,code:e instanceof Error?e.message:'SETTLEMENT_UPDATE_FAILED'},{status:400});}finally{await sql.end({timeout:3});}
+ });}catch(e){const known=new Set(['SETTLEMENT_NOT_FOUND','SETTLEMENT_STATUS_TRANSITION_INVALID']);const message=e instanceof Error?e.message:'';const code=known.has(message)?message:'SETTLEMENT_UPDATE_FAILED';return NextResponse.json({success:false,code},{status:known.has(message)?400:500,headers:{'Cache-Control':'no-store'}});}finally{await sql.end({timeout:3});}
 }
