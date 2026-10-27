@@ -20,4 +20,5 @@ for(const [file,needle] of required){
 const ledger=read('app/lib/ycm-financial-ledger.ts');
 if(/rule:\s*\{/.test(read('app/api/aeps/transactions/route.ts'))||/rule:\s*\{/.test(read('app/api/service-financial/transactions/route.ts'))) throw new Error('FINANCIAL_CONTRACT_FAILED: webhook may override commission rule');
 if(!ledger.includes("status='active'")||!ledger.includes("service_code IS NULL")) throw new Error('FINANCIAL_CONTRACT_FAILED: central commission lookup incomplete');
+if(!ledger.includes("existing?.state==='reversed'")||!ledger.includes("TRANSACTION_ALREADY_REVERSED")||!ledger.includes('LIMIT 1 FOR UPDATE')) throw new Error('FINANCIAL_CONTRACT_FAILED: reversed transactions must remain terminal and locked');
 console.log('Financial ledger contract checks passed.');
