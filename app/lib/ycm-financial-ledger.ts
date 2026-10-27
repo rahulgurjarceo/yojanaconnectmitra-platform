@@ -19,8 +19,11 @@ export async function recordSuccessfulFinancialTransaction(input:RecordFinancial
  if(!Number.isInteger(input.grossAmountPaise)||input.grossAmountPaise<0)throw new Error('GROSS_AMOUNT_INVALID');
  if(!Number.isInteger(providerFee)||providerFee<0||providerFee>input.grossAmountPaise)throw new Error('PROVIDER_FEE_INVALID');
  try{return await sql.begin(async tx=>{
-  const existing=(await tx`SELECT transaction_id,state FROM ycm_financial_transactions WHERE external_reference=${input.externalReference} LIMIT 1`)[0];
+  const existing=(await tx`SELECT transaction_id,state FROM ycm_financial_transactions WHERE external_reference=${input.externalReference} LIMIT 1 FOR UPDATE`)[0];
   if(existing?.state==='success'||existing?.state==='reconciled')return {transactionId:existing.transaction_id,idempotent:true};
+  // A reversed financial transaction is terminal. Never reactivate it from a
+  // delayed/replayed success callback; doing so would desynchronize ledger and wallet balances.
+  if(existing?.state==='reversed')throw new Error('TRANSACTION_ALREADY_REVERSED');
   const transactionId=existing?.transaction_id??randomUUID();
   const rule=await resolveCommissionRule(tx,input.serviceCode,input.transactionType,input.rule);
   const allocation=calculateUnifiedAllocation(input.grossAmountPaise,rule);
@@ -52,8 +55,8 @@ export async function reverseFinancialTransaction(externalReference:string){
  const sql=db();if(!sql)throw new Error('DATABASE_NOT_CONFIGURED');
  try{return await sql.begin(async tx=>{
   const t=(await tx`SELECT * FROM ycm_financial_transactions WHERE external_reference=${externalReference} FOR UPDATE`)[0];if(!t)throw new Error('TRANSACTION_NOT_FOUND');if(t.state==='reversed')return {transactionId:t.transaction_id,idempotent:true};
-  const entries=await tx`SELECT e.*,w.wallet_id,w.available_paise FROM ycm_wallet_entries e JOIN ycm_wallet_accounts w ON w.wallet_id=e.wallet_id WHERE e.transaction_id=${t.transaction_id} AND e.entry_type='commission_credit' AND e.amount_paise>0 FOR UPDATE`;
-  for(const e of entries){const balance=Number(e.available_paise)-Number(e.amount_paise);if(balance<0)throw new Error('WALLET_INSUFFICIENT_FOR_REVERSAL');await tx`UPDATE ycm_wallet_accounts SET available_paise=${balance},lifetime_debited_paise=lifetime_debited_paise+${e.amount_paise},updated_at=NOW() WHERE wallet_id=${e.wallet_id}`;await tx`INSERT INTO ycm_wallet_entries(entry_id,wallet_id,transaction_id,entry_type,amount_paise,balance_after_paise,idempotency_key) VALUES(${randomUUID()},${e.wallet_id},${t.transaction_id},'commission_reversal',${e.amount_paise},${balance},${externalReference+':reverse:'+e.entry_id})`;};
+  const entries=await tx`SELECT e.*,w.wallet_id,w.available_paise,w.withdrawable_paise,sp.settlement_released_at FROM ycm_wallet_entries e JOIN ycm_wallet_accounts w ON w.wallet_id=e.wallet_id JOIN ycm_transaction_splits sp ON sp.split_id=e.split_id WHERE e.transaction_id=${t.transaction_id} AND e.entry_type='commission_credit' AND e.amount_paise>0 FOR UPDATE OF e,w,sp`;
+  for(const e of entries){const wallet=(await tx`SELECT available_paise,withdrawable_paise FROM ycm_wallet_accounts WHERE wallet_id=${e.wallet_id} FOR UPDATE`)[0];if(!wallet)throw new Error('WALLET_NOT_FOUND');const balance=Number(wallet.available_paise)-Number(e.amount_paise);if(balance<0)throw new Error('WALLET_INSUFFICIENT_FOR_REVERSAL');const nextWithdrawable=e.settlement_released_at?Number(wallet.withdrawable_paise)-Number(e.amount_paise):Number(wallet.withdrawable_paise);if(e.settlement_released_at&&nextWithdrawable<0)throw new Error('WALLET_WITHDRAWABLE_INSUFFICIENT_FOR_REVERSAL');await tx`UPDATE ycm_wallet_accounts SET available_paise=${balance},withdrawable_paise=${nextWithdrawable},lifetime_debited_paise=lifetime_debited_paise+${e.amount_paise},updated_at=NOW() WHERE wallet_id=${e.wallet_id}`;await tx`INSERT INTO ycm_wallet_entries(entry_id,wallet_id,transaction_id,entry_type,amount_paise,balance_after_paise,idempotency_key) VALUES(${randomUUID()},${e.wallet_id},${t.transaction_id},'commission_reversal',${e.amount_paise},${balance},${externalReference+':reverse:'+e.entry_id})`;};
   await tx`UPDATE ycm_financial_transactions SET state='reversed',updated_at=NOW() WHERE transaction_id=${t.transaction_id}`;await tx`UPDATE ycm_transaction_splits SET status='reversed' WHERE transaction_id=${t.transaction_id} AND status='credited'`;return {transactionId:t.transaction_id,idempotent:false};
  });}finally{await sql.end({timeout:3});}
 }

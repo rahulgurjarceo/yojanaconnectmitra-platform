@@ -14,7 +14,7 @@ const callbackTransactionDto=(tx:Record<string,unknown>)=>({
  bankReference:tx.bank_reference??null,
 });
 export async function OPTIONS(){return new NextResponse(null,{status:204,headers:{'Access-Control-Allow-Origin':'https://stagegateway.eko.in','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'}});}
-const callbackAuthorized=(r:NextRequest)=>{const configured=process.env.EKO_CALLBACK_SHARED_SECRET||'';const supplied=r.headers.get('x-eko-callback-secret')||'';return !!configured&&supplied.length===configured.length&&timingSafeEqual(Buffer.from(supplied),Buffer.from(configured));};
+const callbackAuthorized=(r:NextRequest)=>{const configured=process.env.EKO_CALLBACK_SHARED_SECRET||'';const supplied=r.headers.get('x-eko-callback-secret')||'';const expectedBytes=Buffer.from(configured,'utf8');const suppliedBytes=Buffer.from(supplied,'utf8');return expectedBytes.length>0&&suppliedBytes.length===expectedBytes.length&&timingSafeEqual(suppliedBytes,expectedBytes);};
 export async function POST(r:NextRequest){
  if(!callbackAuthorized(r))return NextResponse.json({success:false,code:'EKO_CALLBACK_AUTHENTICATION_FAILED'},{status:401});
  const body=await r.json().catch(()=>null) as {action?:string;detail?:Detail}|null;
@@ -30,7 +30,8 @@ export async function POST(r:NextRequest){
    if(tx.amount_paise!==Math.round(amount*100))return NextResponse.json({action:'go',allow:false,message:'Transaction amount mismatch'});
    const params=(detail?.request_hash_params??[]).map(k=>String(data[k]??''));
    const timestamp=Date.now().toString();const security=ekoSecurityHeaders(timestamp);const requestHash=ekoRequestHash(timestamp,params);
-   await sql.unsafe('UPDATE ycm_eko_aeps_transactions SET status=CASE WHEN status=\'initiated\' THEN \'provider_processing\' ELSE status END,provider_payload=provider_payload || $1::jsonb,updated_at=NOW() WHERE eko_transaction_id=$2',[JSON.stringify({debitHook:body}),tx.eko_transaction_id]);
+   const safeDebitHook={clientRefId:clientRef,retailerUserCode:userCode,amount,requestHashParamNames:(detail?.request_hash_params??[]).map(String)};
+   await sql.unsafe('UPDATE ycm_eko_aeps_transactions SET status=CASE WHEN status=\'initiated\' THEN \'provider_processing\' ELSE status END,provider_payload=provider_payload || $1::jsonb,updated_at=NOW() WHERE eko_transaction_id=$2',[JSON.stringify({debitHook:safeDebitHook}),tx.eko_transaction_id]);
    return NextResponse.json({action:'go',allow:true,secret_key_timestamp:security.secretKeyTimestamp,request_hash:requestHash,secret_key:security.secretKey},{headers:{'Access-Control-Allow-Origin':'https://stagegateway.eko.in'}});
   }
   if(body?.action!=='eko-response')return NextResponse.json({success:false,code:'EKO_CALLBACK_ACTION_UNSUPPORTED'},{status:400});
@@ -49,7 +50,7 @@ export async function POST(r:NextRequest){
    await applyLedgerForTerminalStatus(existingStatus,tx);
    return NextResponse.json({success:true,status:existingStatus,idempotent:true,transaction:callbackTransactionDto(tx)});
   }
-  const saved=(await sql.unsafe(`UPDATE ycm_eko_aeps_transactions SET status=CASE WHEN status IN ('success','failed','reversed') AND NOT (status='success' AND $1='reversed') AND status<>$1 THEN status ELSE $1 END,eko_tid=COALESCE($2,eko_tid),bank_reference=COALESCE($3,bank_reference),provider_message=$4,provider_payload=provider_payload || $5::jsonb,final_at=CASE WHEN status='success' AND $1='reversed' THEN NOW() WHEN status IN ('success','failed','reversed') THEN final_at WHEN $1 IN ('success','failed','reversed') THEN NOW() ELSE final_at END,updated_at=NOW() WHERE eko_transaction_id=$6 RETURNING *`,[status,data.tid??null,data.bank_ref_num??null,String(detail?.response?.message??data.reason??''),JSON.stringify({ekoResponse:body}),tx.eko_transaction_id]))[0];
+  const saved=(await sql.unsafe(`UPDATE ycm_eko_aeps_transactions SET status=CASE WHEN status IN ('success','failed','reversed') AND NOT (status='success' AND $1='reversed') AND status<>$1 THEN status ELSE $1 END,eko_tid=COALESCE($2,eko_tid),bank_reference=COALESCE($3,bank_reference),provider_message=$4,provider_payload=provider_payload || $5::jsonb,final_at=CASE WHEN status='success' AND $1='reversed' THEN NOW() WHEN status IN ('success','failed','reversed') THEN final_at WHEN $1 IN ('success','failed','reversed') THEN NOW() ELSE final_at END,updated_at=NOW() WHERE eko_transaction_id=$6 RETURNING *`,[status,data.tid??null,data.bank_ref_num??null,String(detail?.response?.message??data.reason??''),JSON.stringify({ekoResponse:{txStatus:providerStatus,providerReference:data.tid?String(data.tid):null,bankReference:data.bank_ref_num?String(data.bank_ref_num):null,amount:Number.isFinite(amount)?amount:null,reason:String(data.reason??'').slice(0,300),message:String(detail?.response?.message??'').slice(0,300)}}),tx.eko_transaction_id]))[0];
   // Concurrent callbacks can race after the initial read. Only the state persisted by the
   // guarded UPDATE is authoritative for ledger side effects.
   const persistedStatus=String(saved?.status??'');

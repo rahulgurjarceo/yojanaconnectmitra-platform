@@ -4,10 +4,15 @@ const files=['database/migrations/029_wallet_settlement_and_payout_destinations.
 for(const f of files)if(!fs.existsSync(f))throw new Error('SETTLEMENT_CONTRACT_FAILED:'+f);
 const m=read(files[0]);for(const needle of ['withdrawable_paise','settlement_eligible_at','ycm_payout_destinations'])if(!m.includes(needle))throw new Error('SETTLEMENT_CONTRACT_FAILED:'+needle);
 if(!read('app/api/settlements/route.ts').includes('SETTLEMENT_NOT_ELIGIBLE_T1'))throw new Error('SETTLEMENT_CONTRACT_FAILED:T1 gate');
+const settlementRoute=read('app/api/settlements/route.ts');
+if(!settlementRoute.includes('Number.isSafeInteger(amountPaise)'))throw new Error('SETTLEMENT_CONTRACT_FAILED:safe integer amount validation');
+if(settlementRoute.includes("code:e instanceof Error?e.message"))throw new Error('SETTLEMENT_CONTRACT_FAILED:raw settlement errors must be sanitized');
 const payout=read('app/api/payout-destinations/route.ts');
 if(!payout.includes('pending_verification'))throw new Error('SETTLEMENT_CONTRACT_FAILED:payout verification');
 if(!payout.includes('PAYOUT_DESTINATION_VERIFICATION_REQUIRED'))throw new Error('SETTLEMENT_CONTRACT_FAILED:payout activation gate');
 const release=read('app/api/settlements/release/route.ts');
 if(!release.includes("timingSafeEqual"))throw new Error('SETTLEMENT_CONTRACT_FAILED:constant-time secret check');
 if(!release.includes("x-ycm-settlement-secret"))throw new Error('SETTLEMENT_CONTRACT_FAILED:release secret');
+if(!release.includes("configuredBytes.length===0")||!release.includes("suppliedBytes.length!==configuredBytes.length"))throw new Error('SETTLEMENT_CONTRACT_FAILED:UTF-8 secret byte-length check');
+if(release.includes("code:e instanceof Error?e.message"))throw new Error('SETTLEMENT_CONTRACT_FAILED:internal release errors must be sanitized');
 console.log('T+1 settlement contract checks passed.');

@@ -17,9 +17,15 @@ for(const token of ['/ekoapi/v3/tools/reference/transaction','initiator_id','use
 const callback=fs.readFileSync(files[5],'utf8');
 if(!callback.includes("v==='4'||v==='reversed'?'reversed'"))throw new Error('EKO_CONFIRMED_REFUND_CALLBACK_MUST_REVERSE_LEDGER');
 for(const token of ['debit-hook','eko-response','request_hash_params','recordSuccessfulFinancialTransaction','reverseFinancialTransaction','EKO_CALLBACK_SHARED_SECRET','EKO_CALLBACK_AUTHENTICATION_FAILED','timingSafeEqual'])if(!callback.includes(token))throw new Error('MISSING_CALLBACK_TOKEN_'+token);
+if(callback.includes('JSON.stringify({debitHook:body})')||callback.includes('JSON.stringify({ekoResponse:body})'))throw new Error('EKO_CALLBACK_MUST_NOT_PERSIST_UNFILTERED_PROVIDER_PAYLOADS');
+for(const token of ['safeDebitHook','requestHashParamNames','providerReference:data.tid','Number.isFinite(amount)?amount:null'])if(!callback.includes(token))throw new Error('MISSING_EKO_CALLBACK_SAFE_AUDIT_FIELD_'+token);
 const initiate=fs.readFileSync(files[4],'utf8');
+if(!initiate.includes("const supportedTransactionTypes=new Set(['cash_withdrawal','balance_enquiry','mini_statement'])"))throw new Error('UNSUPPORTED_AEPS_TYPES_MUST_BE_REJECTED_BEFORE_INSERT_OR_PROVIDER_CALL');
 for(const token of ['EKO_RETAILER_NOT_BOUND','EKO_RETAILER_NOT_ACTIVE','ycm_eko_aeps_transactions','FIN_AEPS'])if(!initiate.includes(token))throw new Error('MISSING_INITIATE_TOKEN_'+token);
 for(const f of files){const c=fs.readFileSync(f,'utf8');if(/f74c50a1|4CKAzpT/.test(c))throw new Error('HARDCODED_EKO_SECRET_'+f);}
+
+const inquiryRouteForHttpStatus=fs.readFileSync('app/api/aeps/eko/inquiry/route.ts','utf8');
+if(!inquiryRouteForHttpStatus.includes("message.match(/^EKO_INQUIRY_HTTP_(\\d{3})$/)")) throw new Error('EKO_INQUIRY_HTTP_STATUS_CODE_REGEX_MUST_MATCH_THREE_DIGITS');
 console.log('Eko AePS retailer/inquiry/callback contract checks passed');
 const retailer=fs.readFileSync('app/api/management/eko/retailers/route.ts','utf8');
 for(const token of ['EKO_DAILY_AUTH_DATE_INVALID','EKO_DATE_INVALID','ON CONFLICT(user_id)','INSERT INTO ycm_eko_retailer_accounts'])if(!retailer.includes(token))throw new Error('MISSING_RETAILER_HARDENING_'+token);
@@ -42,7 +48,11 @@ if(!inquiryRoute.includes('EKO_INQUIRY_REFERENCE_MISMATCH'))throw new Error('INQ
 const legacyCallback=fs.readFileSync('app/api/aeps/eko/callback/route.ts','utf8');
 if(!legacyCallback.includes("return 'inquiry_required';"))throw new Error('LEGACY_EKO_CALLBACK_UNKNOWN_STATUS_MUST_REQUIRE_INQUIRY');
 if(legacyCallback.includes("v==='3'||v==='4'||v==='reversed')return 'reversed'"))throw new Error('LEGACY_EKO_CALLBACK_MUST_NOT_INFER_REVERSAL_FROM_UNVERIFIED_STATUS');
-console.log('Legacy EKO callback conservative-status checks passed');
+if(legacyCallback.includes("code:e instanceof Error?e.message"))throw new Error('LEGACY_EKO_CALLBACK_MUST_NOT_EXPOSE_RAW_ERROR_MESSAGES');
+if(legacyCallback.includes("JSON.stringify({legacyEkoCallback:body})"))throw new Error('LEGACY_EKO_CALLBACK_MUST_NOT_PERSIST_UNFILTERED_PROVIDER_PAYLOADS');
+for(const token of ['safeLegacyCallback','providerReference:','bankReference:','Number.isFinite(callbackAmount)','safeProviderMessage'])if(!legacyCallback.includes(token))throw new Error('MISSING_LEGACY_EKO_SAFE_CALLBACK_METADATA_'+token);
+if(legacyCallback.includes('body?.message??body?.reason'))throw new Error('LEGACY_EKO_CALLBACK_MUST_NOT_PERSIST_UNTRUSTED_PROVIDER_MESSAGES');
+console.log('Legacy EKO callback conservative-status and safe-persistence checks passed');
 
 if(inquiryRoute.includes("code:e instanceof Error?e.message"))throw new Error('INQUIRY_ROUTE_MUST_NOT_EXPOSE_RAW_ERROR_MESSAGES');
 for(const token of ['knownCodes=new Set','EKO_INQUIRY_FAILED','EKO_INQUIRY_HTTP_'])if(!inquiryRoute.includes(token))throw new Error('MISSING_INQUIRY_ERROR_SANITIZATION_'+token);
@@ -51,6 +61,7 @@ console.log('Eko inquiry error sanitization checks passed');
 const callbackDto=callback.slice(callback.indexOf('const callbackTransactionDto'),callback.indexOf('export async function OPTIONS'));
 if(!callbackDto.includes('clientRefId:String(tx.client_ref_id??\'\')')||callback.includes('transaction:saved')||callback.includes('transaction:tx'))throw new Error('EKO_CALLBACK_MUST_RETURN_ALLOWLISTED_TRANSACTION_FIELDS');
 if(callback.includes("code:e instanceof Error?e.message"))throw new Error('EKO_CALLBACK_MUST_NOT_EXPOSE_RAW_ERROR_MESSAGES');
+if(!callback.includes("const expectedBytes=Buffer.from(configured,'utf8');const suppliedBytes=Buffer.from(supplied,'utf8');return expectedBytes.length>0&&suppliedBytes.length===expectedBytes.length&&timingSafeEqual(suppliedBytes,expectedBytes)"))throw new Error('EKO_CALLBACK_SECRET_MUST_COMPARE_UTF8_BYTE_LENGTHS');
 console.log('Eko callback response/error allowlist checks passed');
 
 if(initiationRoute.includes('transaction:saved'))throw new Error('EKO_INITIATION_MUST_NOT_RETURN_RAW_DATABASE_ROW');
