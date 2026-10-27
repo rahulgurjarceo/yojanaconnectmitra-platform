@@ -19,8 +19,11 @@ export async function recordSuccessfulFinancialTransaction(input:RecordFinancial
  if(!Number.isInteger(input.grossAmountPaise)||input.grossAmountPaise<0)throw new Error('GROSS_AMOUNT_INVALID');
  if(!Number.isInteger(providerFee)||providerFee<0||providerFee>input.grossAmountPaise)throw new Error('PROVIDER_FEE_INVALID');
  try{return await sql.begin(async tx=>{
-  const existing=(await tx`SELECT transaction_id,state FROM ycm_financial_transactions WHERE external_reference=${input.externalReference} LIMIT 1`)[0];
+  const existing=(await tx`SELECT transaction_id,state FROM ycm_financial_transactions WHERE external_reference=${input.externalReference} LIMIT 1 FOR UPDATE`)[0];
   if(existing?.state==='success'||existing?.state==='reconciled')return {transactionId:existing.transaction_id,idempotent:true};
+  // A reversed financial transaction is terminal. Never reactivate it from a
+  // delayed/replayed success callback; doing so would desynchronize ledger and wallet balances.
+  if(existing?.state==='reversed')throw new Error('TRANSACTION_ALREADY_REVERSED');
   const transactionId=existing?.transaction_id??randomUUID();
   const rule=await resolveCommissionRule(tx,input.serviceCode,input.transactionType,input.rule);
   const allocation=calculateUnifiedAllocation(input.grossAmountPaise,rule);
