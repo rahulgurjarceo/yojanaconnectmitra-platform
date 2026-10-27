@@ -22,5 +22,11 @@ if (!route.includes("loginRateLimited(identifier,'identifier-global',30)") || !r
 if (!limiter.includes("maxRequests = MAX_REQUESTS_PER_WINDOW") || !limiter.includes("sql.end({ timeout: 3 })")) {
   throw new Error('Login rate limiter must support scoped thresholds and close database clients');
 }
+if (!route.includes("typeof body?.identifier==='string'") || !route.includes("typeof body?.password==='string'") || !route.includes('identifier.length>200||password.length>1024')) {
+  throw new Error('Login input types and lengths must be validated before authentication');
+}
+if (route.includes("const code=e instanceof Error?e.message:'AUTH_ERROR'")) {
+  throw new Error('Login route must not expose internal error messages');
+}
 
 console.log('Auth login security contract OK');
