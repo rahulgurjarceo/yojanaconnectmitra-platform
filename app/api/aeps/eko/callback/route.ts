@@ -27,12 +27,13 @@ export async function POST(request:NextRequest){
   // Persist only allowlisted callback metadata. The raw provider payload may contain
   // Aadhaar/PID or other sensitive fields and must never be written to the ledger.
   const callbackAmount=Number(body?.amount);
+  const safeProviderMessage=nextStatus==='success'?'Provider confirmed success':nextStatus==='failed'?'Provider reported failure':nextStatus==='reversed'?'Provider reported reversal':'Provider status requires inquiry';
   const safeLegacyCallback={
    txStatus:String(body?.tx_status??body?.status??'').slice(0,40),
    providerReference:typeof body?.tid==='string'||typeof body?.tid==='number'?String(body.tid).slice(0,100):null,
    bankReference:typeof body?.bank_ref_num==='string'||typeof body?.bank_ref_num==='number'?String(body.bank_ref_num).slice(0,100):null,
    amount:Number.isFinite(callbackAmount)?callbackAmount:null,
-   message:typeof (body?.message??body?.reason)==='string'?String(body.message??body.reason).slice(0,300):null
+   message:safeProviderMessage
   };
   const applyLedgerForTerminalStatus=async(status:string,transaction:Record<string,unknown>)=>{
    if(status==='success')await recordSuccessfulFinancialTransaction({externalReference:'aeps:'+clientRef,transactionType:'aeps',serviceCode:'FIN_AEPS',agentUserId:String(transaction.user_id),providerCode:'EKO',providerTransactionId:body?.tid?String(body.tid):undefined,grossAmountPaise:Number(transaction.amount_paise)});
@@ -45,7 +46,7 @@ export async function POST(request:NextRequest){
   }
   const saved=(await sql.unsafe(
    "UPDATE ycm_eko_aeps_transactions SET status=CASE WHEN status IN ('success','failed','reversed') AND NOT (status='success' AND $1='reversed') AND status<>$1 THEN status ELSE $1 END,eko_tid=COALESCE($2,eko_tid),bank_reference=COALESCE($3,bank_reference),provider_message=COALESCE($4,provider_message),provider_payload=provider_payload || $5::jsonb,final_at=CASE WHEN status='success' AND $1='reversed' THEN NOW() WHEN status IN ('success','failed','reversed') THEN final_at WHEN $1 IN ('success','failed','reversed') THEN NOW() ELSE final_at END,updated_at=NOW() WHERE eko_transaction_id=$6 RETURNING *",
-   [nextStatus,body?.tid??null,body?.bank_ref_num??null,body?.message??body?.reason??null,JSON.stringify({legacyEkoCallback:safeLegacyCallback}),tx.eko_transaction_id]
+   [nextStatus,safeLegacyCallback.providerReference,safeLegacyCallback.bankReference,safeProviderMessage,JSON.stringify({legacyEkoCallback:safeLegacyCallback}),tx.eko_transaction_id]
   ))[0];
   const persistedStatus=String(saved?.status??'');
   if(terminal.has(persistedStatus)){
