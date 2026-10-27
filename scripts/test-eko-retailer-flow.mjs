@@ -50,7 +50,8 @@ if(!legacyCallback.includes("return 'inquiry_required';"))throw new Error('LEGAC
 if(legacyCallback.includes("v==='3'||v==='4'||v==='reversed')return 'reversed'"))throw new Error('LEGACY_EKO_CALLBACK_MUST_NOT_INFER_REVERSAL_FROM_UNVERIFIED_STATUS');
 if(legacyCallback.includes("code:e instanceof Error?e.message"))throw new Error('LEGACY_EKO_CALLBACK_MUST_NOT_EXPOSE_RAW_ERROR_MESSAGES');
 if(legacyCallback.includes("JSON.stringify({legacyEkoCallback:body})"))throw new Error('LEGACY_EKO_CALLBACK_MUST_NOT_PERSIST_UNFILTERED_PROVIDER_PAYLOADS');
-for(const token of ['safeLegacyCallback','providerReference:','bankReference:','Number.isFinite(callbackAmount)','slice(0,300)'])if(!legacyCallback.includes(token))throw new Error('MISSING_LEGACY_EKO_SAFE_CALLBACK_METADATA_'+token);
+for(const token of ['safeLegacyCallback','providerReference:','bankReference:','Number.isFinite(callbackAmount)','safeProviderMessage'])if(!legacyCallback.includes(token))throw new Error('MISSING_LEGACY_EKO_SAFE_CALLBACK_METADATA_'+token);
+if(legacyCallback.includes('body?.message??body?.reason'))throw new Error('LEGACY_EKO_CALLBACK_MUST_NOT_PERSIST_UNTRUSTED_PROVIDER_MESSAGES');
 console.log('Legacy EKO callback conservative-status and safe-persistence checks passed');
 
 if(inquiryRoute.includes("code:e instanceof Error?e.message"))throw new Error('INQUIRY_ROUTE_MUST_NOT_EXPOSE_RAW_ERROR_MESSAGES');
