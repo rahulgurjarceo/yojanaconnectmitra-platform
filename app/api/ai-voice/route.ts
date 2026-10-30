@@ -22,6 +22,8 @@ export async function POST(r:NextRequest){
  if(!managers.has(s.role))return NextResponse.json({success:false,code:'FORBIDDEN'},{status:403});
  const sql=db();if(!sql)return NextResponse.json({success:false,code:'DATABASE_NOT_CONFIGURED'},{status:503});
  try{
+  const actorRow=(await sql`SELECT id FROM ycm_users WHERE user_id=${s.sub} LIMIT 1`)[0];if(!actorRow)return NextResponse.json({success:false,code:'ACTOR_NOT_FOUND'},{status:403});
+  const actorPk=actorRow.id;
   const b=await r.json().catch(()=>({})) as Record<string,unknown>,action=str(b.action,32);
   if(action==='create_campaign'){
    const name=str(b.campaignName,160),script=str(b.scriptKey,120),service=str(b.serviceCode,120);
@@ -29,7 +31,7 @@ export async function POST(r:NextRequest){
    const daily=Math.max(1,Math.min(5000,Number(b.dailyCallLimit||100))),attempts=Math.max(1,Math.min(5,Number(b.maxAttempts||2)));
    const start=Math.max(0,Math.min(23,Number(b.startHour??10))),end=Math.max(1,Math.min(24,Number(b.endHour??18)));
    if(!name||!script||end<=start)return NextResponse.json({success:false,code:'CAMPAIGN_INPUT_INVALID'},{status:400});
-   const row=(await sql`INSERT INTO ycm_ai_voice_campaigns(campaign_name,service_code,script_key,language_codes,daily_call_limit,max_attempts,start_hour,end_hour,status,created_by) VALUES(${name},${service},${script},${sql.array(langs)},${daily},${attempts},${start},${end},'draft',${s.sub}) RETURNING *`)[0];
+   const row=(await sql`INSERT INTO ycm_ai_voice_campaigns(campaign_name,service_code,script_key,language_codes,daily_call_limit,max_attempts,start_hour,end_hour,status,created_by) VALUES(${name},${service},${script},${sql.array(langs)},${daily},${attempts},${start},${end},'draft',${actorPk}) RETURNING *`)[0];
    return NextResponse.json({success:true,campaign:row},{status:201});
   }
   if(action==='set_consent'){
@@ -37,8 +39,8 @@ export async function POST(r:NextRequest){
    if(!leadId||!['granted','withdrawn','unknown'].includes(status))return NextResponse.json({success:false,code:'CONSENT_INPUT_INVALID'},{status:400});
    const lead=(await sql`SELECT lead_id FROM ycm_leads WHERE lead_id=${leadId} LIMIT 1`)[0];if(!lead)return NextResponse.json({success:false,code:'LEAD_NOT_FOUND'},{status:404});
    if(status==='granted'&&(!source||!reference))return NextResponse.json({success:false,code:'CONSENT_EVIDENCE_REQUIRED'},{status:400});
-   const row=(await sql`INSERT INTO ycm_ai_contact_preferences(lead_id,channel,consent_status,consent_source,consent_reference,consented_at,withdrawn_at,do_not_contact,updated_by) VALUES(${leadId},'voice',${status},${source},${reference},CASE WHEN ${status}='granted' THEN NOW() ELSE NULL END,CASE WHEN ${status}='withdrawn' THEN NOW() ELSE NULL END,${status}!=='granted',${s.sub}) ON CONFLICT(lead_id,channel) DO UPDATE SET consent_status=EXCLUDED.consent_status,consent_source=EXCLUDED.consent_source,consent_reference=EXCLUDED.consent_reference,consented_at=EXCLUDED.consented_at,withdrawn_at=EXCLUDED.withdrawn_at,do_not_contact=EXCLUDED.do_not_contact,updated_by=EXCLUDED.updated_by,updated_at=NOW() RETURNING *`)[0];
-   await sql`INSERT INTO ycm_ai_voice_audit_events(lead_id,event_type,actor_user_id,metadata) VALUES(${leadId},'voice_consent_updated',${s.sub},${JSON.stringify({status,source,reference})}::jsonb)`;
+   const row=(await sql`INSERT INTO ycm_ai_contact_preferences(lead_id,channel,consent_status,consent_source,consent_reference,consented_at,withdrawn_at,do_not_contact,updated_by) VALUES(${leadId},'voice',${status},${source},${reference},CASE WHEN ${status}='granted' THEN NOW() ELSE NULL END,CASE WHEN ${status}='withdrawn' THEN NOW() ELSE NULL END,${status}!=='granted',${actorPk}) ON CONFLICT(lead_id,channel) DO UPDATE SET consent_status=EXCLUDED.consent_status,consent_source=EXCLUDED.consent_source,consent_reference=EXCLUDED.consent_reference,consented_at=EXCLUDED.consented_at,withdrawn_at=EXCLUDED.withdrawn_at,do_not_contact=EXCLUDED.do_not_contact,updated_by=EXCLUDED.updated_by,updated_at=NOW() RETURNING *`)[0];
+   await sql`INSERT INTO ycm_ai_voice_audit_events(lead_id,event_type,actor_user_id,metadata) VALUES(${leadId},'voice_consent_updated',${actorPk},${JSON.stringify({status,source,reference})}::jsonb)`;
    return NextResponse.json({success:true,preference:row});
   }
   if(action==='enqueue'){
@@ -53,7 +55,7 @@ export async function POST(r:NextRequest){
     if(campaign.service_code&&lead.service_code!==campaign.service_code){suppressed++;continue}
     const key='ycm-voice:'+campaignId+':'+leadId;
     const inserted=await sql`INSERT INTO ycm_ai_voice_call_jobs(campaign_id,lead_id,status,idempotency_key) VALUES(${campaignId},${leadId},'queued',${key}) ON CONFLICT(campaign_id,lead_id) DO NOTHING RETURNING job_id`;
-    if(inserted.length){queued++;await sql`INSERT INTO ycm_ai_voice_audit_events(job_id,campaign_id,lead_id,event_type,actor_user_id) VALUES(${inserted[0].job_id},${campaignId},${leadId},'call_job_queued',${s.sub})`;}
+    if(inserted.length){queued++;await sql`INSERT INTO ycm_ai_voice_audit_events(job_id,campaign_id,lead_id,event_type,actor_user_id) VALUES(${inserted[0].job_id},${campaignId},${leadId},'call_job_queued',${actorPk})`;}
    }
    return NextResponse.json({success:true,queued,suppressed,requested:leadIds.length});
   }
