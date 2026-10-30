@@ -19,6 +19,11 @@ export async function POST(r:NextRequest){
   const status=['no_answer','busy','failed'].includes(outcome)?'failed':'completed';
   await sql`UPDATE ycm_ai_voice_call_jobs SET status=${status},outcome=${outcome},transcript=${String(bdy.transcript||'').slice(0,12000)||null},summary=${String(bdy.summary||'').slice(0,2000)||null},interested=${interested},callback_at=${bdy.callbackAt?new Date(String(bdy.callbackAt)):null},completed_at=NOW(),updated_at=NOW() WHERE job_id=${jobId}`;
   if(outcome==='opt_out')await sql`UPDATE ycm_ai_contact_preferences SET consent_status='withdrawn',do_not_contact=true,withdrawn_at=NOW(),updated_at=NOW() WHERE lead_id=${job.lead_id} AND channel='voice'`;
+  if(interested||outcome==='callback_requested'){
+   const nextStatus=outcome==='callback_requested'?'follow_up':'contacted';
+   await sql`UPDATE ycm_leads SET status=${nextStatus},next_follow_up_at=${bdy.callbackAt?new Date(String(bdy.callbackAt)):null},last_contacted_at=NOW(),updated_at=NOW() WHERE lead_id=${job.lead_id}`;
+   await sql`INSERT INTO ycm_lead_events(lead_id,event_type,details) VALUES(${job.lead_id},'ai_voice_interest',${JSON.stringify({outcome,interested,callbackAt:bdy.callbackAt||null})}::jsonb)`;
+  }
   await sql`INSERT INTO ycm_ai_voice_audit_events(job_id,campaign_id,lead_id,event_type,metadata) VALUES(${jobId},${job.campaign_id},${job.lead_id},'provider_call_completed',${JSON.stringify({outcome,interested})}::jsonb)`;
   return NextResponse.json({success:true});
  }catch{return NextResponse.json({success:false,code:'WEBHOOK_PROCESSING_FAILED'},{status:400})}finally{await sql.end({timeout:3})}
