@@ -87,7 +87,8 @@
     "test:supply-inventory": "node scripts/test-supply-inventory.mjs",
     "test:customer-family-otp": "node scripts/test-customer-family-otp.mjs",
     "test:customer-family-payment": "node scripts/test-customer-family-payment.mjs",
-    "test:ai-voice-sales": "node scripts/test-ai-voice-sales-foundation.mjs"
+    "test:ai-voice-sales": "node scripts/test-ai-voice-sales-foundation.mjs",
+    "test:ai-voice-sales-working": "node scripts/test-ai-voice-working-mvp.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
