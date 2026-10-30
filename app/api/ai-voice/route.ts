@@ -36,7 +36,7 @@ export async function POST(r:NextRequest){
   }
   if(action==='set_consent'){
    const leadId=str(b.leadId,120),status=str(b.consentStatus,16),source=str(b.consentSource,80),reference=str(b.consentReference,160);
-   if(!leadId||!['granted','withdrawn','unknown'].includes(status))return NextResponse.json({success:false,code:'CONSENT_INPUT_INVALID'},{status:400});
+   if(!leadId||!status||!['granted','withdrawn','unknown'].includes(status))return NextResponse.json({success:false,code:'CONSENT_INPUT_INVALID'},{status:400});
    const lead=(await sql`SELECT lead_id FROM ycm_leads WHERE lead_id=${leadId} LIMIT 1`)[0];if(!lead)return NextResponse.json({success:false,code:'LEAD_NOT_FOUND'},{status:404});
    if(status==='granted'&&(!source||!reference))return NextResponse.json({success:false,code:'CONSENT_EVIDENCE_REQUIRED'},{status:400});
    const row=(await sql`INSERT INTO ycm_ai_contact_preferences(lead_id,channel,consent_status,consent_source,consent_reference,consented_at,withdrawn_at,do_not_contact,updated_by) VALUES(${leadId},'voice',${status},${source},${reference},CASE WHEN ${status}='granted' THEN NOW() ELSE NULL END,CASE WHEN ${status}='withdrawn' THEN NOW() ELSE NULL END,${status}!=='granted',${actorPk}) ON CONFLICT(lead_id,channel) DO UPDATE SET consent_status=EXCLUDED.consent_status,consent_source=EXCLUDED.consent_source,consent_reference=EXCLUDED.consent_reference,consented_at=EXCLUDED.consented_at,withdrawn_at=EXCLUDED.withdrawn_at,do_not_contact=EXCLUDED.do_not_contact,updated_by=EXCLUDED.updated_by,updated_at=NOW() RETURNING *`)[0];
@@ -61,7 +61,7 @@ export async function POST(r:NextRequest){
   }
   if(action==='set_status'){
    const campaignId=str(b.campaignId,120),status=str(b.status,16);
-   if(!campaignId||!['active','paused','cancelled'].includes(status))return NextResponse.json({success:false,code:'CAMPAIGN_STATUS_INVALID'},{status:400});
+   if(!campaignId||!status||!['active','paused','cancelled'].includes(status))return NextResponse.json({success:false,code:'CAMPAIGN_STATUS_INVALID'},{status:400});
    const row=(await sql`UPDATE ycm_ai_voice_campaigns SET status=${status},updated_at=NOW() WHERE campaign_id=${campaignId} RETURNING *`)[0];
    if(!row)return NextResponse.json({success:false,code:'CAMPAIGN_NOT_FOUND'},{status:404});
    return NextResponse.json({success:true,campaign:row});
