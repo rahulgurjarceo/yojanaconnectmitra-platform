@@ -91,7 +91,7 @@
     "test:ai-voice-sales-working": "node scripts/test-ai-voice-working-mvp.mjs"
   },
   "dependencies": {
-    "next": "16.3.8",
+    "next": "16.4.3",
     "postgres": "^3.4.7",
     "react": "19.2.4",
     "react-dom": "19.2.4"
