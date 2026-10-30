@@ -88,7 +88,8 @@
     "test:customer-family-otp": "node scripts/test-customer-family-otp.mjs",
     "test:customer-family-payment": "node scripts/test-customer-family-payment.mjs",
     "test:ai-voice-sales": "node scripts/test-ai-voice-sales-foundation.mjs",
-    "test:ai-voice-sales-working": "node scripts/test-ai-voice-working-mvp.mjs"
+    "test:ai-voice-sales-working": "node scripts/test-ai-voice-working-mvp.mjs",
+    "test:ai-voice-reliability": "node scripts/test-ai-voice-reliability.mjs"
   },
   "dependencies": {
     "next": "16.4.3",
