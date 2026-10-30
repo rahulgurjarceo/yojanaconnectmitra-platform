@@ -37,11 +37,11 @@ Build this inside the existing `rahulgurjarceo/yojanaconnectmitra-platform` appl
 - Keep real calls disabled until provider credentials, compliance registration, scripts, templates and consent evidence are verified.
 
 ## Migration
-Migration `063_ai_voice_sales_engine.sql` adds provider-neutral consent, campaign, outbound call job, message event and audit tables. It does not initiate calls and is not automatically applied to production. Run `npm run db:migrate` only after reviewing the migration and selecting the intended database.
+Migrations `063_ai_voice_sales_engine.sql` and `064_ai_voice_reliability.sql` add channel consent, campaigns, outbound jobs, message/audit events, atomic per-campaign daily quotas and idempotent webhook receipts. Migration 064 also supports duplicate-event suppression and audit traceability. Neither migration initiates calls or is automatically applied to production. Run `npm run db:migrate` only after reviewing both migrations and selecting the intended database.
 
 ## Delivery sequence
 - Phase 1: schema, consent model, campaign/job APIs, dashboard and test coverage.
-- Phase 2: provider adapter + sandbox call, webhook signature verification and job worker.
+- Phase 2: provider adapter + sandbox call, webhook signature verification/replay protection, atomic daily quotas and job worker.
 - Phase 3: Hindi/English real-time conversation, human transfer, recording/transcript retention controls.
 - Phase 4: registered SMS/WhatsApp templates, payment/registration deep links and conversion attribution.
 - Phase 5: load, security, compliance and production readiness tests.
