@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const api=fs.readFileSync('app/api/ai-voice/route.ts','utf8');
+const worker=fs.readFileSync('app/api/ai-voice/worker/route.ts','utf8');
+const webhook=fs.readFileSync('app/api/ai-voice/webhook/route.ts','utf8');
+const page=fs.readFileSync('app/management/ai-voice/page.tsx','utf8');
+for(const token of ['create_campaign','set_consent','CONSENT_EVIDENCE_REQUIRED','do_not_contact','enqueue','VOICE']) assert.ok(api.includes(token),'API missing '+token);
+for(const token of ['YCM_AI_VOICE_WORKER_SECRET','YCM_VOICE_LIVE_ENABLED','consent_status','do_not_contact','idempotency-key','daily_call_limit']) assert.ok(worker.includes(token),'worker missing '+token);
+for(const token of ['createHmac','timingSafeEqual','CALL_REFERENCE_MISMATCH','opt_out']) assert.ok(webhook.includes(token),'webhook missing '+token);
+for(const token of ['AI Voice Sales Center','Save verified consent','Queue selected','Live calling disabled']) assert.ok(page.includes(token),'UI missing '+token);
+console.log('YCM_AI_VOICE_WORKING_MVP_CONTRACT: PASS');

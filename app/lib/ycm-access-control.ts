@@ -97,6 +97,8 @@ const PUBLIC_API_PATHS = [
   '/api/integrations/eko/aeps/callback',
   '/api/aeps/transactions',
   '/api/settlements/release',
+  '/api/ai-voice/worker',
+  '/api/ai-voice/webhook',
 ];
 
 export function isProtectedPath(pathname: string) {

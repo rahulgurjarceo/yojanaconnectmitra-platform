@@ -161,6 +161,10 @@ jobs:
         run: npm run test:voice-mitra
       - name: Universal 35-domain journey contract test
         run: npm run test:universal-journey
+      - name: AI Voice Sales working MVP contract test
+        run: npm run test:ai-voice-sales-working
+      - name: AI Voice reliability and replay protection contract test
+        run: npm run test:ai-voice-reliability
       - name: Voice IVR adapter contract test
         run: npm run test:voice-ivr
       - name: Voice form assistant contract test
