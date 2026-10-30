@@ -16,8 +16,10 @@ export async function POST(r:NextRequest){
   const job=(await sql`SELECT job_id,lead_id,campaign_id,provider_call_id FROM ycm_ai_voice_call_jobs WHERE job_id=${jobId} LIMIT 1`)[0];
   if(!job||job.provider_call_id!==callId)return NextResponse.json({success:false,code:'CALL_REFERENCE_MISMATCH'},{status:404});
   const interested=outcome==='interested'||bdy.interested===true;
+  const callbackDate=bdy.callbackAt?new Date(String(bdy.callbackAt)):null;
+  if(callbackDate&&!Number.isFinite(callbackDate.getTime()))return NextResponse.json({success:false,code:'CALLBACK_DATE_INVALID'},{status:400});
   const status=['no_answer','busy','failed'].includes(outcome)?'failed':'completed';
-  await sql`UPDATE ycm_ai_voice_call_jobs SET status=${status},outcome=${outcome},transcript=${String(bdy.transcript||'').slice(0,12000)||null},summary=${String(bdy.summary||'').slice(0,2000)||null},interested=${interested},callback_at=${bdy.callbackAt?new Date(String(bdy.callbackAt)):null},completed_at=NOW(),updated_at=NOW() WHERE job_id=${jobId}`;
+  await sql`UPDATE ycm_ai_voice_call_jobs SET status=${status},outcome=${outcome},transcript=${String(bdy.transcript||'').slice(0,12000)||null},summary=${String(bdy.summary||'').slice(0,2000)||null},interested=${interested},callback_at=${callbackDate},completed_at=NOW(),updated_at=NOW() WHERE job_id=${jobId}`;
   if(outcome==='opt_out')await sql`UPDATE ycm_ai_contact_preferences SET consent_status='withdrawn',do_not_contact=true,withdrawn_at=NOW(),updated_at=NOW() WHERE lead_id=${job.lead_id} AND channel='voice'`;
   if(interested||outcome==='callback_requested'){
    const nextStatus=outcome==='callback_requested'?'follow_up':'contacted';
