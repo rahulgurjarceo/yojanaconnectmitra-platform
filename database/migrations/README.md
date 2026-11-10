@@ -64,6 +64,7 @@ Run in numeric order:
 59. 060_supply_inventory_management.sql
 60. 061_customer_family_otp_rate_limits.sql
 61. 062_customer_family_otp_verification_attempts.sql
+62. 063_bayana_family360_campaign.sql
 
 The older `db/migrations/` directory contains source migrations retained for compatibility. Do not run both trees against the same database unless you have verified the statements are idempotent and intentionally duplicated.
 
@@ -83,3 +84,10 @@ Production prerequisites:
 Never store database credentials or provider secrets in source control.
 
 Membership pricing rule: ₹99 standard Individual/Household = 1 year. Special Family review starts at ₹99 / 1-year base state; after High Management approval, Widow Household or Defense Family becomes ₹99 / 2 years. No defense/government source credentials or raw sensitive government documents are stored in the membership record.
+
+Bayana Family 360 campaign:
+- Route: `/management/bayana-campaign`
+- API: `/api/management/bayana-campaign`
+- Campaign seed: `BAYANA-F360-2026` (planning baseline: 72,000 households; registration target: 50,000)
+- Requires management/team-lead/branch-manager/CEO/admin session and migration 063.
+- Add approved village master rows before recording household visits. Household references must be internal codes; do not store Aadhaar numbers or document images in campaign tables.

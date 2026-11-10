@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const migration=fs.readFileSync('database/migrations/063_bayana_family360_campaign.sql','utf8');
+const route=fs.readFileSync('app/api/management/bayana-campaign/route.ts','utf8');
+const page=fs.readFileSync('app/management/bayana-campaign/page.tsx','utf8');
+const readme=fs.readFileSync('database/migrations/README.md','utf8');
+for(const token of ['ycm_campaigns','ycm_campaign_villages','ycm_campaign_teams','ycm_campaign_team_members','ycm_campaign_camps','ycm_campaign_households','ycm_campaign_visits','BAYANA-F360-2026','72000','50000'])assert.ok(migration.includes(token),'missing schema contract '+token);
+for(const token of ['verifySession','sessionCookieName','team_lead','branch_manager','management','ceo','CONTACT_CONSENT_REQUIRED','VILLAGE_NOT_FOUND','ON CONFLICT'])assert.ok(route.includes(token),'missing API contract '+token);
+for(const token of ['Bayana Family 360 Campaign','Record household visit','Field team scorecard','Doorstep','Village camp','contactConsent'])assert.ok(page.includes(token),'missing UI contract '+token);
+assert.ok(readme.includes('063_bayana_family360_campaign.sql'),'migration not registered');
+assert.ok(!migration.toLowerCase().includes('aadhaar_number'),'do not store Aadhaar number');
+console.log('BAYANA_FAMILY360_CAMPAIGN_CONTRACT_TEST: PASS');
