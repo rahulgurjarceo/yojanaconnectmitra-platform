@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import postgres from 'postgres';
-import { sessionCookieName, verifySession } from '../../../../lib/ycm-access-control';
+import { sessionCookieName, verifySession } from '../../../lib/ycm-access-control';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const roles = new Set(['team_lead','branch_manager','management','ceo','admin']);
