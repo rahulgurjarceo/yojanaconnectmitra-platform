@@ -16,8 +16,8 @@ export async function GET(r:NextRequest){
   const members=own
    ?await sql`SELECT u.user_id,u.full_name AS name,u.role,u.status,t.member_type,t.state_code,t.district_code,t.block_code,t.village_code,t.monthly_target_paise FROM ycm_users u LEFT JOIN ycm_crm_team_members t ON t.member_user_id=u.user_id WHERE u.user_id=${s.sub} LIMIT 1`
    :executive.includes(s.role)
-    ?await sql`SELECT u.user_id,u.name,u.role,u.status,t.manager_user_id,t.member_type,t.state_code,t.district_code,t.block_code,t.village_code,t.monthly_target_paise FROM ycm_users u LEFT JOIN ycm_crm_team_members t ON t.member_user_id=u.user_id ORDER BY u.name LIMIT 500`
-    :await sql`SELECT u.user_id,u.name,u.role,u.status,t.manager_user_id,t.member_type,t.state_code,t.district_code,t.block_code,t.village_code,t.monthly_target_paise FROM ycm_crm_team_members t JOIN ycm_users u ON u.user_id=t.member_user_id WHERE t.manager_user_id=${s.sub} AND t.active=true ORDER BY u.name LIMIT 500`;
+    ?await sql`SELECT u.user_id,u.name,u.role,u.status,t.manager_user_id,t.member_type,t.state_code,t.district_code,t.block_code,t.village_code,t.monthly_target_paise FROM ycm_users u LEFT JOIN ycm_crm_team_members t ON t.member_user_id=u.user_id ORDER BY u.full_name LIMIT 500`
+    :await sql`SELECT u.user_id,u.name,u.role,u.status,t.manager_user_id,t.member_type,t.state_code,t.district_code,t.block_code,t.village_code,t.monthly_target_paise FROM ycm_crm_team_members t JOIN ycm_users u ON u.user_id=t.member_user_id WHERE t.manager_user_id=${s.sub} AND t.active=true ORDER BY u.full_name LIMIT 500`;
   const ids=own?[s.sub]:members.map((m:any)=>m.user_id);
   const metrics=ids.length?await sql`SELECT user_id,COALESCE(SUM(leads_created),0)::int leads,COALESCE(SUM(calls_made),0)::int calls,COALESCE(SUM(sales_count),0)::int sales,COALESCE(SUM(sales_amount_paise),0)::bigint sales_amount_paise,COALESCE(SUM(followups_due),0)::int followups FROM ycm_crm_agent_daily_metrics WHERE user_id=ANY(${ids}) AND metric_date>=date_trunc('month',CURRENT_DATE)::date GROUP BY user_id`:[];
   return NextResponse.json({success:true,scope:own?'self':executive.includes(s.role)?'company':'direct_team',members,metrics});
